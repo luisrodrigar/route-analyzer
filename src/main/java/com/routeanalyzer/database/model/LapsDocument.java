@@ -2,7 +2,7 @@ package com.routeanalyzer.database.model;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.SortedSet;
+import java.util.List;
 
 import org.bson.Document;
 
@@ -10,7 +10,7 @@ import com.routeanalyzer.model.Lap;
 
 public class LapsDocument {
 
-	public static Set<Document> toMongoDocumentsObject(SortedSet<Lap> laps) {
+	public static Set<Document> toMongoDocumentsObject(List<Lap> laps) {
 		Set<Document> documents = new HashSet<Document>();
 		for(Lap lap: laps){
 			Document lapDocument = new Document();

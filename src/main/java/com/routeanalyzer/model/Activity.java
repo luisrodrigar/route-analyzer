@@ -1,9 +1,9 @@
 package com.routeanalyzer.model;
 
-import java.util.Collections;
 import java.util.Date;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.List;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import org.springframework.data.annotation.Id;
@@ -11,17 +11,19 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 @Document(collection="activities")
-public class Activity {
+public class Activity implements Serializable{
+
+	private static final long serialVersionUID = 1L;
 	
 	@Id
 	private String id;
 	private String idUser, device, sport, name, sourceXmlType;
 	private Date date;
 	@Field
-	private SortedSet<Lap> laps;
+	private List<Lap> laps;
 	
 	public Activity(){
-		laps = new TreeSet<>();
+		laps = new ArrayList<>();
 	}
 	
 	public String getIdUser() {
@@ -54,8 +56,8 @@ public class Activity {
 	public void setDate(Date date) {
 		this.date = date;
 	}
-	public SortedSet<Lap> getLaps() {
-		return Collections.unmodifiableSortedSet(laps);
+	public List<Lap> getLaps() {
+		return laps;
 	}
 
 	public String getId() {
@@ -78,6 +80,10 @@ public class Activity {
 		int sizeBeforeAdding = laps.size();
 		laps.add(lap);
 		return sizeBeforeAdding + 1 == laps.size();
+	}
+	
+	public void setLaps(List<Lap> laps){
+		this.laps = laps;
 	}
 	
 	@Override

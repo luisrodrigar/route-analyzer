@@ -8,6 +8,7 @@
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/gpx11/GpxType.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/HeartRateAsPercentOfMaxT.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/ActivityLapT.java
+/Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/services/AS3Service.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/WorkoutT.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/gpx11/TrksegType.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/WorkoutListT.java
@@ -60,6 +61,7 @@
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/CourseListT.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/VersionT.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/gpx11/CopyrightType.java
+/Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/controller/rest/FileRestController.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/controller/rest/ActivityRestController.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/FirstSportT.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/AbstractStepT.java
@@ -67,7 +69,6 @@
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/gpx11/package-info.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/PlanT.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/AbstractSourceT.java
-/Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/controller/FileUploaderController.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/PredefinedHeartRateZoneT.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/gpx11/BoundsType.java
 /Users/luisangelrodriguezgarcia/Documents/TFG/RouteAnalyzer/src/main/java/com/routeanalyzer/xml/tcx/HeartRateT.java

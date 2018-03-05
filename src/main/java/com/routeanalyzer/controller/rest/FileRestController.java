@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -74,17 +75,16 @@ public class FileRestController {
     	return new ResponseEntity<String>(errorValue, HttpStatus.BAD_REQUEST);
     }
     
-    @RequestMapping(value="/get", method=RequestMethod.GET)
-    public ResponseEntity<String> getFile(@RequestParam("id-file") final String id, @RequestParam("type") final String type){
+    @RequestMapping(value="/get/{type}/{id}", method=RequestMethod.GET)
+    public ResponseEntity<String> getFile(@PathVariable final String id, @PathVariable final String type){
     	HttpHeaders responseHeaders = new HttpHeaders();
     	if(type!=null && !type.isEmpty()){
     		try {
-    			
 				BufferedReader bufReader = aS3Service.getFile(id+"."+type);
-				responseHeaders.add("Content-Type", "application/xml; charset=utf-8");
-				// Se utiliza 
 				String xml = bufReader.lines().collect(Collectors.joining("\n"));
-				return new ResponseEntity<String>(xml, responseHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+				responseHeaders.add("Content-Type", "application/octet-stream");
+				responseHeaders.add("Content-Disposition", "attachment;filename="+ id+"."+type);
+				return new ResponseEntity<String>(xml, responseHeaders, HttpStatus.ACCEPTED);
 				
 			} catch (AmazonClientException amazonException ) {
 				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
@@ -129,7 +129,7 @@ public class FileRestController {
 				activity.setSport(eachActivity.getSport().toString());
 				eachActivity.getLap().forEach(eachLap->{
 					Lap lap = new Lap();
-					lap.setAverageHearRate(new Integer(eachLap.getAverageHeartRateBpm().getValue()));
+					lap.setAverageHearRate(new Double(eachLap.getAverageHeartRateBpm().getValue()));
 					lap.setCalories(eachLap.getCalories());
 					lap.setDistanceMeters(eachLap.getDistanceMeters());
 					lap.setMaximunSpeed(eachLap.getMaximumSpeed());

@@ -1,10 +1,13 @@
 package com.routeanalyzer.model;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class TrackPoint implements Comparable<TrackPoint> {
+public class TrackPoint implements Comparable<TrackPoint>, Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
 	private Date date;
 	// Field in cases when date field is not informed.
 	private Integer index;

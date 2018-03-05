@@ -1,23 +1,25 @@
 package com.routeanalyzer.model;
 
-import java.util.Collections;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
-public class Lap implements Comparable<Lap> {
+public class Lap implements Comparable<Lap>, Serializable{
+	
+	private static final long serialVersionUID = 1L;
 	
 	private Date startTime;
 	// Field in cases when startTime field is not informed.
 	private Integer index;
-	private Double totalTimeSeconds, distanceMeters, maximunSpeed, averageSpeed;
-	private Integer averageHearRate, maximunHeartRate, calories;
+	private Double totalTimeSeconds, distanceMeters, maximunSpeed, averageSpeed, averageHearRate;
+	private Integer maximunHeartRate, calories;
 	private String intensity, triggerMethod;
-	private SortedSet<TrackPoint> tracks;
+	private List<TrackPoint> tracks;
 	
 	public Lap(Date startTime, Double totalTimeSeconds, Double distanceMeters, Double maximunSpeed, Integer calories,
-			Double averageSpeed, Integer averageHearRate, Integer maximunHeartRate, String intensity,
+			Double averageSpeed, Double averageHearRate, Integer maximunHeartRate, String intensity,
 			String triggerMethod) {
 		super();
 		this.startTime = startTime;
@@ -30,10 +32,10 @@ public class Lap implements Comparable<Lap> {
 		this.maximunHeartRate = maximunHeartRate;
 		this.intensity = intensity;
 		this.triggerMethod = triggerMethod;
-		tracks = new TreeSet<TrackPoint>();
+		tracks = new ArrayList<TrackPoint>();
 	}
 	public Lap() {
-		tracks = new TreeSet<TrackPoint>();
+		tracks = new ArrayList<TrackPoint>();
 	}
 	public Date getStartTime() {
 		return startTime;
@@ -71,10 +73,10 @@ public class Lap implements Comparable<Lap> {
 	public void setAverageSpeed(Double averageSpeed) {
 		this.averageSpeed = averageSpeed;
 	}
-	public Integer getAverageHearRate() {
+	public Double getAverageHearRate() {
 		return averageHearRate;
 	}
-	public void setAverageHearRate(Integer averageHearRate) {
+	public void setAverageHearRate(Double averageHearRate) {
 		this.averageHearRate = averageHearRate;
 	}
 	public Integer getMaximunHeartRate() {
@@ -103,8 +105,12 @@ public class Lap implements Comparable<Lap> {
 		this.index = index;
 	}
 	
-	public SortedSet<TrackPoint> getTracks() {
-		return Collections.unmodifiableSortedSet(tracks);
+	public List<TrackPoint> getTracks() {
+		return tracks;
+	}
+	
+	public void setTracks(List<TrackPoint> trackPoints){
+		this.tracks = trackPoints;
 	}
 
 	public boolean addTrack(TrackPoint track){

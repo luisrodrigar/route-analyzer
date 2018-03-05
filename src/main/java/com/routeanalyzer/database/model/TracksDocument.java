@@ -2,7 +2,6 @@ package com.routeanalyzer.database.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedSet;
 
 import org.bson.Document;
 
@@ -10,7 +9,7 @@ import com.routeanalyzer.model.TrackPoint;
 
 public class TracksDocument {
 
-	public static List<Document> toMongoDocumentsObject(SortedSet<TrackPoint> tracks) {
+	public static List<Document> toMongoDocumentsObject(List<TrackPoint> tracks) {
 		List<Document> documents = new ArrayList<Document>();
 		for(TrackPoint tP : tracks){
 			Document trackDocument = new Document();
