@@ -32,7 +32,9 @@ import javax.xml.namespace.QName;
 public class ObjectFactory {
 
     private final static QName _TrainingCenterDatabase_QNAME = new QName("http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2", "TrainingCenterDatabase");
-
+    private final static QName _TPX_QNAME = new QName("http://www.garmin.com/xmlschemas/ActivityExtension/v2", "TPX");
+    private final static QName _LX_QNAME = new QName("http://www.garmin.com/xmlschemas/ActivityExtension/v2", "LX");
+    
     /**
      * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: com.routeanalyzer.tcx
      * 
@@ -471,6 +473,39 @@ public class ObjectFactory {
     @XmlElementDecl(namespace = "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2", name = "TrainingCenterDatabase")
     public JAXBElement<TrainingCenterDatabaseT> createTrainingCenterDatabase(TrainingCenterDatabaseT value) {
         return new JAXBElement<TrainingCenterDatabaseT>(_TrainingCenterDatabase_QNAME, TrainingCenterDatabaseT.class, null, value);
+    }
+    /**
+     * Create an instance of {@link ActivityLapExtensionT }
+     * 
+     */
+    public ActivityLapExtensionT createActivityLapExtensionT() {
+        return new ActivityLapExtensionT();
+    }
+
+    /**
+     * Create an instance of {@link ActivityTrackpointExtensionT }
+     * 
+     */
+    public ActivityTrackpointExtensionT createActivityTrackpointExtensionT() {
+        return new ActivityTrackpointExtensionT();
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link ActivityTrackpointExtensionT }{@code >}}
+     * 
+     */
+    @XmlElementDecl(namespace = "http://www.garmin.com/xmlschemas/ActivityExtension/v2", name = "TPX")
+    public JAXBElement<ActivityTrackpointExtensionT> createTPX(ActivityTrackpointExtensionT value) {
+        return new JAXBElement<ActivityTrackpointExtensionT>(_TPX_QNAME, ActivityTrackpointExtensionT.class, null, value);
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link ActivityLapExtensionT }{@code >}}
+     * 
+     */
+    @XmlElementDecl(namespace = "http://www.garmin.com/xmlschemas/ActivityExtension/v2", name = "LX")
+    public JAXBElement<ActivityLapExtensionT> createLX(ActivityLapExtensionT value) {
+        return new JAXBElement<ActivityLapExtensionT>(_LX_QNAME, ActivityLapExtensionT.class, null, value);
     }
 
 }

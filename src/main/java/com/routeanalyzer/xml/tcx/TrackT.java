@@ -41,6 +41,10 @@ import javax.xml.bind.annotation.XmlType;
 })
 public class TrackT {
 
+	public TrackT(){
+		this.trackpoint = new ArrayList<TrackpointT>();
+	}
+	
     @XmlElement(name = "Trackpoint", required = true)
     protected List<TrackpointT> trackpoint;
 
@@ -73,4 +77,7 @@ public class TrackT {
         return this.trackpoint;
     }
 
+    public void addTrackpoint(TrackpointT trackPoint) {
+        this.trackpoint.add(trackPoint);
+    }
 }

@@ -118,10 +118,12 @@ public class Lap implements Comparable<Lap>, Serializable{
 		this.tracks.add(track);
 		return this.tracks.size() == sizeBeforeAdding+1;
 	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((index == null) ? 0 : index.hashCode());
 		result = prime * result + ((startTime == null) ? 0 : startTime.hashCode());
 		return result;
 	}
@@ -134,6 +136,11 @@ public class Lap implements Comparable<Lap>, Serializable{
 		if (getClass() != obj.getClass())
 			return false;
 		Lap other = (Lap) obj;
+		if (index == null) {
+			if (other.index != null)
+				return false;
+		} else if (!index.equals(other.index))
+			return false;
 		if (startTime == null) {
 			if (other.startTime != null)
 				return false;

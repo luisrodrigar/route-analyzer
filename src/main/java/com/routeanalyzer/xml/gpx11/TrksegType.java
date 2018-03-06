@@ -49,6 +49,10 @@ public class TrksegType {
     protected List<WptType> trkpt;
     protected ExtensionsType extensions;
 
+    public TrksegType(){
+    	this.trkpt = new ArrayList<WptType>();
+    }
+    
     /**
      * Gets the value of the trkpt property.
      * 
@@ -76,6 +80,10 @@ public class TrksegType {
             trkpt = new ArrayList<WptType>();
         }
         return this.trkpt;
+    }
+    
+    public void addTrkpt(WptType wpt) {
+        this.trkpt.add(wpt);
     }
 
     /**

@@ -1,8 +1,8 @@
 //
-// Este archivo ha sido generado por la arquitectura JavaTM para la implantación de la referencia de enlace (JAXB) XML v2.2.11 
+// Este archivo ha sido generado por la arquitectura JavaTM para la implantación de la referencia de enlace (JAXB) XML v2.2.8-b130911.1802 
 // Visite <a href="http://java.sun.com/xml/jaxb">http://java.sun.com/xml/jaxb</a> 
 // Todas las modificaciones realizadas en este archivo se perderán si se vuelve a compilar el esquema de origen. 
-// Generado el: 2017.01.20 a las 05:42:38 PM CET 
+// Generado el: 2018.03.06 a las 11:42:53 AM CET 
 //
 
 
@@ -18,41 +18,35 @@ import org.w3c.dom.Element;
 
 
 /**
+ * This type provides the ability to extend any data type that includes it.
  * 
- * 	 You can add extend GPX by adding your own elements from another schema here.
- *     
- * 
- * <p>Clase Java para extensionsType complex type.
+ * <p>Clase Java para Extensions_t complex type.
  * 
  * <p>El siguiente fragmento de esquema especifica el contenido que se espera que haya en esta clase.
  * 
  * <pre>
- * &lt;complexType name="extensionsType"&gt;
- *   &lt;complexContent&gt;
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
- *       &lt;sequence&gt;
- *         &lt;any processContents='lax' namespace='##other' maxOccurs="unbounded" minOccurs="0"/&gt;
- *       &lt;/sequence&gt;
- *     &lt;/restriction&gt;
- *   &lt;/complexContent&gt;
- * &lt;/complexType&gt;
+ * &lt;complexType name="Extensions_t">
+ *   &lt;complexContent>
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+ *       &lt;sequence>
+ *         &lt;any processContents='lax' namespace='##other' maxOccurs="unbounded" minOccurs="0"/>
+ *       &lt;/sequence>
+ *     &lt;/restriction>
+ *   &lt;/complexContent>
+ * &lt;/complexType>
  * </pre>
  * 
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "extensionsType", propOrder = {
+@XmlType(name = "Extensions_t", propOrder = {
     "any"
 })
-public class ExtensionsType {
+public class ExtensionsT {
 
     @XmlAnyElement(lax = true)
     protected List<Object> any;
 
-    public ExtensionsType(){
-    	this.any = new ArrayList<Object>();
-    }
-    
     /**
      * Gets the value of the any property.
      * 
@@ -71,8 +65,8 @@ public class ExtensionsType {
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link Element }
      * {@link Object }
+     * {@link Element }
      * 
      * 
      */
@@ -81,10 +75,6 @@ public class ExtensionsType {
             any = new ArrayList<Object>();
         }
         return this.any;
-    }
-    
-    public void addAny(Object extension) {
-        this.any.add(extension);
     }
 
 }

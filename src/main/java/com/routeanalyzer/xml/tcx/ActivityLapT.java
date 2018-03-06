@@ -98,6 +98,10 @@ public class ActivityLapT {
     @XmlAttribute(name = "StartTime", required = true)
     @XmlSchemaType(name = "dateTime")
     protected XMLGregorianCalendar startTime;
+    
+    public ActivityLapT(){
+    	this.track = new ArrayList<TrackT>();
+    }
 
     /**
      * Obtiene el valor de la propiedad totalTimeSeconds.
@@ -318,6 +322,10 @@ public class ActivityLapT {
             track = new ArrayList<TrackT>();
         }
         return this.track;
+    }
+    
+    public void addTrack(TrackT track) {
+        this.track.add(track);
     }
 
     /**

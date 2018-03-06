@@ -65,6 +65,10 @@ public class GpxType {
     protected String version;
     @XmlAttribute(name = "creator", required = true)
     protected String creator;
+    
+    public GpxType(){
+    	trk = new ArrayList<TrkType>();
+    }
 
     /**
      * Obtiene el valor de la propiedad metadata.
@@ -175,6 +179,10 @@ public class GpxType {
             trk = new ArrayList<TrkType>();
         }
         return this.trk;
+    }
+    
+    public void addTrk(TrkType trk) {
+        this.trk.add(trk);
     }
 
     /**

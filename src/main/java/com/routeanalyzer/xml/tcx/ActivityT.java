@@ -71,6 +71,10 @@ public class ActivityT {
     @XmlAttribute(name = "Sport", required = true)
     protected SportT sport;
 
+    public ActivityT(){
+    	this.lap = new ArrayList<ActivityLapT>();
+    }
+    
     /**
      * Obtiene el valor de la propiedad id.
      * 
@@ -122,6 +126,10 @@ public class ActivityT {
             lap = new ArrayList<ActivityLapT>();
         }
         return this.lap;
+    }
+    
+    public void addLap(ActivityLapT lapT) {
+        this.lap.add(lapT);
     }
 
     /**
