@@ -178,6 +178,12 @@ public class ActivityRestController {
 							+ "\"description\":\"It could not possible to delete the la.\"" + "}",
 							HttpStatus.INTERNAL_SERVER_ERROR);
 
+			} 
+			// The lap is only one track point.
+			// Delete and delete the lap
+			else if(indexPosition==0 && sizeOfTrackPoints == 1){
+				act.getLaps().get(indexLap.intValue()).getTracks().remove(indexPosition.intValue());
+				act.getLaps().remove(indexLap.intValue());
 			}
 			// Start or end, it doesnt split into two laps, just delete the
 			// track
@@ -187,7 +193,6 @@ public class ActivityRestController {
 				newLap.getTracks().remove(indexPosition.intValue());
 				act.getLaps().remove(indexLap.intValue());
 				act.getLaps().add(indexLap.intValue(), newLap);
-
 			}
 
 			activityDAO.update(act);
@@ -211,7 +216,7 @@ public class ActivityRestController {
 
 		XMLService xmlService = new XMLService();
 		com.routeanalyzer.xml.tcx.ObjectFactory oFactory = new com.routeanalyzer.xml.tcx.ObjectFactory();
-
+		
 		TrainingCenterDatabaseT trainingCenterDatabaseT = new TrainingCenterDatabaseT();
 		ActivityListT actListT = new ActivityListT();
 		ActivityT activityT = new ActivityT();

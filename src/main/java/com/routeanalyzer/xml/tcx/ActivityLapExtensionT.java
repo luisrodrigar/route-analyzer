@@ -52,7 +52,7 @@ import javax.xml.bind.annotation.XmlType;
     "maxWatts",
     "extensions"
 })
-public class ActivityLapExtensionT{
+public class ActivityLapExtensionT {
 
     @XmlElement(name = "AvgSpeed")
     protected Double avgSpeed;

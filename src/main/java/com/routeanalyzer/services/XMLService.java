@@ -15,8 +15,7 @@ import org.xml.sax.SAXParseException;
 public class XMLService {
 
 	public <T> T readXML(Class<T> type, InputStream inputFileXML) throws JAXBException, SAXParseException {
-		JAXBContext ctx;
-		ctx = JAXBContext.newInstance(type);
+		JAXBContext ctx = JAXBContext.newInstance(type);
 		Unmarshaller u = ctx.createUnmarshaller();
 
 		return type.cast(u.unmarshal(new StreamSource(inputFileXML), type).getValue());
