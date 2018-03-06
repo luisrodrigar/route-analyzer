@@ -48,6 +48,10 @@ public class ActivityListT {
     @XmlElement(name = "MultiSportSession")
     protected List<MultiSportSessionT> multiSportSession;
 
+    public ActivityListT(){
+    	this.activity = new ArrayList<ActivityT>();
+    }
+    
     /**
      * Gets the value of the activity property.
      * 
@@ -75,6 +79,10 @@ public class ActivityListT {
             activity = new ArrayList<ActivityT>();
         }
         return this.activity;
+    }
+    
+    public void addActivity(ActivityT act) {
+        activity.add(act);
     }
 
     /**

@@ -41,6 +41,10 @@ import org.w3c.dom.Element;
     "any"
 })
 public class ExtensionsT {
+	
+	public ExtensionsT(){
+		this.any = new ArrayList<Object>();
+	}
 
     @XmlAnyElement(lax = true)
     protected List<Object> any;
@@ -73,6 +77,10 @@ public class ExtensionsT {
             any = new ArrayList<Object>();
         }
         return this.any;
+    }
+    
+    public void addAny(Object extension) {
+        this.any.add(extension);
     }
 
 }

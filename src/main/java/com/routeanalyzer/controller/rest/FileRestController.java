@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.xml.sax.SAXParseException;
 
 import com.amazonaws.AmazonClientException;
 import com.google.gson.Gson;
@@ -32,10 +36,12 @@ import com.routeanalyzer.model.Lap;
 import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
 import com.routeanalyzer.services.AS3Service;
-import com.routeanalyzer.services.XMLReader;
+import com.routeanalyzer.services.XMLService;
 import com.routeanalyzer.xml.gpx11.GpxType;
+import com.routeanalyzer.xml.gpx11.TrackPointExtensionT;
+import com.routeanalyzer.xml.tcx.ActivityLapExtensionT;
+import com.routeanalyzer.xml.tcx.ActivityTrackpointExtensionT;
 import com.routeanalyzer.xml.tcx.TrainingCenterDatabaseT;
-import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
 
 @CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
 @RestController()
@@ -45,7 +51,7 @@ public class FileRestController {
 	private static final String BUCKET_NAME = "xml-files-storage";
 	AS3Service aS3Service = new AS3Service(BUCKET_NAME);
 	
-	private XMLReader reader = new XMLReader();
+	private XMLService reader = new XMLService();
 	
 	private GsonBuilder gsonBuilder = new GsonBuilder();
     private Gson gson = gsonBuilder.create();
@@ -56,9 +62,41 @@ public class FileRestController {
     	try {
 	    	switch(type){
 	    	case "tcx":
+				try {
 					return new ResponseEntity<String>(uploadTCXFile(multiPart), HttpStatus.ACCEPTED);
+				} catch (SAXParseException e) {
+					String errorValue = "{"
+		        			+ "\"error\":true,"
+		        			+ "\"description\":\"Problem trying to parser xml file. Check if its correct.\","
+		        			+ "\"exception\":\"" + e.getMessage()+"\""
+		        			+ "}";
+		        	return new ResponseEntity<String>(errorValue, HttpStatus.BAD_REQUEST);
+				} catch (JAXBException e) {
+					String errorValue = "{"
+		        			+ "\"error\":true,"
+		        			+ "\"description\":\"Problem with the file format uploaded.\","
+		        			+ "\"exception\":\"" + e.getMessage()+"\""
+		        			+ "}";
+		        	return new ResponseEntity<String>(errorValue, HttpStatus.INTERNAL_SERVER_ERROR);
+				} 
 	    	case "gpx":
-	    		return new ResponseEntity<String>(uploadGPXFile(multiPart), HttpStatus.ACCEPTED);
+	    		try {
+					return new ResponseEntity<String>(uploadGPXFile(multiPart), HttpStatus.ACCEPTED);
+				} catch (SAXParseException e) {
+					String errorValue = "{"
+		        			+ "\"error\":true,"
+		        			+ "\"description\":\"Problem trying to parser xml file. Check if its correct.\","
+		        			+ "\"exception\":\"" + e.getMessage()+"\""
+		        			+ "}";
+		        	return new ResponseEntity<String>(errorValue, HttpStatus.BAD_REQUEST);
+				} catch (JAXBException e) {
+					String errorValue = "{"
+		        			+ "\"error\":true,"
+		        			+ "\"description\":\"Problem with the file format uploaded.\","
+		        			+ "\"exception\":\"" + e.getMessage()+"\""
+		        			+ "}";
+		        	return new ResponseEntity<String>(errorValue, HttpStatus.INTERNAL_SERVER_ERROR);
+				} 
 	    	}
     	} catch (IOException | AmazonClientException e) {
     		String errorValue = "{"
@@ -113,7 +151,7 @@ public class FileRestController {
     	}
     }
   
-	private String uploadTCXFile(final MultipartFile multiPart) throws IOException{
+	private String uploadTCXFile(final MultipartFile multiPart) throws IOException, JAXBException, SAXParseException{
 		byte[] arrayBytes = multiPart.getBytes();
 		List<String> ids = new ArrayList<String>();
 		AtomicInteger indexLap = new AtomicInteger(), indexTrackPoint = new AtomicInteger();
@@ -124,38 +162,50 @@ public class FileRestController {
 			tcx.getActivities().getActivity().forEach(eachActivity->{
 				Activity activity = new Activity();
 				activity.setSourceXmlType("tcx");
-				activity.setDevice(eachActivity.getCreator().getName());
-				activity.setDate(eachActivity.getId().toGregorianCalendar().getTime());
-				activity.setSport(eachActivity.getSport().toString());
+				if(eachActivity.getCreator()!=null)
+					activity.setDevice(eachActivity.getCreator().getName());
+				if(eachActivity.getId()!=null)
+					activity.setDate(eachActivity.getId().toGregorianCalendar().getTime());
+				if(eachActivity.getSport()!=null)
+					activity.setSport(eachActivity.getSport().toString());
 				eachActivity.getLap().forEach(eachLap->{
 					Lap lap = new Lap();
-					lap.setAverageHearRate(new Double(eachLap.getAverageHeartRateBpm().getValue()));
-					lap.setCalories(eachLap.getCalories());
-					lap.setDistanceMeters(eachLap.getDistanceMeters());
-					lap.setMaximunSpeed(eachLap.getMaximumSpeed());
-					lap.setMaximunHeartRate(new Integer(eachLap.getMaximumHeartRateBpm().getValue()));
-					lap.setStartTime(eachLap.getStartTime()!=null ? eachLap.getStartTime().toGregorianCalendar().getTime() : null);
+					if(eachLap.getAverageHeartRateBpm()!=null && eachLap.getAverageHeartRateBpm().getValue() > 0)
+						lap.setAverageHearRate(new Double(eachLap.getAverageHeartRateBpm().getValue()));
+					if(eachLap.getCalories() > 0)
+						lap.setCalories(eachLap.getCalories());
+					if(eachLap.getDistanceMeters() > 0)
+						lap.setDistanceMeters(eachLap.getDistanceMeters());
+					if(eachLap.getMaximumSpeed()!=null && eachLap.getMaximumSpeed() > 0)
+						lap.setMaximunSpeed(eachLap.getMaximumSpeed());
+					if(eachLap.getMaximumHeartRateBpm() != null && eachLap.getMaximumHeartRateBpm().getValue() > 0)
+						lap.setMaximunHeartRate(new Integer(eachLap.getMaximumHeartRateBpm().getValue()));
+					if(eachLap.getStartTime()!=null)
+					lap.setStartTime(eachLap.getStartTime().toGregorianCalendar().getTime());
 					lap.setIndex(indexLap.incrementAndGet());
-					lap.setTotalTimeSeconds(eachLap.getTotalTimeSeconds());
-					lap.setIntensity(eachLap.getIntensity().toString());
-					
-					eachLap.getExtensions().getAny().stream()
-						.filter(extension->(
-							extension instanceof ElementNSImpl
-							&& ((ElementNSImpl)extension).getFirstChild() instanceof ElementNSImpl
-							&& ((ElementNSImpl)extension).getFirstChild().getLocalName().equals("AvgSpeed")
-						)).forEach(extension->{
-							lap.setAverageSpeed(Double.parseDouble(((ElementNSImpl)extension).getFirstChild().getFirstChild().getNodeValue()));
-						});
-					
+					if(eachLap.getTotalTimeSeconds() > 0.0)
+						lap.setTotalTimeSeconds(eachLap.getTotalTimeSeconds());
+					if(eachLap.getIntensity()!=null)
+						lap.setIntensity(eachLap.getIntensity().toString());
+					if(eachLap.getExtensions()!=null && eachLap.getExtensions().getAny()!=null
+							&& !eachLap.getExtensions().getAny().isEmpty()){
+						eachLap.getExtensions().getAny().stream()
+							.filter(extension->(
+								extension instanceof JAXBElement 
+								&& extension!=null && ((JAXBElement)extension).getValue() != null
+								&& ((JAXBElement)extension).getValue() instanceof ActivityLapExtensionT
+							)).forEach(extension->{
+								ActivityLapExtensionT actTrackpointExtension = (ActivityLapExtensionT) ((JAXBElement)extension).getValue();
+								lap.setAverageSpeed(actTrackpointExtension.getAvgSpeed());
+							});
+					}
 					eachLap.getTrack()
 					.forEach(track->{
 						track.getTrackpoint().forEach(trackPoint->{
 							TrackPoint trp = new TrackPoint(
 									(trackPoint.getTime()!=null ?
 											trackPoint.getTime().toGregorianCalendar().getTime() : null), 
-									(trackPoint==null || indexTrackPoint.get() >= 0 ?
-											indexTrackPoint.incrementAndGet() : null),
+									indexTrackPoint.incrementAndGet(),
 									(trackPoint!=null && trackPoint.getPosition()!=null ?
 									new Position(
 											String.valueOf(trackPoint.getPosition().getLatitudeDegrees()), 
@@ -166,18 +216,21 @@ public class FileRestController {
 											new BigDecimal(trackPoint.getAltitudeMeters()):null, 
 									trackPoint!=null && trackPoint.getDistanceMeters()!=null?
 											new BigDecimal(trackPoint.getDistanceMeters()):null, 
-									new BigDecimal(0), 
+									null, 
 									trackPoint!=null && trackPoint.getHeartRateBpm()!=null?
 											new Integer(trackPoint.getHeartRateBpm().getValue()):null);
-							if(trackPoint.getExtensions()!=null){
+							if(trackPoint.getExtensions()!=null && trackPoint.getExtensions().getAny()!=null
+									&& !trackPoint.getExtensions().getAny().isEmpty()){
 								trackPoint.getExtensions().getAny().stream()
 									.filter(extension -> ( 
-											extension instanceof ElementNSImpl
-											&& ((ElementNSImpl)extension).getFirstChild() instanceof ElementNSImpl
-											&& ((ElementNSImpl)extension).getFirstChild().getLocalName().equals("Speed")
-											))
+											extension instanceof JAXBElement 
+											&& extension!=null && ((JAXBElement)extension).getValue() != null
+											&& ((JAXBElement)extension).getValue() instanceof ActivityTrackpointExtensionT)
+											)
 									.forEach(extension -> {
-										trp.setSpeed(new BigDecimal(((ElementNSImpl)extension).getFirstChild().getFirstChild().getNodeValue()));
+										ActivityTrackpointExtensionT actTrackpointExtension = (ActivityTrackpointExtensionT) ((JAXBElement)extension).getValue();
+										if(actTrackpointExtension.getSpeed()!=null && actTrackpointExtension.getSpeed() > 0)
+											trp.setSpeed(new BigDecimal(actTrackpointExtension.getSpeed()));
 									});
 							}
 							lap.addTrack(trp);		
@@ -208,7 +261,7 @@ public class FileRestController {
 		return gson.toJson(ids);	
 	}
 	
-	private String uploadGPXFile(final MultipartFile multiPart) throws IOException, AmazonClientException{
+	private String uploadGPXFile(final MultipartFile multiPart) throws IOException, AmazonClientException, JAXBException, SAXParseException{
 		List<String> ids = new ArrayList<String>();
 		
 			byte[] arrayBytes = multiPart.getBytes();
@@ -239,18 +292,19 @@ public class FileRestController {
 					eachLap.getTrkpt().forEach(eachTrackPoint->{
 						// Si no viene informada la fecha del track point, se define como fecha la actual
 						// Se hace esto para que despues puedan ser comparados por fecha (metodo compareTo)
-						TrackPoint tkp = new TrackPoint((eachTrackPoint.getTime()!=null && indexTrackPoint.get()==0 ?
-								eachTrackPoint.getTime().toGregorianCalendar().getTime():null),
-								eachTrackPoint.getTime()==null || indexTrackPoint.get()>0 ? indexTrackPoint.incrementAndGet():null,
+						TrackPoint tkp = new TrackPoint((eachTrackPoint.getTime()!=null ?
+								eachTrackPoint.getTime().toGregorianCalendar().getTime() : null),
+								indexTrackPoint.incrementAndGet(),
 								new Position(String.valueOf(eachTrackPoint.getLat()), String.valueOf(eachTrackPoint.getLon())), 
 								eachTrackPoint.getEle(), null, null, null);
 						if(eachTrackPoint.getExtensions()!=null){
 							eachTrackPoint.getExtensions().getAny().stream()
-								.filter(item->(item instanceof ElementNSImpl 
-									&& ((ElementNSImpl)item).getFirstChild() instanceof ElementNSImpl 
-									&& ((ElementNSImpl)item).getFirstChild().getLocalName().equals("hr")))
+								.filter(item-> (item instanceof JAXBElement 
+									&& item!=null && ((JAXBElement)item).getValue() != null
+									&& ((JAXBElement)item).getValue() instanceof TrackPointExtensionT))
 								.forEach(item->{
-									tkp.setHeartRateBpm(Integer.parseInt(((ElementNSImpl)item).getFirstChild().getFirstChild().getNodeValue()));
+									TrackPointExtensionT trpExt = ((TrackPointExtensionT)((JAXBElement)item).getValue());
+									tkp.setHeartRateBpm(trpExt.getHr().intValue());
 								});
 						}
 						lap.addTrack(tkp);

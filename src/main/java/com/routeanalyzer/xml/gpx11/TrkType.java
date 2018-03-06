@@ -72,6 +72,10 @@ public class TrkType {
     protected String type;
     protected ExtensionsType extensions;
     protected List<TrksegType> trkseg;
+    
+    public TrkType(){
+    	this.trkseg = new ArrayList<TrksegType>();
+    }
 
     /**
      * Obtiene el valor de la propiedad name.
@@ -297,6 +301,10 @@ public class TrkType {
             trkseg = new ArrayList<TrksegType>();
         }
         return this.trkseg;
+    }
+    
+    public void addTrkseg(TrksegType trkSeg) {
+    	this.trkseg.add(trkSeg);
     }
 
 }
