@@ -474,6 +474,7 @@ public class ObjectFactory {
     public JAXBElement<TrainingCenterDatabaseT> createTrainingCenterDatabase(TrainingCenterDatabaseT value) {
         return new JAXBElement<TrainingCenterDatabaseT>(_TrainingCenterDatabase_QNAME, TrainingCenterDatabaseT.class, null, value);
     }
+    
     /**
      * Create an instance of {@link ActivityLapExtensionT }
      * 
@@ -489,7 +490,7 @@ public class ObjectFactory {
     public ActivityTrackpointExtensionT createActivityTrackpointExtensionT() {
         return new ActivityTrackpointExtensionT();
     }
-
+    
     /**
      * Create an instance of {@link JAXBElement }{@code <}{@link ActivityTrackpointExtensionT }{@code >}}
      * 
