@@ -5,10 +5,17 @@
 // Generado el: 2017.01.20 a las 05:42:52 PM CET 
 //
 
-@javax.xml.bind.annotation.XmlSchema(
+@XmlSchema(
 		namespace = "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2",
 		xmlns={
-				@javax.xml.bind.annotation.XmlNs(prefix= "nsae" ,namespaceURI = "http://www.garmin.com/xmlschemas/ActivityExtension/v2")
+				@XmlNs(prefix= "nsae" ,namespaceURI = "http://www.garmin.com/xmlschemas/ActivityExtension/v2"),
+				@XmlNs(prefix= "nsag" ,namespaceURI ="http://www.garmin.com/xmlschemas/ActivityGoals/v1"),
+				@XmlNs(prefix= "nsup" ,namespaceURI ="http://www.garmin.com/xmlschemas/UserProfile/v2"),
+				@XmlNs(prefix= "nspe" ,namespaceURI="http://www.garmin.com/xmlschemas/ProfileExtension/v1")
 		},
-		elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
+		elementFormDefault = XmlNsForm.QUALIFIED)
 package com.routeanalyzer.xml.tcx;
+
+import javax.xml.bind.annotation.XmlSchema;
+import javax.xml.bind.annotation.XmlNsForm;
+import javax.xml.bind.annotation.XmlNs;

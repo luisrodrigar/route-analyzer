@@ -497,7 +497,7 @@ public class ObjectFactory {
      */
     @XmlElementDecl(namespace = "http://www.garmin.com/xmlschemas/ActivityExtension/v2", name = "TPX")
     public JAXBElement<ActivityTrackpointExtensionT> createTPX(ActivityTrackpointExtensionT value) {
-        return new JAXBElement<ActivityTrackpointExtensionT>(_TPX_QNAME, ActivityTrackpointExtensionT.class, null, value);
+        return new JAXBElement<ActivityTrackpointExtensionT>(_TPX_QNAME, ActivityTrackpointExtensionT.class, value);
     }
 
     /**
@@ -506,7 +506,7 @@ public class ObjectFactory {
      */
     @XmlElementDecl(namespace = "http://www.garmin.com/xmlschemas/ActivityExtension/v2", name = "LX")
     public JAXBElement<ActivityLapExtensionT> createLX(ActivityLapExtensionT value) {
-        return new JAXBElement<ActivityLapExtensionT>(_LX_QNAME, ActivityLapExtensionT.class, null, value);
+        return new JAXBElement<ActivityLapExtensionT>(_LX_QNAME, ActivityLapExtensionT.class, value);
     }
 
 }
