@@ -98,30 +98,30 @@ public class ActivityUtils {
 					lap.setStartTime(eachLap.getTrkpt().get(0).getTime().toGregorianCalendar().getTime());
 				lap.setIndex(indexLap.incrementAndGet());
 				eachLap.getTrkpt().forEach(eachTrackPoint -> {
-					// Si no viene informada la fecha del track point, se define
-					// como fecha la actual
-					// Se hace esto para que despues puedan ser comparados por
-					// fecha (metodo compareTo)
-					TrackPoint tkp = new TrackPoint(
-							(eachTrackPoint.getTime() != null ? eachTrackPoint.getTime().toGregorianCalendar().getTime()
-									: null),
-							indexTrackPoint.incrementAndGet(),
-							new Position(String.valueOf(eachTrackPoint.getLat()),
-									String.valueOf(eachTrackPoint.getLon())),
-							eachTrackPoint.getEle(), null, null, null);
-					if (eachTrackPoint.getExtensions() != null) {
-						eachTrackPoint.getExtensions().getAny().stream()
-								.filter(item -> (JAXBElement.class.cast(item) != null && item != null
-										&& JAXBElement.class.cast(item).getValue() != null
-										&& TrackPointExtensionT.class
-												.cast(JAXBElement.class.cast(item).getValue()) != null))
-								.forEach(item -> {
-									TrackPointExtensionT trpExt = TrackPointExtensionT.class
-											.cast((JAXBElement.class.cast(item)).getValue());
-									tkp.setHeartRateBpm(trpExt.getHr().intValue());
-								});
+					// Adding track point only if position is informed
+					if(eachTrackPoint.getLat()!=null && eachTrackPoint.getLon()!=null){
+						TrackPoint tkp = new TrackPoint(
+								(eachTrackPoint.getTime() != null ? eachTrackPoint.getTime().toGregorianCalendar().getTime()
+										: null),
+								indexTrackPoint.incrementAndGet(),
+								new Position(String.valueOf(eachTrackPoint.getLat()),
+										String.valueOf(eachTrackPoint.getLon())),
+								eachTrackPoint.getEle(), null, null, null);
+						if (eachTrackPoint.getExtensions() != null) {
+							eachTrackPoint.getExtensions().getAny().stream()
+									.filter(item -> (JAXBElement.class.cast(item) != null && item != null
+											&& JAXBElement.class.cast(item).getValue() != null
+											&& TrackPointExtensionT.class
+													.cast(JAXBElement.class.cast(item).getValue()) != null))
+									.forEach(item -> {
+										TrackPointExtensionT trpExt = TrackPointExtensionT.class
+												.cast((JAXBElement.class.cast(item)).getValue());
+										if (trpExt.getHr() != null)
+											tkp.setHeartRateBpm(trpExt.getHr().intValue());
+									});
+						}
+						lap.addTrack(tkp);
 					}
-					lap.addTrack(tkp);
 				});
 				activity.addLap(lap);
 			});
@@ -151,8 +151,7 @@ public class ActivityUtils {
 
 		return gson.toJson(ids);
 	}
-	
-	
+
 	public static String uploadTCXFile(MultipartFile multiPart) throws IOException, JAXBException, SAXParseException {
 		byte[] arrayBytes = multiPart.getBytes();
 		List<String> ids = new ArrayList<String>();
@@ -204,37 +203,40 @@ public class ActivityUtils {
 				}
 				eachLap.getTrack().forEach(track -> {
 					track.getTrackpoint().forEach(trackPoint -> {
-						TrackPoint trp = new TrackPoint(
-								(trackPoint.getTime() != null ? trackPoint.getTime().toGregorianCalendar().getTime()
-										: null),
-								indexTrackPoint
-										.incrementAndGet(),
-								(trackPoint != null && trackPoint.getPosition() != null
-										? new Position(String.valueOf(trackPoint.getPosition().getLatitudeDegrees()),
-												String.valueOf(trackPoint.getPosition().getLongitudeDegrees()))
-										: null),
-								trackPoint != null && trackPoint.getAltitudeMeters() != null
-										? new BigDecimal(trackPoint.getAltitudeMeters()) : null,
-								trackPoint != null && trackPoint.getDistanceMeters() != null
-										? new BigDecimal(trackPoint.getDistanceMeters()) : null,
-								null, trackPoint != null && trackPoint.getHeartRateBpm() != null
-										? new Integer(trackPoint.getHeartRateBpm().getValue()) : null);
-						if (trackPoint.getExtensions() != null && trackPoint.getExtensions().getAny() != null
-								&& !trackPoint.getExtensions().getAny().isEmpty()) {
-							trackPoint.getExtensions().getAny().stream()
-									.filter(extension -> (JAXBElement.class.cast(extension) != null && extension != null
-											&& (JAXBElement.class.cast(extension)).getValue() != null
-											&& ActivityTrackpointExtensionT.class
-													.cast((JAXBElement.class.cast(extension)).getValue()) != null))
-									.forEach(extension -> {
-										ActivityTrackpointExtensionT actTrackpointExtension = ActivityTrackpointExtensionT.class
-												.cast((JAXBElement.class.cast(extension)).getValue());
-										if (actTrackpointExtension.getSpeed() != null
-												&& actTrackpointExtension.getSpeed() > 0)
-											trp.setSpeed(new BigDecimal(actTrackpointExtension.getSpeed()));
-									});
-						}
-						lap.addTrack(trp);
+						// Adding track point only if position is informed
+						if(trackPoint.getPosition()!=null){
+							TrackPoint trp = new TrackPoint(
+									(trackPoint.getTime() != null ? trackPoint.getTime().toGregorianCalendar().getTime()
+											: null),
+									indexTrackPoint
+											.incrementAndGet(),
+									(trackPoint != null && trackPoint.getPosition() != null
+											? new Position(String.valueOf(trackPoint.getPosition().getLatitudeDegrees()),
+													String.valueOf(trackPoint.getPosition().getLongitudeDegrees()))
+											: null),
+									trackPoint != null && trackPoint.getAltitudeMeters() != null
+											? new BigDecimal(trackPoint.getAltitudeMeters()) : null,
+									trackPoint != null && trackPoint.getDistanceMeters() != null
+											? new BigDecimal(trackPoint.getDistanceMeters()) : null,
+									null, trackPoint != null && trackPoint.getHeartRateBpm() != null
+											? new Integer(trackPoint.getHeartRateBpm().getValue()) : null);
+							if (trackPoint.getExtensions() != null && trackPoint.getExtensions().getAny() != null
+									&& !trackPoint.getExtensions().getAny().isEmpty()) {
+								trackPoint.getExtensions().getAny().stream()
+										.filter(extension -> (JAXBElement.class.cast(extension) != null && extension != null
+												&& (JAXBElement.class.cast(extension)).getValue() != null
+												&& ActivityTrackpointExtensionT.class
+														.cast((JAXBElement.class.cast(extension)).getValue()) != null))
+										.forEach(extension -> {
+											ActivityTrackpointExtensionT actTrackpointExtension = ActivityTrackpointExtensionT.class
+													.cast((JAXBElement.class.cast(extension)).getValue());
+											if (actTrackpointExtension.getSpeed() != null
+													&& actTrackpointExtension.getSpeed() > 0)
+												trp.setSpeed(new BigDecimal(actTrackpointExtension.getSpeed()));
+										});
+							}
+							lap.addTrack(trp);
+						}	
 					});
 				});
 				activity.addLap(lap);
@@ -267,7 +269,7 @@ public class ActivityUtils {
 		BufferedReader bufReader = aS3Service.getFile(nameFile);
 		return bufReader.lines().collect(Collectors.joining("\n"));
 	}
-	
+
 	public static String exportAsTCX(String id) throws JAXBException {
 		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
 		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
@@ -391,7 +393,7 @@ public class ActivityUtils {
 		return xmlService.createXML(TrainingCenterDatabaseT.class,
 				oFactory.createTrainingCenterDatabase(trainingCenterDatabaseT));
 	}
-	
+
 	public static String exportAsGPX(String id) throws JAXBException {
 		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
 		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
@@ -447,21 +449,26 @@ public class ActivityUtils {
 
 		return xmlService.createXML(GpxType.class, oFactory.createGpx(gpx));
 	}
-	
+
 	/**
-	 * Remove point:
-	 * - Remove lap if it is the last point of the lap
-	 * - Split lap into two ones if the point is between start point and end point (not included).
-	 * - Remove point if point is start or end and modify gloval values of the lap
-	 * @param id of the activity
-	 * @param lat of the position
-	 * @param lng of the position
-	 * @param timeInMillis: time in milliseconds
-	 * @param index: order of creation
+	 * Remove point: - Remove lap if it is the last point of the lap - Split lap
+	 * into two ones if the point is between start point and end point (not
+	 * included). - Remove point if point is start or end and modify gloval
+	 * values of the lap
+	 * 
+	 * @param id
+	 *            of the activity
+	 * @param lat
+	 *            of the position
+	 * @param lng
+	 *            of the position
+	 * @param timeInMillis:
+	 *            time in milliseconds
+	 * @param index:
+	 *            order of creation
 	 * @return activity or null if there was any error.
 	 */
-	public static Activity removePoint(String id, String lat,
-			 String lng,  String timeInMillis, String index){
+	public static Activity removePoint(String id, String lat, String lng, String timeInMillis, String index) {
 		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
 		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
 		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
@@ -546,8 +553,27 @@ public class ActivityUtils {
 			activityDAO.update(act);
 
 			return act;
-	}else
-		return null;
+		} else
+			return null;
+	}
+
+	public static Activity removeLap(String id, Long startTime, Integer indexLap) {
+		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
+		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
+		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
+		Activity act = activityDAO.readById(id);
+
+		Lap lapToDelete = act.getLaps().stream().filter((lap) -> {
+			return act.getLaps().indexOf(lap) == indexLap
+					&& (startTime != null
+							? startTime == lap.getStartTime().getTime() : true);
+		}).findFirst().orElse(null);
+		
+		act.getLaps().remove(lapToDelete);
+		
+		activityDAO.update(act);
+	
+		return act;
 	}
 
 }

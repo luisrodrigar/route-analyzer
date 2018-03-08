@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.DoubleAdder;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.routeanalyzer.model.Lap;
@@ -30,7 +31,7 @@ public class LapsUtils {
 
 		tracks.forEach(track -> {
 			int index = tracks.indexOf(track);
-			if (index > 0) {
+			if (index > 0 && tracks.get(index - 1).getPosition()!=null) {
 				TrackPoint previousTrack = tracks.get(index - 1);
 				double currentDistance = TrackPointsUtils.getDistanceBetweenPoints(previousTrack.getPosition(),
 						track.getPosition());
@@ -45,10 +46,10 @@ public class LapsUtils {
 				totalDistance.add(currentDistance);
 				totalTime.add(timeBetween);
 				totalSpeed.add(currentSpeed);
-				maxSpeed.add((maxSpeed.doubleValue() < currentSpeed) ? currentSpeed - maxSpeed.doubleValue()
-						: maxSpeed.doubleValue());
+				maxSpeed.add((maxSpeed.doubleValue() < currentSpeed) ? (currentSpeed - maxSpeed.doubleValue())
+						: 0.0);
 				maxBpm.set(track.getHeartRateBpm() != null
-						? (maxBpm.get() < track.getHeartRateBpm()) ? track.getHeartRateBpm() : maxBpm.get()
+						? (maxBpm.get() < track.getHeartRateBpm() ? track.getHeartRateBpm() : maxBpm.get())
 						: maxBpm.get());
 				totalBpm.addAndGet(track.getHeartRateBpm() != null ? track.getHeartRateBpm() : 0);
 				// Distance in meters
@@ -150,7 +151,7 @@ public class LapsUtils {
 			return element.stream().collect(Collectors.joining("|"));
 		}).collect(Collectors.joining("|"));
 		// Solo si al menos contiene una
-		if(positions!=null && (positions.split("|").length>0 || !positions.isEmpty())){
+		if(positions!=null && !positions.isEmpty() && !positions.replaceAll(Pattern.quote("|"), "").isEmpty() ){
 			Map<String, String> elevations = GoogleMapsService.getAltitude(positions);
 			if ("OK".equalsIgnoreCase(elevations.get("status"))) {
 				laps.forEach(lap -> {

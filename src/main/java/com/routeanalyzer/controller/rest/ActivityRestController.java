@@ -1,5 +1,11 @@
 package com.routeanalyzer.controller.rest;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import javax.xml.bind.JAXBException;
 
 import org.springframework.context.ApplicationContext;
@@ -80,6 +86,28 @@ public class ActivityRestController {
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
 		Activity act = ActivityUtils.removePoint(id, lat, lng, timeInMillis, index);
 		return act != null ? new ResponseEntity<Object>(act, HttpStatus.ACCEPTED)
+				: new ResponseEntity<Object>(
+						"{" + "\"error\":true," + "\"description\":\"Error trying to remove point.\"" + "}",
+						HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
+	@RequestMapping(value = "/{id}/remove/laps", method = RequestMethod.PUT, produces = "application/json;")
+	public @ResponseBody ResponseEntity<Object> removeLap(@PathVariable String id, @RequestParam(name="date") String startTimeLaps,
+			@RequestParam(name="index") String indexLaps) {
+		List<String> dates = Arrays.asList(startTimeLaps.split(",")).stream()
+				.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
+		List<String> index = Arrays.asList(indexLaps.split(",")).stream()
+				.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
+		List<Activity> acts = new ArrayList<>();
+		if(index!=null && !index.isEmpty()){
+			boolean isDates = dates!=null && !dates.isEmpty();
+			IntStream.range(0, index.size()).forEach(indexArrays -> {
+				Integer indexLap = Integer.parseInt(index.get(indexArrays));
+				Long date = isDates?Long.parseLong(dates.get(indexArrays)):null;
+				acts.add(ActivityUtils.removeLap(id, date, indexLap));
+			});
+		}
+		return !acts.isEmpty() ? new ResponseEntity<Object>(acts.get(acts.size()-1), HttpStatus.ACCEPTED)
 				: new ResponseEntity<Object>(
 						"{" + "\"error\":true," + "\"description\":\"Error trying to remove point.\"" + "}",
 						HttpStatus.INTERNAL_SERVER_ERROR);
