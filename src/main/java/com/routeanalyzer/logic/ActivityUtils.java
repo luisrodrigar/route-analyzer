@@ -495,6 +495,9 @@ public class ActivityUtils {
 					leftTrackPoints.add(act.getLaps().get(indexLap).getTracks().get(indexEachTrackPoint));
 				});
 				lapSplitLeft.setTracks(leftTrackPoints);
+				// Se cambia el color
+				lapSplitLeft.setColor(null);
+				lapSplitLeft.setLightColor(null);
 
 				// lap right: Remove elements of the left of the track point to
 				// delete, include index of this
@@ -503,6 +506,9 @@ public class ActivityUtils {
 					rightTrackPoints.add(act.getLaps().get(indexLap).getTracks().get(indexEachTrackPoint));
 				});
 				lapSplitRight.setTracks(rightTrackPoints);
+				// Se cambia el color
+				lapSplitRight.setColor(null);
+				lapSplitRight.setLightColor(null);
 
 				LapsUtils.recalculateLapValues(lapSplitLeft);
 				LapsUtils.recalculateLapValues(lapSplitRight);
@@ -557,21 +563,15 @@ public class ActivityUtils {
 			return null;
 	}
 
-	public static Activity removeLap(String id, Long startTime, Integer indexLap) {
-		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
-		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
-		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
-		Activity act = activityDAO.readById(id);
+	public static Activity removeLap(Activity act, Long startTime, Integer indexLap) {
 
 		Lap lapToDelete = act.getLaps().stream().filter((lap) -> {
-			return act.getLaps().indexOf(lap) == indexLap
+			return lap.getIndex() == indexLap
 					&& (startTime != null
 							? startTime == lap.getStartTime().getTime() : true);
 		}).findFirst().orElse(null);
 		
 		act.getLaps().remove(lapToDelete);
-		
-		activityDAO.update(act);
 	
 		return act;
 	}

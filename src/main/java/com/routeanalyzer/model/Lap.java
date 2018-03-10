@@ -15,7 +15,7 @@ public class Lap implements Comparable<Lap>, Serializable{
 	private Integer index;
 	private Double totalTimeSeconds, distanceMeters, maximunSpeed, averageSpeed, averageHearRate;
 	private Integer maximunHeartRate, calories;
-	private String intensity, triggerMethod;
+	private String intensity, triggerMethod, color, lightColor;
 	private List<TrackPoint> tracks;
 	
 	public Lap(Date startTime, Double totalTimeSeconds, Double distanceMeters, Double maximunSpeed, Integer calories,
@@ -172,5 +172,17 @@ public class Lap implements Comparable<Lap>, Serializable{
 				+ ( tracks!=null && !tracks.isEmpty() ? (",\n\ttracks=" + 
 						(tracks.stream().map(Object::toString).collect(Collectors.joining(",\n\t"))) ) : "")
 				+ "\n]";
+	}
+	public String getColor() {
+		return color;
+	}
+	public void setColor(String color) {
+		this.color = color;
+	}
+	public String getLightColor() {
+		return lightColor;
+	}
+	public void setLightColor(String lightColor) {
+		this.lightColor = lightColor;
 	}
 }
