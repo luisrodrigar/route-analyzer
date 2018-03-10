@@ -1,8 +1,8 @@
 package com.routeanalyzer.controller.rest;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -92,24 +92,54 @@ public class ActivityRestController {
 	}
 	
 	@RequestMapping(value = "/{id}/remove/laps", method = RequestMethod.PUT, produces = "application/json;")
-	public @ResponseBody ResponseEntity<Object> removeLap(@PathVariable String id, @RequestParam(name="date") String startTimeLaps,
+	public @ResponseBody ResponseEntity<Activity> removeLap(@PathVariable String id, @RequestParam(name="date") String startTimeLaps,
 			@RequestParam(name="index") String indexLaps) {
+		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
+		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
+		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
+		Activity act = activityDAO.readById(id);
+		
 		List<String> dates = Arrays.asList(startTimeLaps.split(",")).stream()
 				.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
 		List<String> index = Arrays.asList(indexLaps.split(",")).stream()
 				.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
-		List<Activity> acts = new ArrayList<>();
+
 		if(index!=null && !index.isEmpty()){
 			boolean isDates = dates!=null && !dates.isEmpty();
 			IntStream.range(0, index.size()).forEach(indexArrays -> {
 				Integer indexLap = Integer.parseInt(index.get(indexArrays));
 				Long date = isDates?Long.parseLong(dates.get(indexArrays)):null;
-				acts.add(ActivityUtils.removeLap(id, date, indexLap));
+				ActivityUtils.removeLap(act, date, indexLap);
 			});
 		}
-		return !acts.isEmpty() ? new ResponseEntity<Object>(acts.get(acts.size()-1), HttpStatus.ACCEPTED)
-				: new ResponseEntity<Object>(
-						"{" + "\"error\":true," + "\"description\":\"Error trying to remove point.\"" + "}",
-						HttpStatus.INTERNAL_SERVER_ERROR);
+		
+		activityDAO.update(act);
+		
+		return act != null ? new ResponseEntity<Activity>(act, HttpStatus.ACCEPTED)
+				: new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
+	@RequestMapping(value = "/{id}/color/laps", method = RequestMethod.PUT)
+	public @ResponseBody ResponseEntity<String> setColorLaps(@PathVariable String id, String data) {
+		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
+		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
+		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
+		Activity act = activityDAO.readById(id);
+		
+		// Data param array of [color(hex)]@...
+		if(data!=null && !data.isEmpty()){
+			List<String> laps = Arrays.asList(data.split("@"));
+			AtomicInteger index = new AtomicInteger();
+			laps.forEach(lap ->{
+				String color = lap.split("-")[0];
+				String lightColor = lap.split("-")[1];
+				if(color!=null && !color.isEmpty()){
+					act.getLaps().get(index.get()).setColor("#"+color);
+					act.getLaps().get(index.getAndIncrement()).setLightColor("#"+lightColor);
+				}
+			});
+			activityDAO.update(act);
+		}
+		return new ResponseEntity<String>(HttpStatus.ACCEPTED);
 	}
 }
