@@ -91,6 +91,16 @@ public class ActivityRestController {
 						HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 	
+	@RequestMapping(value = "/{id}/split/lap", method = RequestMethod.PUT, produces = "application/json;")
+	public @ResponseBody ResponseEntity<Object> splitLap(@PathVariable String id, @RequestParam String lat,
+			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
+		Activity act = ActivityUtils.splitLap(id, lat, lng, timeInMillis, index);
+		return act != null ? new ResponseEntity<Object>(act, HttpStatus.ACCEPTED)
+				: new ResponseEntity<Object>(
+						"{" + "\"error\":true," + "\"description\":\"Error trying split the lap.\"" + "}",
+						HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
 	@RequestMapping(value = "/{id}/remove/laps", method = RequestMethod.PUT, produces = "application/json;")
 	public @ResponseBody ResponseEntity<Activity> removeLap(@PathVariable String id, @RequestParam(name="date") String startTimeLaps,
 			@RequestParam(name="index") String indexLaps) {
