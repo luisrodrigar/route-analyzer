@@ -271,9 +271,7 @@ public class ActivityUtils {
 	}
 
 	public static String exportAsTCX(String id) throws JAXBException {
-		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
-		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
-		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
+		ActivityDAO activityDAO = getActivityDAO();
 		Activity act = activityDAO.readById(id);
 
 		XMLService xmlService = new XMLService();
@@ -395,9 +393,7 @@ public class ActivityUtils {
 	}
 
 	public static String exportAsGPX(String id) throws JAXBException {
-		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
-		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
-		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
+		ActivityDAO activityDAO = getActivityDAO();
 		Activity act = activityDAO.readById(id);
 
 		XMLService xmlService = new XMLService();
@@ -469,9 +465,7 @@ public class ActivityUtils {
 	 * @return activity or null if there was any error.
 	 */
 	public static Activity removePoint(String id, String lat, String lng, String timeInMillis, String index) {
-		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
-		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
-		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
+		ActivityDAO activityDAO = getActivityDAO();
 		Activity act = activityDAO.readById(id);
 
 		// Remove element from the laps stored in state
@@ -483,13 +477,52 @@ public class ActivityUtils {
 					index);
 			int sizeOfTrackPoints = act.getLaps().get(indexLap).getTracks().size();
 
-			// Track point not start nor end. Thus, it slipt into two laps
+			// The lap is only one track point.
+			// Delete both lap and track point
+			if (indexPosition == 0 && sizeOfTrackPoints == 1) {
+				act.getLaps().get(indexLap.intValue()).getTracks().remove(indexPosition.intValue());
+				act.getLaps().remove(indexLap.intValue());
+			}
+			// Delete the trackpoint and recalcualte lap values.
+			else {
+				Lap newLap = SerializationUtils.clone(act.getLaps().get(indexLap));
+				newLap.getTracks().remove(indexPosition.intValue());
+				LapsUtils.recalculateLapValues(newLap);
+				act.getLaps().remove(indexLap.intValue());
+				act.getLaps().add(indexLap.intValue(), newLap);
+			}
+
+			activityDAO.update(act);
+
+			return act;
+		} else
+			return null;
+	}
+	
+	/**
+	 * Split a lap into two laps with one track point as the divider.
+	 * @param id of the activity
+	 * @param indexLap index lap to split up
+	 * @param indexPosition of the track point which will be the divider
+	 * @return activity with the new laps.
+	 */
+	public static Activity splitLap(String id, String lat, String lng, String timeInMillis, String index){
+		ActivityDAO activityDAO = getActivityDAO();
+		Activity act = activityDAO.readById(id);
+		
+		Integer indexLap = LapsUtils.getIndexOfALap(act.getLaps(), lat, lng, timeInMillis, index);
+		if (indexLap > -1) {
+			Integer indexPosition = LapsUtils.getIndexOfAPosition(act.getLaps(), indexLap, lat, lng, timeInMillis,
+					index);
+			int sizeOfTrackPoints = act.getLaps().get(indexLap).getTracks().size();
+
+			// Track point not start nor end. Thus, it split into two laps
 			if (indexPosition > 0 && indexPosition < sizeOfTrackPoints - 1) {
+		
 				Lap lapSplitLeft = SerializationUtils.clone(act.getLaps().get(indexLap));
 				Lap lapSplitRight = SerializationUtils.clone(act.getLaps().get(indexLap));
-
-				// lap left: Remove elements of the right of the track point to
-				// delete
+			
+				// lap left: add left track points
 				List<TrackPoint> leftTrackPoints = new ArrayList<TrackPoint>();
 				IntStream.range(0, indexPosition).forEach(indexEachTrackPoint -> {
 					leftTrackPoints.add(act.getLaps().get(indexLap).getTracks().get(indexEachTrackPoint));
@@ -498,21 +531,20 @@ public class ActivityUtils {
 				// Se cambia el color
 				lapSplitLeft.setColor(null);
 				lapSplitLeft.setLightColor(null);
-
-				// lap right: Remove elements of the left of the track point to
-				// delete, include index of this
+			
+				// lap right: add right elements and the current track point which has index = index position
 				List<TrackPoint> rightTrackPoints = new ArrayList<TrackPoint>();
-				IntStream.range(indexPosition + 1, sizeOfTrackPoints).forEach(indexEachTrackPoint -> {
+				IntStream.range(indexPosition, sizeOfTrackPoints).forEach(indexEachTrackPoint -> {
 					rightTrackPoints.add(act.getLaps().get(indexLap).getTracks().get(indexEachTrackPoint));
 				});
 				lapSplitRight.setTracks(rightTrackPoints);
 				// Se cambia el color
 				lapSplitRight.setColor(null);
 				lapSplitRight.setLightColor(null);
-
+			
 				LapsUtils.recalculateLapValues(lapSplitLeft);
 				LapsUtils.recalculateLapValues(lapSplitRight);
-
+			
 				lapSplitLeft
 						.setCalories(act.getLaps().get(indexLap).getCalories() != null
 								? new Long(Math.round(Double.valueOf(lapSplitLeft.getTracks().size())
@@ -531,35 +563,18 @@ public class ActivityUtils {
 				IntStream.range(indexLap + 1, act.getLaps().size()).forEach(indexEachLap -> {
 					act.getLaps().get(indexEachLap).setIndex(act.getLaps().get(indexEachLap).getIndex() + 1);
 				});
-
+			
 				Lap lapRemoved = act.getLaps().remove(indexLap.intValue());
 				if (lapRemoved != null) {
 					act.getLaps().add(indexLap.intValue(), lapSplitLeft);
 					act.getLaps().add((indexLap.intValue() + 1), lapSplitRight);
+					activityDAO.update(act);
+					return act;
 				} else
-					return null;
-
-			}
-			// The lap is only one track point.
-			// Delete and delete the lap
-			else if (indexPosition == 0 && sizeOfTrackPoints == 1) {
-				act.getLaps().get(indexLap.intValue()).getTracks().remove(indexPosition.intValue());
-				act.getLaps().remove(indexLap.intValue());
-			}
-			// Start or end, it does not split into two laps, just delete the
-			// track point and recalculate values of the lap.
-			else {
-				Lap newLap = SerializationUtils.clone(act.getLaps().get(indexLap));
-				newLap.getTracks().remove(indexPosition.intValue());
-				LapsUtils.recalculateLapValues(newLap);
-				act.getLaps().remove(indexLap.intValue());
-				act.getLaps().add(indexLap.intValue(), newLap);
-			}
-
-			activityDAO.update(act);
-
-			return act;
-		} else
+					return null;	
+			}else
+				return null;
+		}else
 			return null;
 	}
 
@@ -574,6 +589,12 @@ public class ActivityUtils {
 		act.getLaps().remove(lapToDelete);
 	
 		return act;
+	}
+	
+	public static ActivityDAO getActivityDAO(){
+		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
+		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
+		return mongoDBJDBC.getActivityDAOImpl();
 	}
 
 }
