@@ -53,10 +53,10 @@ public class LapsUtils {
 						: maxBpm.get());
 				totalBpm.addAndGet(track.getHeartRateBpm() != null ? track.getHeartRateBpm() : 0);
 				// Distance in meters
-				if (track.getDistanceMeters() == null && currentDistance != 0.0)
+				if (track.getDistanceMeters() == null)
 					track.setDistanceMeters(new BigDecimal(currentDistance));
 				// Speed in meters per second
-				if (track.getSpeed() == null && currentSpeed != 0.0)
+				if (track.getSpeed() == null)
 					track.setSpeed(new BigDecimal(currentSpeed));
 			}
 		});

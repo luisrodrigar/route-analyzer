@@ -541,9 +541,55 @@ public class ActivityUtils {
 				// Se cambia el color
 				lapSplitRight.setColor(null);
 				lapSplitRight.setLightColor(null);
+				
+				if(indexLap>0){
+					Lap previousLap = act.getLaps().get(indexLap-1);
+					if(lapSplitLeft.getTracks().get(0).getSpeed()==null || 
+							lapSplitLeft.getTracks().get(0).getSpeed().doubleValue()==0.0){
+						double distanceBetweenLaps = TrackPointsUtils.getDistanceBetweenPoints(
+								lapSplitLeft.getTracks().get(0).getPosition(), 
+								previousLap.getTracks().get(previousLap.getTracks().size()-1).getPosition());
+						if(lapSplitLeft.getTracks().get(0).getDistanceMeters()==null || 
+								lapSplitLeft.getTracks().get(0).getDistanceMeters().doubleValue()==0.0){
+							lapSplitLeft.getTracks().get(0).setDistanceMeters(new BigDecimal(distanceBetweenLaps));
+						}
+						double timeBetweenLaps = (lapSplitLeft.getTracks().get(0).getDate().getTime() -
+								previousLap.getTracks().get(previousLap.getTracks().size()-1).getDate().getTime()) / 1000;
+						if(timeBetweenLaps > 0.0){
+							lapSplitLeft.getTracks().get(0).setSpeed(new BigDecimal( distanceBetweenLaps / timeBetweenLaps));
+						}
+						
+					}			
+				} else {
+					if(lapSplitLeft.getTracks().get(0).getDistanceMeters()==null)
+						lapSplitLeft.getTracks().get(0).setDistanceMeters(new BigDecimal(0.0));
+					if(lapSplitLeft.getTracks().get(0).getSpeed()==null)
+						lapSplitLeft.getTracks().get(0).setSpeed(new BigDecimal(0.0));
+				}
+					
 			
 				LapsUtils.recalculateLapValues(lapSplitLeft);
+				
+				// Calculation between end point of left laps and first point of right lap.
+				if(lapSplitRight.getTracks()!=null && lapSplitRight.getTracks().get(0)!=null
+						&& (lapSplitRight.getTracks().get(0).getSpeed()==null || 
+						lapSplitRight.getTracks().get(0).getSpeed().doubleValue()==0.0)){
+					double distanceBetweenLaps = TrackPointsUtils.getDistanceBetweenPoints(
+							lapSplitLeft.getTracks().get(lapSplitLeft.getTracks().size()-1).getPosition(), 
+							lapSplitRight.getTracks().get(0).getPosition());
+					if(lapSplitRight.getTracks().get(0).getDistanceMeters()==null || 
+							lapSplitRight.getTracks().get(0).getDistanceMeters().doubleValue()==0.0){
+						lapSplitRight.getTracks().get(0).setDistanceMeters(new BigDecimal(distanceBetweenLaps));
+					}
+					double timeBetweenLaps = (lapSplitRight.getTracks().get(0).getDate().getTime() -
+							lapSplitLeft.getTracks().get(lapSplitLeft.getTracks().size()-1).getDate().getTime()) / 1000;
+					if(timeBetweenLaps > 0.0){
+						lapSplitRight.getTracks().get(0).setSpeed(new BigDecimal( distanceBetweenLaps / timeBetweenLaps));
+					}
+				}
+				
 				LapsUtils.recalculateLapValues(lapSplitRight);
+					
 			
 				lapSplitLeft
 						.setCalories(act.getLaps().get(indexLap).getCalories() != null
