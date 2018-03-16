@@ -1,5 +1,7 @@
 package com.routeanalyzer.logic;
 
+import java.math.BigDecimal;
+
 import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
 
@@ -66,6 +68,17 @@ public class TrackPointsUtils {
 
 		return earthRadiusMeters * theta;
 
+	}
+	
+	public static void calculateSpeedBetweenPoints(TrackPoint origin, TrackPoint end){
+		double distance = getDistanceBetweenPoints(origin.getPosition(), end.getPosition());
+		double time = (end.getDate().getTime() - origin.getDate().getTime()) / 1000;
+		double speed = 0.0;
+		if (time > 0)
+			speed = distance / time;
+		if (end.getDistanceMeters() == null)
+			end.setDistanceMeters(new BigDecimal(distance));
+		end.setSpeed(new BigDecimal(speed));
 	}
 	
 	private static double degrees2Radians(String degrees) {

@@ -31,7 +31,7 @@ public class LapsUtils {
 
 		tracks.forEach(track -> {
 			int index = tracks.indexOf(track);
-			if (index > 0 && tracks.get(index - 1).getPosition()!=null) {
+			if (index > 0 && tracks.get(index - 1).getPosition() != null) {
 				TrackPoint previousTrack = tracks.get(index - 1);
 				double currentDistance = TrackPointsUtils.getDistanceBetweenPoints(previousTrack.getPosition(),
 						track.getPosition());
@@ -46,8 +46,7 @@ public class LapsUtils {
 				totalDistance.add(currentDistance);
 				totalTime.add(timeBetween);
 				totalSpeed.add(currentSpeed);
-				maxSpeed.add((maxSpeed.doubleValue() < currentSpeed) ? (currentSpeed - maxSpeed.doubleValue())
-						: 0.0);
+				maxSpeed.add((maxSpeed.doubleValue() < currentSpeed) ? (currentSpeed - maxSpeed.doubleValue()) : 0.0);
 				maxBpm.set(track.getHeartRateBpm() != null
 						? (maxBpm.get() < track.getHeartRateBpm() ? track.getHeartRateBpm() : maxBpm.get())
 						: maxBpm.get());
@@ -151,7 +150,7 @@ public class LapsUtils {
 			return element.stream().collect(Collectors.joining("|"));
 		}).collect(Collectors.joining("|"));
 		// Solo si al menos contiene una
-		if(positions!=null && !positions.isEmpty() && !positions.replaceAll(Pattern.quote("|"), "").isEmpty() ){
+		if (positions != null && !positions.isEmpty() && !positions.replaceAll(Pattern.quote("|"), "").isEmpty()) {
 			Map<String, String> elevations = GoogleMapsService.getAltitude(positions);
 			if ("OK".equalsIgnoreCase(elevations.get("status"))) {
 				laps.forEach(lap -> {
@@ -164,5 +163,39 @@ public class LapsUtils {
 				});
 			}
 		}
+	}
+
+	/**
+	 * Calculate speed of a laps
+	 * @param laps
+	 */
+	public static void calculateSpeed(List<Lap> laps) {
+		laps.forEach(lap -> {
+			int indexCurrentLap = laps.indexOf(lap);
+			lap.getTracks().stream().forEach(track -> {
+				if(track.getSpeed()==null){
+					int indexCurrentTrack = lap.getTracks().indexOf(track);
+					// Start point's speed value is zero unless it is informed
+					if (indexCurrentTrack == 0 && indexCurrentLap == 0) {
+						if (track.getDistanceMeters() == null)
+							track.setDistanceMeters(new BigDecimal(0.0));
+						track.setSpeed(new BigDecimal(0.0));
+					} 
+					// Start point of a lap, take the last point of the previous lap
+					else if (indexCurrentTrack == 0) {
+						int sizeTracksPreviousLap = laps.get(indexCurrentLap - 1).getTracks().size();
+						TrackPoint previousTrackPreviousLap = laps.get(indexCurrentLap - 1).getTracks()
+								.get(sizeTracksPreviousLap - 1);
+						TrackPointsUtils.calculateSpeedBetweenPoints(previousTrackPreviousLap,track);
+					} 
+					// A point between points in a same lap
+					else {
+						int indexPreviousTrack = indexCurrentTrack-1;
+						TrackPoint previousTrackPoint = lap.getTracks().get(indexPreviousTrack);
+						TrackPointsUtils.calculateSpeedBetweenPoints(previousTrackPoint,track);
+					}
+				}
+			});
+		});
 	}
 }
