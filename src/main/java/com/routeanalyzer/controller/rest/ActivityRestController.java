@@ -8,7 +8,6 @@ import java.util.stream.IntStream;
 
 import javax.xml.bind.JAXBException;
 
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +19,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.routeanalyzer.config.ApplicationContextProvider;
-import com.routeanalyzer.database.MongoDBJDBC;
 import com.routeanalyzer.database.dao.ActivityDAO;
 import com.routeanalyzer.logic.ActivityUtils;
 import com.routeanalyzer.model.Activity;
@@ -33,9 +30,7 @@ public class ActivityRestController {
 
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json;")
 	public @ResponseBody ResponseEntity<Activity> getActivityById(@PathVariable String id) {
-		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
-		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
-		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
+		ActivityDAO activityDAO = ActivityUtils.getActivityDAO();
 		Activity act = activityDAO.readById(id);
 		return act != null ? new ResponseEntity<Activity>(act, HttpStatus.ACCEPTED)
 				: new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -90,7 +85,21 @@ public class ActivityRestController {
 						"{" + "\"error\":true," + "\"description\":\"Error trying to remove point.\"" + "}",
 						HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-	
+
+	@RequestMapping(value = "/{id}/join/laps", method = RequestMethod.PUT, produces = "application/json;")
+	public @ResponseBody ResponseEntity<Activity> joinLaps(@PathVariable String id,
+			@RequestParam(name = "index1") String indexLap1, @RequestParam(name = "index2") String indexLap2) {
+		Activity act = null;
+		if (indexLap1 != null && !indexLap1.isEmpty() && indexLap2 != null && !indexLap2.isEmpty()) {
+			act = ActivityUtils.joinLap(id, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2));
+			
+			return act != null ? new ResponseEntity<Activity>(act, HttpStatus.ACCEPTED)
+					: new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
+		} else
+			return new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
+
+	}
+
 	@RequestMapping(value = "/{id}/split/lap", method = RequestMethod.PUT, produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> splitLap(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
@@ -100,52 +109,48 @@ public class ActivityRestController {
 						"{" + "\"error\":true," + "\"description\":\"Error trying split the lap.\"" + "}",
 						HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-	
+
 	@RequestMapping(value = "/{id}/remove/laps", method = RequestMethod.PUT, produces = "application/json;")
-	public @ResponseBody ResponseEntity<Activity> removeLap(@PathVariable String id, @RequestParam(name="date") String startTimeLaps,
-			@RequestParam(name="index") String indexLaps) {
-		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
-		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
-		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
+	public @ResponseBody ResponseEntity<Activity> removeLaps(@PathVariable String id,
+			@RequestParam(name = "date") String startTimeLaps, @RequestParam(name = "index") String indexLaps) {
+		ActivityDAO activityDAO = ActivityUtils.getActivityDAO();
 		Activity act = activityDAO.readById(id);
-		
+
 		List<String> dates = Arrays.asList(startTimeLaps.split(",")).stream()
 				.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
 		List<String> index = Arrays.asList(indexLaps.split(",")).stream()
 				.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
 
-		if(index!=null && !index.isEmpty()){
-			boolean isDates = dates!=null && !dates.isEmpty();
+		if (index != null && !index.isEmpty()) {
+			boolean isDates = dates != null && !dates.isEmpty();
 			IntStream.range(0, index.size()).forEach(indexArrays -> {
 				Integer indexLap = Integer.parseInt(index.get(indexArrays));
-				Long date = isDates?Long.parseLong(dates.get(indexArrays)):null;
+				Long date = isDates ? Long.parseLong(dates.get(indexArrays)) : null;
 				ActivityUtils.removeLap(act, date, indexLap);
 			});
 		}
-		
+
 		activityDAO.update(act);
-		
+
 		return act != null ? new ResponseEntity<Activity>(act, HttpStatus.ACCEPTED)
 				: new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-	
+
 	@RequestMapping(value = "/{id}/color/laps", method = RequestMethod.PUT)
 	public @ResponseBody ResponseEntity<String> setColorLaps(@PathVariable String id, String data) {
-		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
-		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
-		ActivityDAO activityDAO = mongoDBJDBC.getActivityDAOImpl();
+		ActivityDAO activityDAO = ActivityUtils.getActivityDAO();
 		Activity act = activityDAO.readById(id);
-		
+
 		// Data param array of [color(hex)]@...
-		if(data!=null && !data.isEmpty()){
+		if (data != null && !data.isEmpty()) {
 			List<String> laps = Arrays.asList(data.split("@"));
 			AtomicInteger index = new AtomicInteger();
-			laps.forEach(lap ->{
+			laps.forEach(lap -> {
 				String color = lap.split("-")[0];
 				String lightColor = lap.split("-")[1];
-				if(color!=null && !color.isEmpty()){
-					act.getLaps().get(index.get()).setColor("#"+color);
-					act.getLaps().get(index.getAndIncrement()).setLightColor("#"+lightColor);
+				if (color != null && !color.isEmpty()) {
+					act.getLaps().get(index.get()).setColor("#" + color);
+					act.getLaps().get(index.getAndIncrement()).setLightColor("#" + lightColor);
 				}
 			});
 			activityDAO.update(act);

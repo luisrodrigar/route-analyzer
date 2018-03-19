@@ -15,3 +15,9 @@
 # Directories #
 target/
 build/
+.settings/
+
+# Files #
+.project
+.classpath
+

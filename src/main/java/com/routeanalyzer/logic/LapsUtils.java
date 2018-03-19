@@ -167,35 +167,54 @@ public class LapsUtils {
 
 	/**
 	 * Calculate speed of a laps
+	 * 
 	 * @param laps
 	 */
 	public static void calculateSpeed(List<Lap> laps) {
 		laps.forEach(lap -> {
 			int indexCurrentLap = laps.indexOf(lap);
+			DoubleAdder totalDistance = new DoubleAdder(), maxSpeed = new DoubleAdder();
 			lap.getTracks().stream().forEach(track -> {
-				if(track.getSpeed()==null){
+				if (track.getSpeed() == null) {
 					int indexCurrentTrack = lap.getTracks().indexOf(track);
 					// Start point's speed value is zero unless it is informed
 					if (indexCurrentTrack == 0 && indexCurrentLap == 0) {
 						if (track.getDistanceMeters() == null)
 							track.setDistanceMeters(new BigDecimal(0.0));
 						track.setSpeed(new BigDecimal(0.0));
-					} 
-					// Start point of a lap, take the last point of the previous lap
+					}
+					// Start point of a lap, take the last point of the previous
+					// lap
 					else if (indexCurrentTrack == 0) {
 						int sizeTracksPreviousLap = laps.get(indexCurrentLap - 1).getTracks().size();
 						TrackPoint previousTrackPreviousLap = laps.get(indexCurrentLap - 1).getTracks()
 								.get(sizeTracksPreviousLap - 1);
-						TrackPointsUtils.calculateSpeedBetweenPoints(previousTrackPreviousLap,track);
-					} 
+						TrackPointsUtils.calculateSpeedBetweenPoints(previousTrackPreviousLap, track);
+					}
 					// A point between points in a same lap
 					else {
-						int indexPreviousTrack = indexCurrentTrack-1;
+						int indexPreviousTrack = indexCurrentTrack - 1;
 						TrackPoint previousTrackPoint = lap.getTracks().get(indexPreviousTrack);
-						TrackPointsUtils.calculateSpeedBetweenPoints(previousTrackPoint,track);
+						TrackPointsUtils.calculateSpeedBetweenPoints(previousTrackPoint, track);
 					}
+					totalDistance.add(track.getDistanceMeters().doubleValue());
+					if (track.getSpeed().doubleValue() > maxSpeed.doubleValue())
+						maxSpeed.add(track.getSpeed().doubleValue() - maxSpeed.doubleValue());
 				}
 			});
+			// lap's total distance in meters
+			lap.setDistanceMeters(totalDistance.doubleValue());
+			// lap's max speed
+			if(lap.getMaximunSpeed()==null)
+				lap.setMaximunSpeed(maxSpeed.doubleValue());
+			// lap's total time
+			double totalTime = (lap.getTracks().get(lap.getTracks().size() - 1).getDate().getTime()
+					- lap.getTracks().get(0).getDate().getTime())/1000;
+			lap.setTotalTimeSeconds(totalTime);
+			// lap's average speed
+			if(lap.getAverageSpeed()==null && totalTime > 0)
+				lap.setAverageSpeed(lap.getDistanceMeters()/lap.getTotalTimeSeconds());
+			
 		});
 	}
 }

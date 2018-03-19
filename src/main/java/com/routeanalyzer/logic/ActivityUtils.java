@@ -66,6 +66,15 @@ public class ActivityUtils {
 	private static GsonBuilder gsonBuilder = new GsonBuilder();
 	private static Gson gson = gsonBuilder.create();
 
+	/**
+	 * 
+	 * @param multiPart
+	 * @return
+	 * @throws IOException
+	 * @throws AmazonClientException
+	 * @throws JAXBException
+	 * @throws SAXParseException
+	 */
 	public static String uploadGPXFile(MultipartFile multiPart)
 			throws IOException, AmazonClientException, JAXBException, SAXParseException {
 		byte[] arrayBytes = multiPart.getBytes();
@@ -79,6 +88,14 @@ public class ActivityUtils {
 		return gson.toJson(ids);
 	}
 
+	/**
+	 * 
+	 * @param multiPart
+	 * @return
+	 * @throws IOException
+	 * @throws JAXBException
+	 * @throws SAXParseException
+	 */
 	public static String uploadTCXFile(MultipartFile multiPart) throws IOException, JAXBException, SAXParseException {
 		byte[] arrayBytes = multiPart.getBytes();
 		InputStream inputFileTCX = multiPart.getInputStream();
@@ -91,12 +108,26 @@ public class ActivityUtils {
 		return gson.toJson(ids);
 	}
 
+	/**
+	 * 
+	 * @param nameFile
+	 * @return
+	 * @throws AmazonServiceException
+	 * @throws AmazonClientException
+	 * @throws IOException
+	 */
 	public static String getActivityAS3(String nameFile)
 			throws AmazonServiceException, AmazonClientException, IOException {
 		BufferedReader bufReader = aS3Service.getFile(nameFile);
 		return bufReader.lines().collect(Collectors.joining("\n"));
 	}
 
+	/**
+	 * 
+	 * @param id
+	 * @return
+	 * @throws JAXBException
+	 */
 	public static String exportAsTCX(String id) throws JAXBException {
 		ActivityDAO activityDAO = getActivityDAO();
 		Activity act = activityDAO.readById(id);
@@ -219,6 +250,12 @@ public class ActivityUtils {
 				oFactory.createTrainingCenterDatabase(trainingCenterDatabaseT));
 	}
 
+	/**
+	 * 
+	 * @param id
+	 * @return
+	 * @throws JAXBException
+	 */
 	public static String exportAsGPX(String id) throws JAXBException {
 		ActivityDAO activityDAO = getActivityDAO();
 		Activity act = activityDAO.readById(id);
@@ -459,6 +496,13 @@ public class ActivityUtils {
 			return null;
 	}
 
+	/**
+	 * 
+	 * @param idActivity
+	 * @param indexLap1
+	 * @param indexLap2
+	 * @return
+	 */
 	public static Activity joinLap(String idActivity, Integer indexLap1, Integer indexLap2) {
 		ActivityDAO activityDAO = getActivityDAO();
 		Activity act = activityDAO.readById(idActivity);
@@ -523,12 +567,23 @@ public class ActivityUtils {
 		act.getLaps().remove(lapRight);
 
 		act.getLaps().add(indexLapLeft, newLap);
+		
+		IntStream.range(indexLapRight, act.getLaps().size()).forEach(indexEachLap -> {
+			act.getLaps().get(indexEachLap).setIndex(act.getLaps().get(indexEachLap).getIndex() - 1);
+		});
 
 		activityDAO.update(act);
 
 		return act;
 	}
 
+	/**
+	 * 
+	 * @param act
+	 * @param startTime
+	 * @param indexLap
+	 * @return
+	 */
 	public static Activity removeLap(Activity act, Long startTime, Integer indexLap) {
 		Lap lapToDelete = act.getLaps().stream().filter((lap) -> {
 			return lap.getIndex() == indexLap && (startTime != null ? startTime == lap.getStartTime().getTime() : true);
@@ -539,12 +594,21 @@ public class ActivityUtils {
 		return act;
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public static ActivityDAO getActivityDAO() {
 		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
 		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
 		return mongoDBJDBC.getActivityDAOImpl();
 	}
 	
+	/**
+	 * 
+	 * @param gpx
+	 * @return
+	 */
 	private static List<Activity> getListActivitiesFromGPX(GpxType gpx){
 		List<Activity> activities = new ArrayList<Activity>();
 		AtomicInteger indexLap = new AtomicInteger(), indexTrackPoint = new AtomicInteger();
@@ -605,6 +669,11 @@ public class ActivityUtils {
 		return activities;
 	}
 	
+	/**
+	 * 
+	 * @param tcx
+	 * @return
+	 */
 	private static List<Activity> getListActivitiesFromTCX(TrainingCenterDatabaseT tcx){
 		
 		List<Activity> activities = new ArrayList<Activity>();
@@ -702,6 +771,13 @@ public class ActivityUtils {
 		return activities;
 	}
 
+	/**
+	 * 
+	 * @param activities
+	 * @param arrayBytes
+	 * @return
+	 * @throws AmazonClientException
+	 */
 	private static List<String> saveActivity(List<Activity> activities, byte[] arrayBytes)
 			throws AmazonClientException {
 		List<String> ids = new ArrayList<String>();
