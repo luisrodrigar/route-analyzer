@@ -1,12 +1,13 @@
 package com.routeanalyzer.logic;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
 
 public class TrackPointsUtils {
-	
+
 	/**
 	 * Check if the track point corresponds with the values of the params
 	 * 
@@ -28,7 +29,7 @@ public class TrackPointsUtils {
 						|| (index != null && track.getIndex() == index));
 		return isTrack;
 	}
-	
+
 	/**
 	 * Distance between two positions. Degrees to radians and then, radians to
 	 * meters.
@@ -69,19 +70,20 @@ public class TrackPointsUtils {
 		return earthRadiusMeters * theta;
 
 	}
-	
-	public static void calculateSpeedBetweenPoints(TrackPoint origin, TrackPoint end){
+
+	public static void calculateSpeedBetweenPoints(TrackPoint origin, TrackPoint end) {
 		double distance = getDistanceBetweenPoints(origin.getPosition(), end.getPosition());
 		double time = (end.getDate().getTime() - origin.getDate().getTime()) / 1000;
 		double speed = 0.0;
 		if (time > 0)
 			speed = distance / time;
-		if (end.getDistanceMeters() == null)
+		if (Objects.isNull(end.getDistanceMeters())
+				|| (!Objects.isNull(end.getDistanceMeters()) && end.getDistanceMeters().doubleValue() != distance))
 			end.setDistanceMeters(new BigDecimal(distance));
 		end.setSpeed(new BigDecimal(speed));
 	}
-	
+
 	private static double degrees2Radians(String degrees) {
 		return Double.parseDouble(degrees) * Math.PI / 180.0;
 	}
-}	
+}
