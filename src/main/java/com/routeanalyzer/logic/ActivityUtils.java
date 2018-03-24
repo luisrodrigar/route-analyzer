@@ -131,8 +131,7 @@ public class ActivityUtils {
 	 * @throws JAXBException
 	 */
 	public static String exportAsTCX(String id) throws JAXBException {
-		ActivityDAO activityDAO = getActivityDAO();
-		Activity act = activityDAO.readById(id);
+		Activity act = getActivityById(id);
 
 		XMLService xmlService = new XMLService();
 		com.routeanalyzer.xml.tcx.ObjectFactory oFactory = new com.routeanalyzer.xml.tcx.ObjectFactory();
@@ -259,8 +258,7 @@ public class ActivityUtils {
 	 * @throws JAXBException
 	 */
 	public static String exportAsGPX(String id) throws JAXBException {
-		ActivityDAO activityDAO = getActivityDAO();
-		Activity act = activityDAO.readById(id);
+		Activity act = getActivityById(id);
 
 		XMLService xmlService = new XMLService();
 		com.routeanalyzer.xml.gpx11.ObjectFactory oFactory = new com.routeanalyzer.xml.gpx11.ObjectFactory();
@@ -330,32 +328,48 @@ public class ActivityUtils {
 	 *            order of creation
 	 * @return activity or null if there was any error.
 	 */
-	public static Activity removePoint(String id, String lat, String lng, String timeInMillis, String index) {
+	public static Activity removePoint(String id, String lat, String lng, String timeInMillis, String indexTrackPoint) {
 		ActivityDAO activityDAO = getActivityDAO();
 		Activity act = activityDAO.readById(id);
+
+		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
+		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
+				? Integer.parseInt(indexTrackPoint) : null;
+
+		Position position = new Position(lat, lng);
 
 		// Remove element from the laps stored in state
 		// If it is not at the begining or in the end of a lap
 		// the lap splits into two new ones.
-		Integer indexLap = LapsUtils.getIndexOfALap(act.getLaps(), lat, lng, timeInMillis, index);
+		Integer indexLap = indexOfALap(act, position, time, index);
 		if (indexLap > -1) {
-			Integer indexPosition = LapsUtils.getIndexOfAPosition(act.getLaps(), indexLap, lat, lng, timeInMillis,
-					index);
+			Integer indexPosition = LapsUtils.indexOfTrackpoint(act, indexLap, position, time, index);
 			int sizeOfTrackPoints = act.getLaps().get(indexLap).getTracks().size();
 
 			// The lap is only one track point.
-			// Delete both lap and track point
+			// Delete both lap and track point. No recalculations.
 			if (indexPosition == 0 && sizeOfTrackPoints == 1) {
 				act.getLaps().get(indexLap.intValue()).getTracks().remove(indexPosition.intValue());
 				act.getLaps().remove(indexLap.intValue());
 			}
-			// Delete the trackpoint and recalcualte lap values.
+			// Delete the trackpoint and calculate lap values.
 			else {
 				Lap newLap = SerializationUtils.clone(act.getLaps().get(indexLap));
+				// Reset speed and distance of the next track point of the removed track point
+				// calculateDistanceSpeedValues calculate this params.
+				if(indexPosition.intValue()<newLap.getTracks().size()-1){
+					newLap.getTracks().get(indexPosition.intValue()+1).setSpeed(null);
+					newLap.getTracks().get(indexPosition.intValue()+1).setDistanceMeters(null);
+				}
+				// Remove track point
 				newLap.getTracks().remove(indexPosition.intValue());
-				LapsUtils.recalculateLapValues(newLap);
 				act.getLaps().remove(indexLap.intValue());
 				act.getLaps().add(indexLap.intValue(), newLap);
+				LapsUtils.resetAggregateValues(newLap);
+				LapsUtils.resetTotals(newLap);
+				calculateDistanceSpeedValues(act);
+				LapsUtils.setTotalValuesLap(newLap);
+				LapsUtils.calculateAggregateValuesLap(newLap);
 			}
 
 			activityDAO.update(act);
@@ -376,122 +390,51 @@ public class ActivityUtils {
 	 *            of the track point which will be the divider
 	 * @return activity with the new laps.
 	 */
-	public static Activity splitLap(String id, String lat, String lng, String timeInMillis, String index) {
+	public static Activity splitLap(String id, String lat, String lng, String timeInMillis, String indexTrackPoint) {
 		ActivityDAO activityDAO = getActivityDAO();
 		Activity act = activityDAO.readById(id);
 
-		Integer indexLap = LapsUtils.getIndexOfALap(act.getLaps(), lat, lng, timeInMillis, index);
+		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
+		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
+				? Integer.parseInt(indexTrackPoint) : null;
+
+		Position position = new Position(lat, lng);
+
+		Integer indexLap = indexOfALap(act, position, time, index);
 		if (indexLap > -1) {
-			Integer indexPosition = LapsUtils.getIndexOfAPosition(act.getLaps(), indexLap, lat, lng, timeInMillis,
-					index);
-			int sizeOfTrackPoints = act.getLaps().get(indexLap).getTracks().size();
+			Integer indexPosition = LapsUtils.indexOfTrackpoint(act, indexLap, position, time, index);
+			Lap lap = act.getLaps().get(indexLap);
+			int sizeOfTrackPoints = lap.getTracks().size();
 
 			// Track point not start nor end. Thus, it split into two laps
 			if (indexPosition > 0 && indexPosition < sizeOfTrackPoints - 1) {
 
 				Lap lapSplitLeft = SerializationUtils.clone(act.getLaps().get(indexLap));
+				LapsUtils.createSplittLap(lap, lapSplitLeft, 0, indexPosition);
+				// Index the same original lap
+				lapSplitLeft.setIndex(lap.getIndex());
+				
 				Lap lapSplitRight = SerializationUtils.clone(act.getLaps().get(indexLap));
-
-				// lap left: add left track points
-				List<TrackPoint> leftTrackPoints = new ArrayList<TrackPoint>();
-				IntStream.range(0, indexPosition).forEach(indexEachTrackPoint -> {
-					leftTrackPoints.add(act.getLaps().get(indexLap).getTracks().get(indexEachTrackPoint));
-				});
-				lapSplitLeft.setTracks(leftTrackPoints);
-				// Se cambia el color
-				lapSplitLeft.setColor(null);
-				lapSplitLeft.setLightColor(null);
-
 				// lap right: add right elements and the current track point
 				// which has index = index position
-				List<TrackPoint> rightTrackPoints = new ArrayList<TrackPoint>();
-				IntStream.range(indexPosition, sizeOfTrackPoints).forEach(indexEachTrackPoint -> {
-					rightTrackPoints.add(act.getLaps().get(indexLap).getTracks().get(indexEachTrackPoint));
-				});
-				lapSplitRight.setTracks(rightTrackPoints);
-				// Se cambia el color
-				lapSplitRight.setColor(null);
-				lapSplitRight.setLightColor(null);
+				LapsUtils.createSplittLap(lap, lapSplitRight, indexPosition, sizeOfTrackPoints);
+				// Index
+				lapSplitRight.setIndex(lap.getIndex() + 1);
 
-				if (indexLap > 0) {
-					Lap previousLap = act.getLaps().get(indexLap - 1);
-					if (lapSplitLeft.getTracks().get(0).getSpeed() == null
-							|| lapSplitLeft.getTracks().get(0).getSpeed().doubleValue() == 0.0) {
-						double distanceBetweenLaps = TrackPointsUtils.getDistanceBetweenPoints(
-								lapSplitLeft.getTracks().get(0).getPosition(),
-								previousLap.getTracks().get(previousLap.getTracks().size() - 1).getPosition());
-						if (lapSplitLeft.getTracks().get(0).getDistanceMeters() == null
-								|| lapSplitLeft.getTracks().get(0).getDistanceMeters().doubleValue() == 0.0) {
-							lapSplitLeft.getTracks().get(0).setDistanceMeters(new BigDecimal(distanceBetweenLaps));
-						}
-						double timeBetweenLaps = (lapSplitLeft.getTracks().get(0).getDate().getTime()
-								- previousLap.getTracks().get(previousLap.getTracks().size() - 1).getDate().getTime())
-								/ 1000;
-						if (timeBetweenLaps > 0.0) {
-							lapSplitLeft.getTracks().get(0)
-									.setSpeed(new BigDecimal(distanceBetweenLaps / timeBetweenLaps));
-						}
-
-					}
-				} else {
-					if (lapSplitLeft.getTracks().get(0).getDistanceMeters() == null)
-						lapSplitLeft.getTracks().get(0).setDistanceMeters(new BigDecimal(0.0));
-					if (lapSplitLeft.getTracks().get(0).getSpeed() == null)
-						lapSplitLeft.getTracks().get(0).setSpeed(new BigDecimal(0.0));
-				}
-
-				LapsUtils.recalculateLapValues(lapSplitLeft);
-
-				// Calculation between end point of left laps and first point of
-				// right lap.
-				if (lapSplitRight.getTracks() != null && lapSplitRight.getTracks().get(0) != null
-						&& (lapSplitRight.getTracks().get(0).getSpeed() == null
-								|| lapSplitRight.getTracks().get(0).getSpeed().doubleValue() == 0.0)) {
-					double distanceBetweenLaps = TrackPointsUtils.getDistanceBetweenPoints(
-							lapSplitLeft.getTracks().get(lapSplitLeft.getTracks().size() - 1).getPosition(),
-							lapSplitRight.getTracks().get(0).getPosition());
-					if (lapSplitRight.getTracks().get(0).getDistanceMeters() == null
-							|| lapSplitRight.getTracks().get(0).getDistanceMeters().doubleValue() == 0.0) {
-						lapSplitRight.getTracks().get(0).setDistanceMeters(new BigDecimal(distanceBetweenLaps));
-					}
-					double timeBetweenLaps = (lapSplitRight.getTracks().get(0).getDate().getTime()
-							- lapSplitLeft.getTracks().get(lapSplitLeft.getTracks().size() - 1).getDate().getTime())
-							/ 1000;
-					if (timeBetweenLaps > 0.0) {
-						lapSplitRight.getTracks().get(0)
-								.setSpeed(new BigDecimal(distanceBetweenLaps / timeBetweenLaps));
-					}
-				}
-
-				LapsUtils.recalculateLapValues(lapSplitRight);
-
-				lapSplitLeft
-						.setCalories(act.getLaps().get(indexLap).getCalories() != null
-								? new Long(Math.round(Double.valueOf(lapSplitLeft.getTracks().size())
-										/ sizeOfTrackPoints * act.getLaps().get(indexLap).getCalories())).intValue()
-								: null);
-				lapSplitRight
-						.setCalories(
-								act.getLaps().get(indexLap).getCalories() != null
-										? new Long(Math.round(
-												(Double.valueOf(lapSplitRight.getTracks().size()) / sizeOfTrackPoints)
-														* act.getLaps().get(indexLap).getCalories())).intValue()
-										: null);
-				lapSplitRight.setIndex(act.getLaps().get(indexLap).getIndex() + 1);
 				// Increment a point the index field of the next elements of the
 				// element to delete
 				IntStream.range(indexLap + 1, act.getLaps().size()).forEach(indexEachLap -> {
 					act.getLaps().get(indexEachLap).setIndex(act.getLaps().get(indexEachLap).getIndex() + 1);
 				});
 
-				Lap lapRemoved = act.getLaps().remove(indexLap.intValue());
-				if (lapRemoved != null) {
-					act.getLaps().add(indexLap.intValue(), lapSplitLeft);
-					act.getLaps().add((indexLap.intValue() + 1), lapSplitRight);
-					activityDAO.update(act);
-					return act;
-				} else
-					return null;
+				// Delete lap before splitting
+				act.getLaps().remove(indexLap.intValue());
+				// Adding two new laps
+				act.getLaps().add(indexLap.intValue(), lapSplitLeft);
+				act.getLaps().add((indexLap.intValue() + 1), lapSplitRight);
+
+				activityDAO.update(act);
+				return act;
 			} else
 				return null;
 		} else
@@ -624,16 +567,9 @@ public class ActivityUtils {
 				LapsUtils.calculateLapValues(lap);
 				activity.addLap(lap);
 			});
-			// Check if any track point has no speed value
-			boolean hasActivityNonSpeedValues = hasActivityTrackPointsValue(activity,
-					trackpoint -> !Objects.isNull(trackpoint.getSpeed()));
-			if (!hasActivityNonSpeedValues)
-				calculateSpeedValues(activity);
-			// Check if its any resume value not informed
-			boolean hasActivityLapsValue = hasActivityLapsValue(activity,
-					lap -> !Objects.isNull(lap.getMaximunSpeed()) && !Objects.isNull(lap.getAverageHearRate()));
-			if (!hasActivityLapsValue)
-				activity.getLaps().forEach(lap -> LapsUtils.calculateSummarySpeedLapValues(lap));
+			// Check if no speed nor distance values
+			calculateDistanceSpeedValues(activity);
+			
 			activities.add(activity);
 		});
 		return activities;
@@ -737,42 +673,59 @@ public class ActivityUtils {
 				LapsUtils.calculateLapValues(lap);
 				activity.addLap(lap);
 			});
+			calculateDistanceSpeedValues(activity);
+			activities.add(activity);
+		});
+		return activities;
+	}
+
+	private static void calculateDistanceSpeedValues(Activity activity) {
+		boolean hasActivityDateTrackPointValues = hasActivityTrackPointsValue(activity,
+				track -> !Objects.isNull(track.getDate()));
+		if(hasActivityDateTrackPointValues){
+			// Check if any track point has no distance value calculate distance
+			boolean hasActivityNonDistanceValue = hasActivityTrackPointsValue(activity,
+					track -> !Objects.isNull(track.getDistanceMeters()));
+			if (!hasActivityNonDistanceValue)
+				calculateDistanceMeters(activity);
 			// Check if any track point has no speed value
 			boolean hasActivityNonSpeedValues = hasActivityTrackPointsValue(activity,
 					track -> !Objects.isNull(track.getSpeed()));
 			if (!hasActivityNonSpeedValues)
 				calculateSpeedValues(activity);
-			// Check if its any resume value not informed
-			boolean hasActivityLapsValue = hasActivityLapsValue(activity,
-					lap -> !Objects.isNull(lap.getAverageSpeed()) && !Objects.isNull(lap.getMaximunSpeed()));
-			if (!hasActivityLapsValue)
-				activity.getLaps().forEach(lap -> LapsUtils.calculateSummarySpeedLapValues(lap));
-			activities.add(activity);
+		}
+	}
+
+	private static void calculateDistanceMeters(Activity activity) {
+		List<Lap> laps = activity.getLaps();
+		laps.forEach(lap -> {
+			int indexLap = laps.indexOf(lap);
+			switch (indexLap) {
+			case 0:
+				LapsUtils.calculateDistanceLap(lap, null);
+				break;
+			default:
+				Lap previousLap = laps.get(indexLap - 1);
+				LapsUtils.calculateDistanceLap(lap, previousLap.getTracks().get(previousLap.getTracks().size() - 1));
+				break;
+			}
 		});
-		return activities;
 	}
 
 	private static void calculateSpeedValues(Activity activity) {
 		List<Lap> laps = activity.getLaps();
 		laps.forEach(lap -> {
 			int indexLap = laps.indexOf(lap);
-			TrackPoint firstTrackpoint = lap.getTracks().get(0);
 			switch (indexLap) {
 			case 0:
-				if (Objects.isNull(firstTrackpoint.getSpeed()))
-					firstTrackpoint.setSpeed(new BigDecimal(0.0));
+				LapsUtils.calculateSpeedLap(lap, null);
 				break;
 			default:
 				Lap previousLap = laps.get(indexLap - 1);
-				TrackPoint lastTrackPoint = previousLap.getTracks().get(previousLap.getTracks().size() - 1);
-				TrackPointsUtils.calculateSpeedBetweenPoints(lastTrackPoint, firstTrackpoint);
+				LapsUtils.calculateSpeedLap(lap, previousLap.getTracks().get(previousLap.getTracks().size() - 1));
 				break;
 			}
 		});
-	}
-
-	private static boolean hasActivityLapsValue(Activity activity, Function<Lap, Boolean> function) {
-		return activity.getLaps().stream().map(function).reduce(Boolean::logicalAnd).orElse(false);
 	}
 
 	private static boolean hasActivityTrackPointsValue(Activity activity, Function<TrackPoint, Boolean> function) {
@@ -805,6 +758,41 @@ public class ActivityUtils {
 			}
 		});
 		return ids;
+	}
+
+	/**
+	 * Method which returns an index corresponding to the lap which contains
+	 * track point with the latitude, longitude and ( time or index) contained
+	 * in the parameters.
+	 * 
+	 * @param act:
+	 *            activity
+	 * @param lat:
+	 *            latitude position
+	 * @param lng:
+	 *            longitude position
+	 * @param timeInMillis:
+	 *            time in milliseconds
+	 * @param index:
+	 *            index of the lap in the array
+	 * @return index of the lap
+	 */
+	private static int indexOfALap(Activity activity, Position position, Long timeInMillis, Integer index) {
+		List<Lap> laps = activity.getLaps();
+		Lap lap = laps.stream().filter(eachLap -> {
+			return LapsUtils.fulfillCriteriaPositionTime(eachLap, position, timeInMillis, index);
+		}).findFirst().orElse(null);
+
+		return !Objects.isNull(lap) ? laps.indexOf(lap) : -1;
+	}
+
+	/**
+	 * 
+	 * @param id
+	 * @return
+	 */
+	private static Activity getActivityById(String id) {
+		return getActivityDAO().readById(id);
 	}
 
 }
