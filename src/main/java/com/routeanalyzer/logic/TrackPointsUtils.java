@@ -22,9 +22,10 @@ public class TrackPointsUtils {
 	 * @param index
 	 * @return true or false
 	 */
-	public static boolean isThisTrack(TrackPoint track, String lat, String lng, Long timeInMillis, Integer index) {
-		boolean isTrack = track.getPosition() != null && track.getPosition().getLatitudeDegrees().equals(lat)
-				&& track.getPosition().getLongitudeDegrees().equals(lng)
+	public static boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index) {
+		boolean isTrack = track.getPosition() != null
+				&& track.getPosition().getLatitudeDegrees().equals(position.getLatitudeDegrees())
+				&& track.getPosition().getLongitudeDegrees().equals(position.getLongitudeDegrees())
 				&& ((timeInMillis != null && track.getDate().getTime() == timeInMillis)
 						|| (index != null && track.getIndex() == index));
 		return isTrack;
@@ -71,16 +72,30 @@ public class TrackPointsUtils {
 
 	}
 
+	public static double getSpeedBetweenPoints(TrackPoint previous, TrackPoint current) {
+		if(!Objects.isNull(previous) && !Objects.isNull(current) 
+				&& !Objects.isNull(previous.getDate())
+				&& !Objects.isNull(current.getDate())){
+			long initTime = previous.getDate().getTime();
+			long endTime = current.getDate().getTime();
+			double totalTime = (endTime - initTime) / 1000;
+			if (totalTime > 0)
+				return (current.getDistanceMeters().doubleValue() - previous.getDistanceMeters().doubleValue()) / totalTime;
+			else
+				return 0.0;
+		}else
+			return 0.0;
+	}
+
 	public static void calculateSpeedBetweenPoints(TrackPoint origin, TrackPoint end) {
 		double distance = getDistanceBetweenPoints(origin.getPosition(), end.getPosition());
 		double time = (end.getDate().getTime() - origin.getDate().getTime()) / 1000;
 		double speed = 0.0;
-		if (time > 0)
+		if (time > 0) {
 			speed = distance / time;
-		if (Objects.isNull(end.getDistanceMeters())
-				|| (!Objects.isNull(end.getDistanceMeters()) && end.getDistanceMeters().doubleValue() != distance))
-			end.setDistanceMeters(new BigDecimal(distance));
-		end.setSpeed(new BigDecimal(speed));
+			if (Objects.isNull(end.getSpeed()))
+				end.setSpeed(new BigDecimal(speed));
+		}
 	}
 
 	private static double degrees2Radians(String degrees) {
