@@ -32,10 +32,13 @@ public class LapsUtils {
 		// Start time is the first left lap's track point time
 		newLap.setStartTime(newLap.getTracks().get(0).getDate());
 		// Calories are the total sum
-		newLap.setCalories(!Objects.isNull(lapLeft.getCalories())
-				? (!Objects.isNull(lapRight.getCalories()) ? (lapLeft.getCalories() + lapRight.getCalories())
-						: lapLeft.getCalories())
-				: (!Objects.isNull(lapRight.getCalories()) ? lapRight.getCalories() : null));
+		Integer leftCal = null, rightCal = null;
+		if (!Objects.isNull(lapLeft.getCalories()))
+			leftCal = lapLeft.getCalories();
+		if (!Objects.isNull(lapRight.getCalories()))
+			rightCal = lapRight.getCalories();
+		newLap.setCalories(Objects.isNull(leftCal) && Objects.isNull(rightCal) ? null
+				: ((Objects.isNull(leftCal) ? 0 : leftCal) + (Objects.isNull(rightCal) ? 0 : rightCal)));
 		// Intensidad
 		newLap.setIntensity(
 				!Objects.isNull(lapLeft.getIntensity())
@@ -76,12 +79,12 @@ public class LapsUtils {
 	}
 
 	public static void setTotalValuesLap(Lap lap) {
-		if(Objects.isNull(lap.getTotalTimeSeconds()))
+		if (Objects.isNull(lap.getTotalTimeSeconds()))
 			lap.setTotalTimeSeconds(Double.valueOf((lap.getTracks().get(lap.getTracks().size() - 1).getDate().getTime()
-				-lap.getTracks().get(0).getDate().getTime()) / 1000));
-		if(Objects.isNull(lap.getDistanceMeters()))
+					- lap.getTracks().get(0).getDate().getTime()) / 1000));
+		if (Objects.isNull(lap.getDistanceMeters()))
 			lap.setDistanceMeters(lap.getTracks().get(lap.getTracks().size() - 1).getDistanceMeters().doubleValue()
-				- lap.getTracks().get(0).getDistanceMeters().doubleValue());
+					- lap.getTracks().get(0).getDistanceMeters().doubleValue());
 	}
 
 	public static void resetTotals(Lap lap) {
@@ -207,18 +210,20 @@ public class LapsUtils {
 		}).findFirst().orElse(null);
 		return trackPoint != null ? activity.getLaps().get(indexLap).getTracks().indexOf(trackPoint) : -1;
 	}
-	
-	public static void calculateAggregateValuesLap(Lap lap){
+
+	public static void calculateAggregateValuesLap(Lap lap) {
 		calculateAggregateHeartRate(lap);
 		calculateAggregateSpeed(lap);
 	}
-	
+
 	/**
 	 * 
-	 * @param initIndex track point included
-	 * @param endIndex track point not included
+	 * @param initIndex
+	 *            track point included
+	 * @param endIndex
+	 *            track point not included
 	 */
-	public static void createSplittLap(Lap lap, Lap newLap, int initIndex, int endIndex){
+	public static void createSplittLap(Lap lap, Lap newLap, int initIndex, int endIndex) {
 		int sizeOfTrackPoints = lap.getTracks().size();
 		LapsUtils.resetAggregateValues(newLap);
 		LapsUtils.resetTotals(newLap);
@@ -233,11 +238,10 @@ public class LapsUtils {
 		newLap.setColor(null);
 		newLap.setLightColor(null);
 		// Proportional calories
-		newLap
-				.setCalories(!Objects.isNull(lap.getCalories())
-						? new Long(Math.round(Double.valueOf(newLap.getTracks().size())
-								/ sizeOfTrackPoints * lap.getCalories())).intValue()
-						: null);
+		newLap.setCalories(!Objects.isNull(lap.getCalories()) ? new Long(
+				Math.round(Double.valueOf(newLap.getTracks().size()) / sizeOfTrackPoints * lap.getCalories()))
+						.intValue()
+				: null);
 		// Start date
 		newLap.setStartTime(newLap.getTracks().get(0).getDate());
 		LapsUtils.setTotalValuesLap(newLap);
