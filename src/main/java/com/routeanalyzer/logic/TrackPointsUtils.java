@@ -24,8 +24,8 @@ public class TrackPointsUtils {
 	 */
 	public static boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index) {
 		boolean isTrack = track.getPosition() != null
-				&& track.getPosition().getLatitudeDegrees().equals(position.getLatitudeDegrees())
-				&& track.getPosition().getLongitudeDegrees().equals(position.getLongitudeDegrees())
+				&& Double.parseDouble(track.getPosition().getLatitudeDegrees()) == Double.parseDouble(position.getLatitudeDegrees())
+				&& Double.parseDouble(track.getPosition().getLongitudeDegrees()) == Double.parseDouble(position.getLongitudeDegrees())
 				&& ((timeInMillis != null && track.getDate().getTime() == timeInMillis)
 						|| (index != null && track.getIndex() == index));
 		return isTrack;

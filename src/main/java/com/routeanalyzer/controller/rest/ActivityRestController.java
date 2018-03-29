@@ -2,6 +2,7 @@ package com.routeanalyzer.controller.rest;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -140,21 +141,29 @@ public class ActivityRestController {
 	public @ResponseBody ResponseEntity<String> setColorLaps(@PathVariable String id, String data) {
 		ActivityDAO activityDAO = ActivityUtils.getActivityDAO();
 		Activity act = activityDAO.readById(id);
-
-		// Data param array of [color(hex)]@...
-		if (data != null && !data.isEmpty()) {
-			List<String> laps = Arrays.asList(data.split("@"));
+		// Lap splitter: @, color splitter: -, first char in hexadecimal number: #
+		String lapSplitter = "@", colorSplitter = "-", startedCharHex = "#";
+		// [color(hex)-lightColor(hex)]@[...]... number without #
+		if (!Objects.isNull(data) && !data.isEmpty()) {
+			List<String> laps = null;
+			if(data.contains(lapSplitter))
+				laps = Arrays.asList(data.split(lapSplitter));
+			else
+				laps = Arrays.asList(data);
 			AtomicInteger index = new AtomicInteger();
 			laps.forEach(lap -> {
-				String color = lap.split("-")[0];
-				String lightColor = lap.split("-")[1];
-				if (color != null && !color.isEmpty()) {
-					act.getLaps().get(index.get()).setColor("#" + color);
-					act.getLaps().get(index.getAndIncrement()).setLightColor("#" + lightColor);
+				int indexLap = index.getAndIncrement();
+				String color = lap.split(colorSplitter)[0], lightColor = lap.split(colorSplitter)[1];
+				if (!Objects.isNull(color) && !Objects.isNull(lightColor)
+						&& !color.isEmpty() && !lightColor.isEmpty()) {
+					String hexColor = startedCharHex + color, hexLightColor = startedCharHex + lightColor;
+					act.getLaps().get(indexLap).setColor(hexColor);
+					act.getLaps().get(indexLap).setLightColor(hexLightColor);
 				}
 			});
 			activityDAO.update(act);
-		}
-		return new ResponseEntity<String>(HttpStatus.ACCEPTED);
+			return new ResponseEntity<String>(HttpStatus.ACCEPTED);
+		}else
+			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
 	}
 }

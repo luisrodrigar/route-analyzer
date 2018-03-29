@@ -393,7 +393,7 @@ public class ActivityUtils {
 	public static Activity splitLap(String id, String lat, String lng, String timeInMillis, String indexTrackPoint) {
 		ActivityDAO activityDAO = getActivityDAO();
 		Activity act = activityDAO.readById(id);
-
+		System.out.println("Activity: " + act);
 		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
 		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
 				? Integer.parseInt(indexTrackPoint) : null;
