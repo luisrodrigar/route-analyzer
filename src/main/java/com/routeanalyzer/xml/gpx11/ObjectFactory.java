@@ -32,8 +32,7 @@ import javax.xml.namespace.QName;
 public class ObjectFactory {
 
     private final static QName _Gpx_QNAME = new QName("http://www.topografix.com/GPX/1/1", "gpx");
-    private final static QName _TrackPointExtension_QNAME = new QName("http://www.garmin.com/xmlschemas/TrackPointExtension/v1", "TrackPointExtension");
-
+    
     /**
      * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: com.routeanalyzer.gpx11
      * 
@@ -152,14 +151,6 @@ public class ObjectFactory {
     public BoundsType createBoundsType() {
         return new BoundsType();
     }
-    
-    /**
-     * Create an instance of {@link TrackPointExtensionT }
-     * 
-     */
-    public TrackPointExtensionT createTrackPointExtensionT() {
-        return new TrackPointExtensionT();
-    }
 
     /**
      * Create an instance of {@link ExtensionsT }
@@ -167,15 +158,6 @@ public class ObjectFactory {
      */
     public ExtensionsT createExtensionsT() {
         return new ExtensionsT();
-    }
-
-    /**
-     * Create an instance of {@link JAXBElement }{@code <}{@link TrackPointExtensionT }{@code >}}
-     * 
-     */
-    @XmlElementDecl(namespace = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1", name = "TrackPointExtension")
-    public JAXBElement<TrackPointExtensionT> createTrackPointExtension(TrackPointExtensionT value) {
-        return new JAXBElement<TrackPointExtensionT>(_TrackPointExtension_QNAME, TrackPointExtensionT.class, null, value);
     }
 
     /**
