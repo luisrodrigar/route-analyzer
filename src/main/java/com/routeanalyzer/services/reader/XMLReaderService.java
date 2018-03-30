@@ -1,4 +1,4 @@
-package com.routeanalyzer.services;
+package com.routeanalyzer.services.reader;
 
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -12,18 +12,24 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.xml.sax.SAXParseException;
 
-public class XMLService {
+public abstract class XMLReaderService<T> {
+	
+	protected Class<T> type;
+	
+	public XMLReaderService(Class<T> type){
+		this.type = type;
+	}
 
-	public <T> T readXML(Class<T> type, InputStream inputFileXML) throws JAXBException, SAXParseException {
-		JAXBContext ctx = JAXBContext.newInstance(type);
+	public T readXML(InputStream inputFileXML) throws JAXBException, SAXParseException {
+		JAXBContext ctx = getJAXBContext();
 		Unmarshaller u = ctx.createUnmarshaller();
 
 		return type.cast(u.unmarshal(new StreamSource(inputFileXML), type).getValue());
 
 	}
 
-	public <T> String createXML(Class<T> type, JAXBElement<T> object) throws JAXBException {
-		JAXBContext jaxbContext = JAXBContext.newInstance(type);
+	public String createXML(JAXBElement<T> object) throws JAXBException {
+		JAXBContext jaxbContext = getJAXBContext();
 		Marshaller marshaller = jaxbContext.createMarshaller();
 		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 		StringWriter builderXml = new StringWriter();
@@ -31,5 +37,7 @@ public class XMLService {
 
 		return builderXml.toString();
 	}
+	
+	protected abstract JAXBContext getJAXBContext() throws JAXBException;
 
 }

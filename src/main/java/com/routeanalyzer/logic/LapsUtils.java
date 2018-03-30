@@ -69,6 +69,9 @@ public class LapsUtils {
 		calculateAltitude(lap);
 		// Fill aggregate heart rate fields
 		calculateAggregateHeartRate(lap);
+		boolean hasSpeedValues = hasLapTrackpointValue(lap, track->!Objects.isNull(track.getSpeed()));
+		if(hasSpeedValues)
+			calculateAggregateSpeed(lap);
 	}
 
 	public static void resetAggregateValues(Lap lap) {

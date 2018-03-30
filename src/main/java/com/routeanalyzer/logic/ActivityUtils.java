@@ -36,19 +36,18 @@ import com.routeanalyzer.model.Lap;
 import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
 import com.routeanalyzer.services.AS3Service;
-import com.routeanalyzer.services.XMLService;
+import com.routeanalyzer.services.reader.GPXReader;
+import com.routeanalyzer.services.reader.TCXReader;
 import com.routeanalyzer.xml.gpx11.ExtensionsType;
 import com.routeanalyzer.xml.gpx11.GpxType;
 import com.routeanalyzer.xml.gpx11.MetadataType;
-import com.routeanalyzer.xml.gpx11.TrackPointExtensionT;
 import com.routeanalyzer.xml.gpx11.TrkType;
 import com.routeanalyzer.xml.gpx11.TrksegType;
 import com.routeanalyzer.xml.gpx11.WptType;
-import com.routeanalyzer.xml.tcx.ActivityLapExtensionT;
+import com.routeanalyzer.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
 import com.routeanalyzer.xml.tcx.ActivityLapT;
 import com.routeanalyzer.xml.tcx.ActivityListT;
 import com.routeanalyzer.xml.tcx.ActivityT;
-import com.routeanalyzer.xml.tcx.ActivityTrackpointExtensionT;
 import com.routeanalyzer.xml.tcx.ExtensionsT;
 import com.routeanalyzer.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.xml.tcx.IntensityT;
@@ -57,16 +56,20 @@ import com.routeanalyzer.xml.tcx.SportT;
 import com.routeanalyzer.xml.tcx.TrackT;
 import com.routeanalyzer.xml.tcx.TrackpointT;
 import com.routeanalyzer.xml.tcx.TrainingCenterDatabaseT;
+import com.routeanalyzer.xml.tcx.activityextension.ActivityLapExtensionT;
+import com.routeanalyzer.xml.tcx.activityextension.ActivityTrackpointExtensionT;
 
 public class ActivityUtils {
 
 	private static final String BUCKET_NAME = "xml-files-storage";
 	private static AS3Service aS3Service = new AS3Service(BUCKET_NAME);
 
-	private static XMLService reader = new XMLService();
+	private static GPXReader gpxReader = new GPXReader();
+	private static TCXReader tcxReader = new TCXReader();
 
 	private static GsonBuilder gsonBuilder = new GsonBuilder();
 	private static Gson gson = gsonBuilder.create();
+	
 
 	/**
 	 * 
@@ -82,7 +85,8 @@ public class ActivityUtils {
 		byte[] arrayBytes = multiPart.getBytes();
 		InputStream inputFileGPX = multiPart.getInputStream();
 		// Get the object from xml file (type GPX)
-		GpxType gpx = reader.readXML(GpxType.class, inputFileGPX);
+		
+		GpxType gpx = gpxReader.readXML(inputFileGPX);
 		// Create each activity of the file
 		List<Activity> activities = getListActivitiesFromGPX(gpx);
 		// Se guarda en la base de datos
@@ -102,7 +106,7 @@ public class ActivityUtils {
 		byte[] arrayBytes = multiPart.getBytes();
 		InputStream inputFileTCX = multiPart.getInputStream();
 		// Get the object from xml file (type TCX)
-		TrainingCenterDatabaseT tcx = reader.readXML(TrainingCenterDatabaseT.class, inputFileTCX);
+		TrainingCenterDatabaseT tcx = tcxReader.readXML(inputFileTCX);
 		// Create each activity of the file
 		List<Activity> activities = getListActivitiesFromTCX(tcx);
 		// Se guarda en la base de datos
@@ -133,8 +137,9 @@ public class ActivityUtils {
 	public static String exportAsTCX(String id) throws JAXBException {
 		Activity act = getActivityById(id);
 
-		XMLService xmlService = new XMLService();
+		TCXReader xmlCreator = new TCXReader();
 		com.routeanalyzer.xml.tcx.ObjectFactory oFactory = new com.routeanalyzer.xml.tcx.ObjectFactory();
+		com.routeanalyzer.xml.tcx.activityextension.ObjectFactory extensionFactory = new com.routeanalyzer.xml.tcx.activityextension.ObjectFactory();
 
 		TrainingCenterDatabaseT trainingCenterDatabaseT = new TrainingCenterDatabaseT();
 		ActivityListT actListT = new ActivityListT();
@@ -201,7 +206,7 @@ public class ActivityUtils {
 				ExtensionsT extT = new ExtensionsT();
 				ActivityLapExtensionT actExtensionT = new ActivityLapExtensionT();
 				actExtensionT.setAvgSpeed(lap.getAverageSpeed());
-				extT.addAny(oFactory.createLX(actExtensionT));
+				extT.addAny(extensionFactory.createLX(actExtensionT));
 				lapT.setExtensions(extT);
 			}
 			TrackT trackT = new TrackT();
@@ -236,7 +241,7 @@ public class ActivityUtils {
 
 					ActivityTrackpointExtensionT trackPointExtension = new ActivityTrackpointExtensionT();
 					trackPointExtension.setSpeed(trackPoint.getSpeed().doubleValue());
-					extension.addAny(oFactory.createTPX(trackPointExtension));
+					extension.addAny(extensionFactory.createTPX(trackPointExtension));
 					trackPointT.setExtensions(extension);
 				}
 				trackT.addTrackpoint(trackPointT);
@@ -246,9 +251,8 @@ public class ActivityUtils {
 		});
 		actListT.addActivity(activityT);
 		trainingCenterDatabaseT.setActivities(actListT);
-
-		return xmlService.createXML(TrainingCenterDatabaseT.class,
-				oFactory.createTrainingCenterDatabase(trainingCenterDatabaseT));
+		
+		return xmlCreator.createXML(oFactory.createTrainingCenterDatabase(trainingCenterDatabaseT));
 	}
 
 	/**
@@ -260,8 +264,9 @@ public class ActivityUtils {
 	public static String exportAsGPX(String id) throws JAXBException {
 		Activity act = getActivityById(id);
 
-		XMLService xmlService = new XMLService();
+		GPXReader xmlCreator = new GPXReader();
 		com.routeanalyzer.xml.gpx11.ObjectFactory oFactory = new com.routeanalyzer.xml.gpx11.ObjectFactory();
+		com.routeanalyzer.xml.gpx11.trackpointextension.garmin.ObjectFactory extensionFactory = new com.routeanalyzer.xml.gpx11.trackpointextension.garmin.ObjectFactory();
 
 		GpxType gpx = new GpxType();
 		if (act.getDate() != null) {
@@ -298,7 +303,7 @@ public class ActivityUtils {
 					ExtensionsType extensions = new ExtensionsType();
 					TrackPointExtensionT trptExtension = new TrackPointExtensionT();
 					trptExtension.setHr(trackPoint.getHeartRateBpm().shortValue());
-					extensions.addAny(oFactory.createTrackPointExtension(trptExtension));
+					extensions.addAny(extensionFactory.createTrackPointExtension(trptExtension));
 					wpt.setExtensions(extensions);
 				}
 				trkSeg.addTrkpt(wpt);
@@ -307,7 +312,7 @@ public class ActivityUtils {
 		});
 		gpx.addTrk(trk);
 
-		return xmlService.createXML(GpxType.class, oFactory.createGpx(gpx));
+		return xmlCreator.createXML(oFactory.createGpx(gpx));
 	}
 
 	/**
@@ -393,7 +398,7 @@ public class ActivityUtils {
 	public static Activity splitLap(String id, String lat, String lng, String timeInMillis, String indexTrackPoint) {
 		ActivityDAO activityDAO = getActivityDAO();
 		Activity act = activityDAO.readById(id);
-		System.out.println("Activity: " + act);
+		
 		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
 		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
 				? Integer.parseInt(indexTrackPoint) : null;
@@ -661,7 +666,7 @@ public class ActivityUtils {
 											ActivityTrackpointExtensionT actTrackpointExtension = ActivityTrackpointExtensionT.class
 													.cast((JAXBElement.class.cast(extension)).getValue());
 											if (!Objects.isNull(actTrackpointExtension.getSpeed())
-													&& actTrackpointExtension.getSpeed() > 0)
+													&& actTrackpointExtension.getSpeed() >= 0)
 												trp.setSpeed(new BigDecimal(actTrackpointExtension.getSpeed()));
 										});
 							}
@@ -775,7 +780,7 @@ public class ActivityUtils {
 	 *            time in milliseconds
 	 * @param index:
 	 *            index of the lap in the array
-	 * @return index of the lap
+	 * @return index of the lapº
 	 */
 	private static int indexOfALap(Activity activity, Position position, Long timeInMillis, Integer index) {
 		List<Lap> laps = activity.getLaps();
