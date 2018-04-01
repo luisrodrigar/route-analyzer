@@ -6,9 +6,9 @@ import javax.xml.bind.JAXBException;
 import com.routeanalyzer.xml.gpx11.GpxType;
 import com.routeanalyzer.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
 
-public class GPXReader extends XMLReaderService<GpxType> {
+public class GPXService extends XMLService<GpxType> {
 
-	public GPXReader() {
+	public GPXService() {
 		super(GpxType.class);
 	}
 
