@@ -7,9 +7,9 @@ import com.routeanalyzer.xml.tcx.TrainingCenterDatabaseT;
 import com.routeanalyzer.xml.tcx.activityextension.ActivityLapExtensionT;
 import com.routeanalyzer.xml.tcx.activityextension.ActivityTrackpointExtensionT;
 
-public class TCXReader extends XMLReaderService<TrainingCenterDatabaseT> {
+public class TCXService extends XMLService<TrainingCenterDatabaseT> {
 
-	public TCXReader() {
+	public TCXService() {
 		super(TrainingCenterDatabaseT.class);
 	}
 

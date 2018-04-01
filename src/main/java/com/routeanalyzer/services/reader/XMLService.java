@@ -12,11 +12,11 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.xml.sax.SAXParseException;
 
-public abstract class XMLReaderService<T> {
+public abstract class XMLService<T> {
 	
 	protected Class<T> type;
 	
-	public XMLReaderService(Class<T> type){
+	public XMLService(Class<T> type){
 		this.type = type;
 	}
 
