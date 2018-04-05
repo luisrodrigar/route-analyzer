@@ -20,7 +20,6 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.commons.lang3.SerializationUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXParseException;
 
@@ -220,8 +219,8 @@ public class ActivityUtils {
 				}
 				if (trackPoint.getPosition() != null) {
 					PositionT positionT = new PositionT();
-					positionT.setLatitudeDegrees(Double.parseDouble(trackPoint.getPosition().getLatitudeDegrees()));
-					positionT.setLongitudeDegrees(Double.parseDouble(trackPoint.getPosition().getLongitudeDegrees()));
+					positionT.setLatitudeDegrees(trackPoint.getPosition().getLatitudeDegrees().doubleValue());
+					positionT.setLongitudeDegrees(trackPoint.getPosition().getLongitudeDegrees().doubleValue());
 					trackPointT.setPosition(positionT);
 				}
 				trackPointT.setAltitudeMeters(
@@ -292,9 +291,9 @@ public class ActivityUtils {
 					}
 				}
 				wpt.setLat(trackPoint.getPosition() != null && trackPoint.getPosition().getLatitudeDegrees() != null
-						? new BigDecimal(trackPoint.getPosition().getLatitudeDegrees()) : null);
+						? trackPoint.getPosition().getLatitudeDegrees() : null);
 				wpt.setLon(trackPoint.getPosition() != null && trackPoint.getPosition().getLongitudeDegrees() != null
-						? new BigDecimal(trackPoint.getPosition().getLongitudeDegrees()) : null);
+						? trackPoint.getPosition().getLongitudeDegrees() : null);
 				wpt.setEle(trackPoint.getAltitudeMeters() != null ? trackPoint.getAltitudeMeters() : null);
 				if (trackPoint.getHeartRateBpm() != null) {
 					ExtensionsType extensions = new ExtensionsType();
@@ -337,7 +336,7 @@ public class ActivityUtils {
 		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
 				? Integer.parseInt(indexTrackPoint) : null;
 
-		Position position = new Position(lat, lng);
+		Position position = new Position(new BigDecimal(lat), new BigDecimal(lng));
 
 		// Remove element from the laps stored in state
 		// If it is not at the begining or in the end of a lap
@@ -399,7 +398,7 @@ public class ActivityUtils {
 		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
 				? Integer.parseInt(indexTrackPoint) : null;
 
-		Position position = new Position(lat, lng);
+		Position position = new Position(new BigDecimal(lat), new BigDecimal(lng));
 
 		Integer indexLap = indexOfALap(act, position, time, index);
 		if (indexLap > -1) {
@@ -533,8 +532,8 @@ public class ActivityUtils {
 								(!Objects.isNull(eachTrackPoint.getTime())
 										? eachTrackPoint.getTime().toGregorianCalendar().getTime() : null),
 								indexTrackPoint.incrementAndGet(),
-								new Position(String.valueOf(eachTrackPoint.getLat()),
-										String.valueOf(eachTrackPoint.getLon())),
+								new Position(eachTrackPoint.getLat(),
+										eachTrackPoint.getLon()),
 								eachTrackPoint.getEle(), null, null, null);
 						if (!Objects.isNull(eachTrackPoint.getExtensions())) {
 							eachTrackPoint.getExtensions().getAny()
@@ -630,8 +629,8 @@ public class ActivityUtils {
 										indexTrackPoint.incrementAndGet(),
 										(!Objects.isNull(trackPoint) && !Objects.isNull(trackPoint.getPosition())
 												? new Position(
-														String.valueOf(trackPoint.getPosition().getLatitudeDegrees()),
-														String.valueOf(trackPoint.getPosition().getLongitudeDegrees()))
+														new BigDecimal(trackPoint.getPosition().getLatitudeDegrees()),
+														new BigDecimal(trackPoint.getPosition().getLongitudeDegrees()))
 												: null),
 										!Objects.isNull(trackPoint) && !Objects.isNull(trackPoint.getAltitudeMeters())
 												? new BigDecimal(trackPoint.getAltitudeMeters()) : null,
@@ -679,19 +678,19 @@ public class ActivityUtils {
 					lap.setTotalTimeSeconds(eachLap.getTotalTimeSeconds());
 					lap.setDistanceMeters(eachLap.getDistanceMeters());
 					lap.setIndex(indexLap.getAndIncrement());
-					Position initial = new Position(String.valueOf(eachLap.getBeginPosition().getLatitudeDegrees()),
-											String.valueOf(eachLap.getBeginPosition().getLongitudeDegrees()));
-					Position end = new Position(String.valueOf(eachLap.getEndPosition().getLatitudeDegrees()),
-							String.valueOf(eachLap.getEndPosition().getLongitudeDegrees()));
+					Position initial = new Position(new BigDecimal(eachLap.getBeginPosition().getLatitudeDegrees()),
+							new BigDecimal(eachLap.getBeginPosition().getLongitudeDegrees()));
+					Position end = new Position(new BigDecimal(eachLap.getEndPosition().getLatitudeDegrees()),
+							new BigDecimal(eachLap.getEndPosition().getLongitudeDegrees()));
 					AtomicInteger eachIndex = new AtomicInteger();
 					AtomicInteger indexStart = new AtomicInteger(), indexEnd = new AtomicInteger();
 					course.getTrack().forEach(track->{
 						track.getTrackpoint().forEach(trackpoint -> {
-							if(trackpoint.getPosition().getLatitudeDegrees() == Double.parseDouble(initial.getLatitudeDegrees())
-									&& trackpoint.getPosition().getLongitudeDegrees() == Double.parseDouble(initial.getLongitudeDegrees()))
+							if(trackpoint.getPosition().getLatitudeDegrees() == initial.getLatitudeDegrees().doubleValue()
+									&& trackpoint.getPosition().getLongitudeDegrees() == initial.getLongitudeDegrees().doubleValue())
 								indexStart.set(eachIndex.get());
-							else if (trackpoint.getPosition().getLatitudeDegrees() == Double.parseDouble(end.getLatitudeDegrees())
-									&& trackpoint.getPosition().getLongitudeDegrees() == Double.parseDouble(end.getLongitudeDegrees()))
+							else if (trackpoint.getPosition().getLatitudeDegrees() == end.getLatitudeDegrees().doubleValue()
+									&& trackpoint.getPosition().getLongitudeDegrees() == end.getLongitudeDegrees().doubleValue())
 								indexEnd.set(eachIndex.get());
 							eachIndex.incrementAndGet();
 								
@@ -702,8 +701,8 @@ public class ActivityUtils {
 						TrackPoint trackpoint = new TrackPoint(
 								trT.getTime().toGregorianCalendar().getTime(),
 								indexTrackPoint.getAndIncrement(),
-								new Position(String.valueOf(trT.getPosition().getLatitudeDegrees()),
-										String.valueOf(trT.getPosition().getLongitudeDegrees())),
+								new Position(new BigDecimal(trT.getPosition().getLatitudeDegrees()),
+										new BigDecimal(trT.getPosition().getLongitudeDegrees())),
 								new BigDecimal(trT.getAltitudeMeters().doubleValue()),
 								!Objects.isNull(trT.getDistanceMeters())?new BigDecimal(trT.getDistanceMeters().doubleValue()):null, null,
 								!Objects.isNull(trT.getHeartRateBpm())?Integer.valueOf(trT.getHeartRateBpm().getValue()):null);
