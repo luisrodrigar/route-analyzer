@@ -22,7 +22,7 @@ import com.amazonaws.AmazonClientException;
 import com.routeanalyzer.database.ActivityMongoRepository;
 import com.routeanalyzer.logic.ActivityUtils;
 
-@CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController()
 @RequestMapping("/file")
 public class FileRestController {
