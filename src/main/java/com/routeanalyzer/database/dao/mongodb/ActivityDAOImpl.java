@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 import com.mongodb.WriteResult;
+import com.mongodb.client.result.DeleteResult;
 import com.routeanalyzer.database.dao.ActivityDAO;
 import com.routeanalyzer.model.Activity;
 
@@ -36,8 +37,8 @@ public class ActivityDAOImpl implements ActivityDAO {
 	@Override
 	public int deleteById(String id) {
 		Query query = new Query(Criteria.where("id").is(id));
-		WriteResult result = this.mongoOps.remove(query, Activity.class, ACTIVITY_COLLECTION);
-		return result.getN();
+		DeleteResult result = this.mongoOps.remove(query, Activity.class, ACTIVITY_COLLECTION);
+		return (int)result.getDeletedCount();
 	}
 
 }
