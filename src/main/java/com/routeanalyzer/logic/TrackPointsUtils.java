@@ -24,8 +24,8 @@ public class TrackPointsUtils {
 	 */
 	public static boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index) {
 		boolean isTrack = track.getPosition() != null
-				&& Double.parseDouble(track.getPosition().getLatitudeDegrees()) == Double.parseDouble(position.getLatitudeDegrees())
-				&& Double.parseDouble(track.getPosition().getLongitudeDegrees()) == Double.parseDouble(position.getLongitudeDegrees())
+				&& track.getPosition().getLatitudeDegrees().doubleValue() == position.getLatitudeDegrees().doubleValue()
+				&& track.getPosition().getLongitudeDegrees().doubleValue() == position.getLongitudeDegrees().doubleValue()
 				&& ((timeInMillis != null && track.getDate().getTime() == timeInMillis)
 						|| (index != null && track.getIndex() == index));
 		return isTrack;
@@ -98,7 +98,7 @@ public class TrackPointsUtils {
 		}
 	}
 
-	private static double degrees2Radians(String degrees) {
-		return Double.parseDouble(degrees) * Math.PI / 180.0;
+	private static double degrees2Radians(BigDecimal degrees) {
+		return degrees.doubleValue() * Math.PI / 180.0;
 	}
 }
