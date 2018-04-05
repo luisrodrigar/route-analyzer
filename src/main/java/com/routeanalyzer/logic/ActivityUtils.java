@@ -20,7 +20,7 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.commons.lang3.SerializationUtils;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXParseException;
 
@@ -28,9 +28,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.routeanalyzer.config.ApplicationContextProvider;
-import com.routeanalyzer.database.MongoDBJDBC;
-import com.routeanalyzer.database.dao.ActivityDAO;
+import com.routeanalyzer.database.ActivityMongoRepository;
 import com.routeanalyzer.model.Activity;
 import com.routeanalyzer.model.Lap;
 import com.routeanalyzer.model.Position;
@@ -79,7 +77,7 @@ public class ActivityUtils {
 	 * @throws JAXBException
 	 * @throws SAXParseException
 	 */
-	public static String uploadGPXFile(MultipartFile multiPart)
+	public static String uploadGPXFile(MultipartFile multiPart, ActivityMongoRepository mongoRepository)
 			throws IOException, AmazonClientException, JAXBException, SAXParseException {
 		byte[] arrayBytes = multiPart.getBytes();
 		InputStream inputFileGPX = multiPart.getInputStream();
@@ -89,7 +87,7 @@ public class ActivityUtils {
 		// Create each activity of the file
 		List<Activity> activities = getListActivitiesFromGPX(gpx);
 		// Se guarda en la base de datos
-		List<String> ids = saveActivity(activities, arrayBytes);
+		List<String> ids = saveActivity(activities, arrayBytes, mongoRepository);
 		return gson.toJson(ids);
 	}
 
@@ -101,7 +99,7 @@ public class ActivityUtils {
 	 * @throws JAXBException
 	 * @throws SAXParseException
 	 */
-	public static String uploadTCXFile(MultipartFile multiPart) throws IOException, JAXBException, SAXParseException {
+	public static String uploadTCXFile(MultipartFile multiPart, ActivityMongoRepository mongoRepository) throws IOException, JAXBException, SAXParseException {
 		byte[] arrayBytes = multiPart.getBytes();
 		InputStream inputFileTCX = multiPart.getInputStream();
 		// Get the object from xml file (type TCX)
@@ -109,7 +107,7 @@ public class ActivityUtils {
 		// Create each activity of the file
 		List<Activity> activities = getListActivitiesFromTCX(tcx);
 		// Se guarda en la base de datos
-		List<String> ids = saveActivity(activities, arrayBytes);
+		List<String> ids = saveActivity(activities, arrayBytes, mongoRepository);
 		return gson.toJson(ids);
 	}
 
@@ -133,8 +131,8 @@ public class ActivityUtils {
 	 * @return
 	 * @throws JAXBException
 	 */
-	public static String exportAsTCX(String id) throws JAXBException {
-		Activity act = getActivityById(id);
+	public static String exportAsTCX(String id, ActivityMongoRepository mongoRepository) throws JAXBException {
+		Activity act = getActivityById(id, mongoRepository);
 
 		TCXService xmlCreator = new TCXService();
 		com.routeanalyzer.xml.tcx.ObjectFactory oFactory = new com.routeanalyzer.xml.tcx.ObjectFactory();
@@ -260,8 +258,8 @@ public class ActivityUtils {
 	 * @return
 	 * @throws JAXBException
 	 */
-	public static String exportAsGPX(String id) throws JAXBException {
-		Activity act = getActivityById(id);
+	public static String exportAsGPX(String id, ActivityMongoRepository mongoRepository) throws JAXBException {
+		Activity act = getActivityById(id, mongoRepository);
 
 		GPXService xmlCreator = new GPXService();
 		com.routeanalyzer.xml.gpx11.ObjectFactory oFactory = new com.routeanalyzer.xml.gpx11.ObjectFactory();
@@ -332,9 +330,8 @@ public class ActivityUtils {
 	 *            order of creation
 	 * @return activity or null if there was any error.
 	 */
-	public static Activity removePoint(String id, String lat, String lng, String timeInMillis, String indexTrackPoint) {
-		ActivityDAO activityDAO = getActivityDAO();
-		Activity act = activityDAO.readById(id);
+	public static Activity removePoint(String id, String lat, String lng, String timeInMillis, String indexTrackPoint, ActivityMongoRepository mongoRepository) {
+		Activity act = mongoRepository.findById(id).orElse(null);
 
 		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
 		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
@@ -377,7 +374,7 @@ public class ActivityUtils {
 				LapsUtils.calculateAggregateValuesLap(newLap);
 			}
 
-			activityDAO.update(act);
+			mongoRepository.save(act);
 
 			return act;
 		} else
@@ -395,9 +392,8 @@ public class ActivityUtils {
 	 *            of the track point which will be the divider
 	 * @return activity with the new laps.
 	 */
-	public static Activity splitLap(String id, String lat, String lng, String timeInMillis, String indexTrackPoint) {
-		ActivityDAO activityDAO = getActivityDAO();
-		Activity act = activityDAO.readById(id);
+	public static Activity splitLap(String id, String lat, String lng, String timeInMillis, String indexTrackPoint, ActivityMongoRepository mongoRepository) {
+		Activity act = mongoRepository.findById(id).orElse(null);
 
 		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
 		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
@@ -438,7 +434,7 @@ public class ActivityUtils {
 				act.getLaps().add(indexLap.intValue(), lapSplitLeft);
 				act.getLaps().add((indexLap.intValue() + 1), lapSplitRight);
 
-				activityDAO.update(act);
+				mongoRepository.save(act);
 				return act;
 			} else
 				return null;
@@ -453,9 +449,8 @@ public class ActivityUtils {
 	 * @param indexLap2
 	 * @return
 	 */
-	public static Activity joinLap(String idActivity, Integer indexLap1, Integer indexLap2) {
-		ActivityDAO activityDAO = getActivityDAO();
-		Activity act = activityDAO.readById(idActivity);
+	public static Activity joinLap(String idActivity, Integer indexLap1, Integer indexLap2, ActivityMongoRepository mongoRepository) {
+		Activity act = mongoRepository.findById(idActivity).orElse(null);
 
 		if (Objects.isNull(indexLap1) || Objects.isNull(indexLap2))
 			return null;
@@ -479,7 +474,7 @@ public class ActivityUtils {
 			act.getLaps().get(indexEachLap).setIndex(act.getLaps().get(indexEachLap).getIndex() - 1);
 		});
 
-		activityDAO.update(act);
+		mongoRepository.save(act);
 
 		return act;
 	}
@@ -500,16 +495,6 @@ public class ActivityUtils {
 		act.getLaps().remove(lapToDelete);
 
 		return act;
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	public static ActivityDAO getActivityDAO() {
-		ApplicationContext ctxt = (ApplicationContext) ApplicationContextProvider.getApplicationContext();
-		MongoDBJDBC mongoDBJDBC = (MongoDBJDBC) ctxt.getBean("mongoDBJDBC");
-		return mongoDBJDBC.getActivityDAOImpl();
 	}
 
 	/**
@@ -813,19 +798,18 @@ public class ActivityUtils {
 	 * @return
 	 * @throws AmazonClientException
 	 */
-	private static List<String> saveActivity(List<Activity> activities, byte[] arrayBytes)
+	private static List<String> saveActivity(List<Activity> activities, byte[] arrayBytes, ActivityMongoRepository mongoRepository)
 			throws AmazonClientException {
 		List<String> ids = new ArrayList<String>();
-		ActivityDAO activityDAO = getActivityDAO();
 		activities.forEach(activity -> {
-			activityDAO.create(activity);
+			mongoRepository.save(activity);
 			ids.add(activity.getId());
 			try {
 				aS3Service.uploadFile(arrayBytes, activity.getId() + "." + activity.getSourceXmlType());
 			} catch (AmazonClientException aS3Exception) {
 				System.err.println("Delete activity with id: " + activity.getId()
 						+ " due to problems trying to upload file to AS3.");
-				activityDAO.deleteById(activity.getId());
+				mongoRepository.deleteById(activity.getId());
 				throw aS3Exception;
 			}
 		});
@@ -863,8 +847,8 @@ public class ActivityUtils {
 	 * @param id
 	 * @return
 	 */
-	private static Activity getActivityById(String id) {
-		return getActivityDAO().readById(id);
+	private static Activity getActivityById(String id, ActivityMongoRepository mongoRepository) {
+		return mongoRepository.findById(id).orElse(null);
 	}
 
 }

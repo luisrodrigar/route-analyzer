@@ -9,6 +9,7 @@ import java.util.stream.IntStream;
 
 import javax.xml.bind.JAXBException;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.routeanalyzer.database.dao.ActivityDAO;
+import com.routeanalyzer.database.ActivityMongoRepository;
 import com.routeanalyzer.logic.ActivityUtils;
 import com.routeanalyzer.model.Activity;
 
@@ -28,11 +29,13 @@ import com.routeanalyzer.model.Activity;
 @RestController
 @RequestMapping("activity")
 public class ActivityRestController {
+	
+	@Autowired
+	private ActivityMongoRepository mongoRepository;
 
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json;")
 	public @ResponseBody ResponseEntity<Activity> getActivityById(@PathVariable String id) {
-		ActivityDAO activityDAO = ActivityUtils.getActivityDAO();
-		Activity act = activityDAO.readById(id);
+		Activity act = mongoRepository.findById(id).orElse(null);
 		return act != null ? new ResponseEntity<Activity>(act, HttpStatus.ACCEPTED)
 				: new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
@@ -45,7 +48,7 @@ public class ActivityRestController {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/octet-stream");
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_tcx.xml");
-				return new ResponseEntity<String>(ActivityUtils.exportAsTCX(id), responseHeaders, HttpStatus.ACCEPTED);
+				return new ResponseEntity<String>(ActivityUtils.exportAsTCX(id, mongoRepository), responseHeaders, HttpStatus.ACCEPTED);
 			} catch (JAXBException e1) {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
@@ -59,7 +62,7 @@ public class ActivityRestController {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/octet-stream");
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_gpx.xml");
-				return new ResponseEntity<String>(ActivityUtils.exportAsGPX(id), responseHeaders, HttpStatus.ACCEPTED);
+				return new ResponseEntity<String>(ActivityUtils.exportAsGPX(id, mongoRepository), responseHeaders, HttpStatus.ACCEPTED);
 			} catch (JAXBException e) {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
@@ -80,7 +83,7 @@ public class ActivityRestController {
 	@RequestMapping(value = "/{id}/remove/point", method = RequestMethod.PUT, produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> removePoint(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
-		Activity act = ActivityUtils.removePoint(id, lat, lng, timeInMillis, index);
+		Activity act = ActivityUtils.removePoint(id, lat, lng, timeInMillis, index, mongoRepository);
 		return act != null ? new ResponseEntity<Object>(act, HttpStatus.ACCEPTED)
 				: new ResponseEntity<Object>(
 						"{" + "\"error\":true," + "\"description\":\"Error trying to remove point.\"" + "}",
@@ -92,7 +95,7 @@ public class ActivityRestController {
 			@RequestParam(name = "index1") String indexLap1, @RequestParam(name = "index2") String indexLap2) {
 		Activity act = null;
 		if (indexLap1 != null && !indexLap1.isEmpty() && indexLap2 != null && !indexLap2.isEmpty()) {
-			act = ActivityUtils.joinLap(id, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2));
+			act = ActivityUtils.joinLap(id, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2), mongoRepository);
 			
 			return act != null ? new ResponseEntity<Activity>(act, HttpStatus.ACCEPTED)
 					: new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -104,7 +107,7 @@ public class ActivityRestController {
 	@RequestMapping(value = "/{id}/split/lap", method = RequestMethod.PUT, produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> splitLap(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
-		Activity act = ActivityUtils.splitLap(id, lat, lng, timeInMillis, index);
+		Activity act = ActivityUtils.splitLap(id, lat, lng, timeInMillis, index, mongoRepository);
 		return act != null ? new ResponseEntity<Object>(act, HttpStatus.ACCEPTED)
 				: new ResponseEntity<Object>(
 						"{" + "\"error\":true," + "\"description\":\"Error trying split the lap.\"" + "}",
@@ -114,8 +117,7 @@ public class ActivityRestController {
 	@RequestMapping(value = "/{id}/remove/laps", method = RequestMethod.PUT, produces = "application/json;")
 	public @ResponseBody ResponseEntity<Activity> removeLaps(@PathVariable String id,
 			@RequestParam(name = "date") String startTimeLaps, @RequestParam(name = "index") String indexLaps) {
-		ActivityDAO activityDAO = ActivityUtils.getActivityDAO();
-		Activity act = activityDAO.readById(id);
+		Activity act = mongoRepository.findById(id).orElse(null);
 
 		List<String> dates = Arrays.asList(startTimeLaps.split(",")).stream()
 				.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
@@ -131,7 +133,7 @@ public class ActivityRestController {
 			});
 		}
 
-		activityDAO.update(act);
+		mongoRepository.save(act);
 
 		return act != null ? new ResponseEntity<Activity>(act, HttpStatus.ACCEPTED)
 				: new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -139,8 +141,7 @@ public class ActivityRestController {
 
 	@RequestMapping(value = "/{id}/color/laps", method = RequestMethod.PUT)
 	public @ResponseBody ResponseEntity<String> setColorLaps(@PathVariable String id, String data) {
-		ActivityDAO activityDAO = ActivityUtils.getActivityDAO();
-		Activity act = activityDAO.readById(id);
+		Activity act = mongoRepository.findById(id).orElse(null);
 		// Lap splitter: @, color splitter: -, first char in hexadecimal number: #
 		String lapSplitter = "@", colorSplitter = "-", startedCharHex = "#";
 		// [color(hex)-lightColor(hex)]@[...]... number without #
@@ -161,7 +162,7 @@ public class ActivityRestController {
 					act.getLaps().get(indexLap).setLightColor(hexLightColor);
 				}
 			});
-			activityDAO.update(act);
+			mongoRepository.save(act);
 			return new ResponseEntity<String>(HttpStatus.ACCEPTED);
 		}else
 			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
