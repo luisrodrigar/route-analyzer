@@ -105,7 +105,7 @@ public class LapsUtils {
 		if (!hasAltitudeValues && hasPositionValues) {
 			List<String> listPositionsEachLap = new ArrayList<String>();
 			lap.getTracks().stream().filter(track -> {
-				return track.getAltitudeMeters() == null && track.getPosition() != null;
+				return track.getAltitudeMeters() == null && !Objects.isNull(track.getPosition());
 			}).forEach(track -> {
 				Position position = track.getPosition();
 				listPositionsEachLap.add(position.getLatitudeDegrees() + "," + position.getLongitudeDegrees());
@@ -113,7 +113,7 @@ public class LapsUtils {
 
 			String positions = listPositionsEachLap.stream().collect(Collectors.joining("|"));
 
-			if (positions != null && !positions.isEmpty() && !listPositionsEachLap.isEmpty()) {
+			if (!Objects.isNull(positions) && !positions.isEmpty() && !listPositionsEachLap.isEmpty()) {
 				Map<String, String> elevations = GoogleMapsService.getAltitude(positions);
 				if ("OK".equalsIgnoreCase(elevations.get("status"))) {
 					lap.getTracks().forEach(trackPoint -> {
@@ -211,7 +211,7 @@ public class LapsUtils {
 		TrackPoint trackPoint = activity.getLaps().get(indexLap).getTracks().stream().filter(track -> {
 			return TrackPointsUtils.isThisTrack(track, position, time, index);
 		}).findFirst().orElse(null);
-		return trackPoint != null ? activity.getLaps().get(indexLap).getTracks().indexOf(trackPoint) : -1;
+		return !Objects.isNull(trackPoint) ? activity.getLaps().get(indexLap).getTracks().indexOf(trackPoint) : -1;
 	}
 
 	public static void calculateAggregateValuesLap(Lap lap) {

@@ -34,109 +34,128 @@ public class ActivityRestController {
 	private ActivityMongoRepository mongoRepository;
 
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json;")
-	public @ResponseBody ResponseEntity<Activity> getActivityById(@PathVariable String id) {
+	public @ResponseBody ResponseEntity<Object> getActivityById(@PathVariable String id) {
 		Activity act = mongoRepository.findById(id).orElse(null);
-		return act != null ? new ResponseEntity<Activity>(act, HttpStatus.ACCEPTED)
-				: new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
+		if(Objects.isNull(act)){
+			String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\"" + "}";
+			return ResponseEntity.badRequest().body(error);
+		} else
+			return ResponseEntity.ok().body(act);
 	}
 
 	@RequestMapping(value = "/{id}/export/{type}", method = RequestMethod.GET)
 	public ResponseEntity<String> exportAs(@PathVariable final String id, @PathVariable final String type) {
+		Activity activity = mongoRepository.findById(id).orElse(null);
 		switch (type.toLowerCase()) {
 		case "tcx":
 			try {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/octet-stream");
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_tcx.xml");
-				return new ResponseEntity<String>(ActivityUtils.exportAsTCX(id, mongoRepository), responseHeaders, HttpStatus.ACCEPTED);
+				return ResponseEntity.ok().body(ActivityUtils.exportAsTCX(activity));
 			} catch (JAXBException e1) {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
 				String errorValue = "{" + "\"error\":true,"
 						+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
 						+ e1.getMessage() + "\"" + "}";
-				return new ResponseEntity<String>(errorValue, responseHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders).body(errorValue);
 			}
 		case "gpx":
 			try {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/octet-stream");
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_gpx.xml");
-				return new ResponseEntity<String>(ActivityUtils.exportAsGPX(id, mongoRepository), responseHeaders, HttpStatus.ACCEPTED);
+				return ResponseEntity.ok().headers(responseHeaders).body(ActivityUtils.exportAsGPX(activity));
 			} catch (JAXBException e) {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
 				String errorValue = "{" + "\"error\":true,"
 						+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
 						+ e.getMessage() + "\"" + "}";
-				return new ResponseEntity<String>(errorValue, responseHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders).body(errorValue);
 			}
 		default:
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.add("Content-Type", "application/json; charset=utf-8");
 			String errorValue = "{" + "\"error\":true," + "\"description\":\"Select a correct type for export it.\""
 					+ "}";
-			return new ResponseEntity<String>(errorValue, responseHeaders, HttpStatus.BAD_REQUEST);
+			return ResponseEntity.badRequest().headers(responseHeaders).body(errorValue);
 		}
 	}
 
 	@RequestMapping(value = "/{id}/remove/point", method = RequestMethod.PUT, produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> removePoint(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
-		Activity act = ActivityUtils.removePoint(id, lat, lng, timeInMillis, index, mongoRepository);
-		return act != null ? new ResponseEntity<Object>(act, HttpStatus.ACCEPTED)
-				: new ResponseEntity<Object>(
-						"{" + "\"error\":true," + "\"description\":\"Error trying to remove point.\"" + "}",
-						HttpStatus.INTERNAL_SERVER_ERROR);
+		Activity activity = mongoRepository.findById(id).orElse(null);
+		ActivityUtils.removePoint(activity, lat, lng, timeInMillis, index);
+		if(Objects.isNull(activity)){
+			String error = "{" + "\"error\":true," + "\"description\":\"Given activity not found in database.\"" + "}";
+			return ResponseEntity.badRequest().body(error);
+		}else{
+			mongoRepository.save(activity);
+			return ResponseEntity.ok().body(activity);
+		}
 	}
 
 	@RequestMapping(value = "/{id}/join/laps", method = RequestMethod.PUT, produces = "application/json;")
-	public @ResponseBody ResponseEntity<Activity> joinLaps(@PathVariable String id,
+	public @ResponseBody ResponseEntity<Object> joinLaps(@PathVariable String id,
 			@RequestParam(name = "index1") String indexLap1, @RequestParam(name = "index2") String indexLap2) {
-		Activity act = null;
-		if (indexLap1 != null && !indexLap1.isEmpty() && indexLap2 != null && !indexLap2.isEmpty()) {
-			act = ActivityUtils.joinLap(id, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2), mongoRepository);
-			
-			return act != null ? new ResponseEntity<Activity>(act, HttpStatus.ACCEPTED)
-					: new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
-		} else
-			return new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
+		Activity act = mongoRepository.findById(id).orElse(null);
+		if (!Objects.isNull(indexLap1) && !Objects.isNull(indexLap2) && !indexLap1.isEmpty()  && !indexLap2.isEmpty()) {
+			act = ActivityUtils.joinLap(act, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2));
+			if(Objects.isNull(act)){
+				String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\"" + "}";
+				return ResponseEntity.badRequest().body(error);
+			} else{
+				mongoRepository.save(act);
+				return ResponseEntity.ok().body(act);
+			}
+		} else{
+			String error = "{" + "\"error\":true," + "\"description\":\"Please check the laps indexes params.\"" + "}";
+			return ResponseEntity.badRequest().body(error);
+		}
 
 	}
 
 	@RequestMapping(value = "/{id}/split/lap", method = RequestMethod.PUT, produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> splitLap(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
-		Activity act = ActivityUtils.splitLap(id, lat, lng, timeInMillis, index, mongoRepository);
-		return act != null ? new ResponseEntity<Object>(act, HttpStatus.ACCEPTED)
-				: new ResponseEntity<Object>(
-						"{" + "\"error\":true," + "\"description\":\"Error trying split the lap.\"" + "}",
-						HttpStatus.INTERNAL_SERVER_ERROR);
+		Activity act = mongoRepository.findById(id).orElse(null);
+		act = ActivityUtils.splitLap(act, lat, lng, timeInMillis, index);
+		if(Objects.isNull(act))
+			return ResponseEntity.badRequest().body("{" + "\"error\":true," + "\"description\":\"Error trying split the lap. Given activity id not found in database\"" + "}");
+		else{
+			mongoRepository.save(act);
+			return ResponseEntity.ok().body(act);
+		}
 	}
 
 	@RequestMapping(value = "/{id}/remove/laps", method = RequestMethod.PUT, produces = "application/json;")
-	public @ResponseBody ResponseEntity<Activity> removeLaps(@PathVariable String id,
+	public @ResponseBody ResponseEntity<Object> removeLaps(@PathVariable String id,
 			@RequestParam(name = "date") String startTimeLaps, @RequestParam(name = "index") String indexLaps) {
 		Activity act = mongoRepository.findById(id).orElse(null);
-
-		List<String> dates = Arrays.asList(startTimeLaps.split(",")).stream()
-				.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
-		List<String> index = Arrays.asList(indexLaps.split(",")).stream()
-				.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
-
-		if (index != null && !index.isEmpty()) {
-			boolean isDates = dates != null && !dates.isEmpty();
-			IntStream.range(0, index.size()).forEach(indexArrays -> {
-				Integer indexLap = Integer.parseInt(index.get(indexArrays));
-				Long date = isDates ? Long.parseLong(dates.get(indexArrays)) : null;
-				ActivityUtils.removeLap(act, date, indexLap);
-			});
+		
+		if(!Objects.isNull(act)){
+			List<String> dates = Arrays.asList(startTimeLaps.split(",")).stream()
+					.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
+			List<String> index = Arrays.asList(indexLaps.split(",")).stream()
+					.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
+	
+			if (index != null && !index.isEmpty()) {
+				boolean isDates = dates != null && !dates.isEmpty();
+				IntStream.range(0, index.size()).forEach(indexArrays -> {
+					Integer indexLap = Integer.parseInt(index.get(indexArrays));
+					Long date = isDates ? Long.parseLong(dates.get(indexArrays)) : null;
+					ActivityUtils.removeLap(act, date, indexLap);
+				});
+			}
+			mongoRepository.save(act);
+			return ResponseEntity.ok().body(act);
+		} else{
+			String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\"" + "}";
+			return ResponseEntity.badRequest().body(error);
 		}
-
-		mongoRepository.save(act);
-
-		return act != null ? new ResponseEntity<Activity>(act, HttpStatus.ACCEPTED)
-				: new ResponseEntity<Activity>(act, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 	@RequestMapping(value = "/{id}/color/laps", method = RequestMethod.PUT)
@@ -163,8 +182,11 @@ public class ActivityRestController {
 				}
 			});
 			mongoRepository.save(act);
-			return new ResponseEntity<String>(HttpStatus.ACCEPTED);
-		}else
-			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
+			String info = "{" + "\"error\":false," + "\"description\":\"Lap's colors are updated.\"" + "}";
+			return ResponseEntity.ok().body(info);
+		}else{
+			String error = "{" + "\"error\":true," + "\"description\":\"Not be posible to update lap's colors.\"" + "}";
+			return ResponseEntity.badRequest().body(error);
+		}
 	}
 }
