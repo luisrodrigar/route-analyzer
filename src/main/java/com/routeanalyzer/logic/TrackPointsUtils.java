@@ -23,11 +23,11 @@ public class TrackPointsUtils {
 	 * @return true or false
 	 */
 	public static boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index) {
-		boolean isTrack = track.getPosition() != null
+		boolean isTrack = !Objects.isNull(track.getPosition())
 				&& track.getPosition().getLatitudeDegrees().doubleValue() == position.getLatitudeDegrees().doubleValue()
 				&& track.getPosition().getLongitudeDegrees().doubleValue() == position.getLongitudeDegrees().doubleValue()
-				&& ((timeInMillis != null && track.getDate().getTime() == timeInMillis)
-						|| (index != null && track.getIndex() == index));
+				&& ((!Objects.isNull(timeInMillis) && track.getDate().getTime() == timeInMillis)
+						|| (!Objects.isNull(index) && track.getIndex() == index));
 		return isTrack;
 	}
 

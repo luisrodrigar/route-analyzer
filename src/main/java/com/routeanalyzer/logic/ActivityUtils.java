@@ -24,15 +24,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXParseException;
 
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.routeanalyzer.database.ActivityMongoRepository;
 import com.routeanalyzer.model.Activity;
 import com.routeanalyzer.model.Lap;
 import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
-import com.routeanalyzer.services.AS3Service;
 import com.routeanalyzer.services.reader.GPXService;
 import com.routeanalyzer.services.reader.TCXService;
 import com.routeanalyzer.xml.gpx11.ExtensionsType;
@@ -58,15 +53,6 @@ import com.routeanalyzer.xml.tcx.activityextension.ActivityTrackpointExtensionT;
 
 public class ActivityUtils {
 
-	private static final String BUCKET_NAME = "xml-files-storage";
-	private static AS3Service aS3Service = new AS3Service(BUCKET_NAME);
-
-	private static GPXService gpxReader = new GPXService();
-	private static TCXService tcxReader = new TCXService();
-
-	private static GsonBuilder gsonBuilder = new GsonBuilder();
-	private static Gson gson = gsonBuilder.create();
-
 	/**
 	 * 
 	 * @param multiPart
@@ -76,18 +62,14 @@ public class ActivityUtils {
 	 * @throws JAXBException
 	 * @throws SAXParseException
 	 */
-	public static String uploadGPXFile(MultipartFile multiPart, ActivityMongoRepository mongoRepository)
+	public static List<Activity> uploadGPXFile(MultipartFile multiPart)
 			throws IOException, AmazonClientException, JAXBException, SAXParseException {
-		byte[] arrayBytes = multiPart.getBytes();
+		GPXService gpxReader = new GPXService();
 		InputStream inputFileGPX = multiPart.getInputStream();
 		// Get the object from xml file (type GPX)
-
 		GpxType gpx = gpxReader.readXML(inputFileGPX);
 		// Create each activity of the file
-		List<Activity> activities = getListActivitiesFromGPX(gpx);
-		// Se guarda en la base de datos
-		List<String> ids = saveActivity(activities, arrayBytes, mongoRepository);
-		return gson.toJson(ids);
+		return getListActivitiesFromGPX(gpx);
 	}
 
 	/**
@@ -98,30 +80,14 @@ public class ActivityUtils {
 	 * @throws JAXBException
 	 * @throws SAXParseException
 	 */
-	public static String uploadTCXFile(MultipartFile multiPart, ActivityMongoRepository mongoRepository) throws IOException, JAXBException, SAXParseException {
-		byte[] arrayBytes = multiPart.getBytes();
+	public static List<Activity> uploadTCXFile(MultipartFile multiPart)
+			throws IOException, JAXBException, SAXParseException {
+		TCXService tcxReader = new TCXService();
 		InputStream inputFileTCX = multiPart.getInputStream();
 		// Get the object from xml file (type TCX)
 		TrainingCenterDatabaseT tcx = tcxReader.readXML(inputFileTCX);
 		// Create each activity of the file
-		List<Activity> activities = getListActivitiesFromTCX(tcx);
-		// Se guarda en la base de datos
-		List<String> ids = saveActivity(activities, arrayBytes, mongoRepository);
-		return gson.toJson(ids);
-	}
-
-	/**
-	 * 
-	 * @param nameFile
-	 * @return
-	 * @throws AmazonServiceException
-	 * @throws AmazonClientException
-	 * @throws IOException
-	 */
-	public static String getActivityAS3(String nameFile)
-			throws AmazonServiceException, AmazonClientException, IOException {
-		BufferedReader bufReader = aS3Service.getFile(nameFile);
-		return bufReader.lines().collect(Collectors.joining("\n"));
+		return getListActivitiesFromTCX(tcx);
 	}
 
 	/**
@@ -130,9 +96,7 @@ public class ActivityUtils {
 	 * @return
 	 * @throws JAXBException
 	 */
-	public static String exportAsTCX(String id, ActivityMongoRepository mongoRepository) throws JAXBException {
-		Activity act = getActivityById(id, mongoRepository);
-
+	public static String exportAsTCX(Activity act) throws JAXBException {
 		TCXService xmlCreator = new TCXService();
 		com.routeanalyzer.xml.tcx.ObjectFactory oFactory = new com.routeanalyzer.xml.tcx.ObjectFactory();
 		com.routeanalyzer.xml.tcx.activityextension.ObjectFactory extensionFactory = new com.routeanalyzer.xml.tcx.activityextension.ObjectFactory();
@@ -141,12 +105,12 @@ public class ActivityUtils {
 		ActivityListT actListT = new ActivityListT();
 		ActivityT activityT = new ActivityT();
 		// Sport is an enum
-		if (act.getSport() != null) {
+		if (!Objects.isNull(act.getSport())) {
 			SportT sport = SportT.valueOf(act.getSport());
 			activityT.setSport(sport);
 		}
 		// Set xml gregorian calendar date
-		if (act.getDate() != null) {
+		if (!Objects.isNull(act.getDate())) {
 			GregorianCalendar c = new GregorianCalendar();
 			c.setTime(act.getDate());
 			XMLGregorianCalendar xmlGregorianCalendar;
@@ -161,27 +125,27 @@ public class ActivityUtils {
 			ActivityLapT lapT = new ActivityLapT();
 			// heart rate average in beats per minute
 			HeartRateInBeatsPerMinuteT avgBpm = new HeartRateInBeatsPerMinuteT();
-			avgBpm.setValue(lap.getAverageHearRate() != null && lap.getAverageHearRate().shortValue() > 0.0
+			avgBpm.setValue(!Objects.isNull(lap.getAverageHearRate()) && lap.getAverageHearRate().shortValue() > 0.0
 					? lap.getAverageHearRate().shortValue() : 0);
 			if (avgBpm.getValue() > 0)
 				lapT.setAverageHeartRateBpm(avgBpm);
 			// calories
-			if (lap.getCalories() != null)
+			if (!Objects.isNull(lap.getCalories()))
 				lapT.setCalories(lap.getCalories());
 			// distance in meters
-			if (lap.getDistanceMeters() != null)
+			if (!Objects.isNull(lap.getDistanceMeters()))
 				lapT.setDistanceMeters(lap.getDistanceMeters());
 			// max speed in meters per second
-			if (lap.getMaximunSpeed() != null)
+			if (!Objects.isNull(lap.getMaximunSpeed()))
 				lapT.setMaximumSpeed(lap.getMaximunSpeed());
 			// max heart rate in beats per minute
 			HeartRateInBeatsPerMinuteT maxBpm = new HeartRateInBeatsPerMinuteT();
-			maxBpm.setValue(lap.getMaximunHeartRate() != null && lap.getMaximunHeartRate().shortValue() > 0
+			maxBpm.setValue(!Objects.isNull(lap.getMaximunHeartRate()) && lap.getMaximunHeartRate().shortValue() > 0
 					? lap.getMaximunHeartRate().shortValue() : 0);
 			if (maxBpm.getValue() > 0)
 				lapT.setMaximumHeartRateBpm(maxBpm);
 			// Start time in xml gregorian calendar
-			if (lap.getStartTime() != null) {
+			if (!Objects.isNull(lap.getStartTime())) {
 				GregorianCalendar gregorian = new GregorianCalendar();
 				gregorian.setTime(lap.getStartTime());
 				try {
@@ -192,13 +156,13 @@ public class ActivityUtils {
 			} else
 				lapT.setStartTime(null);
 			// total time in seconds
-			if (lap.getTotalTimeSeconds() != null && lap.getTotalTimeSeconds() > 0)
+			if (!Objects.isNull(lap.getTotalTimeSeconds()) && lap.getTotalTimeSeconds() > 0)
 				lapT.setTotalTimeSeconds(lap.getTotalTimeSeconds());
 			// intensity
-			if (lap.getIntensity() != null)
+			if (!Objects.isNull(lap.getIntensity()))
 				lapT.setIntensity(IntensityT.valueOf(lap.getIntensity()));
 
-			if (lap.getAverageSpeed() != null) {
+			if (!Objects.isNull(lap.getAverageSpeed())) {
 				ExtensionsT extT = new ExtensionsT();
 				ActivityLapExtensionT actExtensionT = new ActivityLapExtensionT();
 				actExtensionT.setAvgSpeed(lap.getAverageSpeed());
@@ -208,7 +172,7 @@ public class ActivityUtils {
 			TrackT trackT = new TrackT();
 			lap.getTracks().forEach(trackPoint -> {
 				TrackpointT trackPointT = new TrackpointT();
-				if (trackPoint.getDate() != null) {
+				if (!Objects.isNull(trackPoint.getDate())) {
 					GregorianCalendar gregorian = new GregorianCalendar();
 					gregorian.setTime(trackPoint.getDate());
 					try {
@@ -217,22 +181,22 @@ public class ActivityUtils {
 						trackPointT.setTime(null);
 					}
 				}
-				if (trackPoint.getPosition() != null) {
+				if (!Objects.isNull(trackPoint.getPosition())) {
 					PositionT positionT = new PositionT();
 					positionT.setLatitudeDegrees(trackPoint.getPosition().getLatitudeDegrees().doubleValue());
 					positionT.setLongitudeDegrees(trackPoint.getPosition().getLongitudeDegrees().doubleValue());
 					trackPointT.setPosition(positionT);
 				}
 				trackPointT.setAltitudeMeters(
-						trackPoint.getAltitudeMeters() != null ? trackPoint.getAltitudeMeters().doubleValue() : null);
+						!Objects.isNull(trackPoint.getAltitudeMeters()) ? trackPoint.getAltitudeMeters().doubleValue() : null);
 				trackPointT.setDistanceMeters(
-						trackPoint.getDistanceMeters() != null ? trackPoint.getDistanceMeters().doubleValue() : null);
-				if (trackPoint.getHeartRateBpm() != null) {
+						!Objects.isNull(trackPoint.getDistanceMeters()) ? trackPoint.getDistanceMeters().doubleValue() : null);
+				if (!Objects.isNull(trackPoint.getHeartRateBpm())) {
 					HeartRateInBeatsPerMinuteT bpm = new HeartRateInBeatsPerMinuteT();
 					bpm.setValue(trackPoint.getHeartRateBpm().shortValue());
 					trackPointT.setHeartRateBpm(bpm);
 				}
-				if (trackPoint.getSpeed() != null) {
+				if (!Objects.isNull(trackPoint.getSpeed())) {
 					ExtensionsT extension = new ExtensionsT();
 
 					ActivityTrackpointExtensionT trackPointExtension = new ActivityTrackpointExtensionT();
@@ -257,15 +221,13 @@ public class ActivityUtils {
 	 * @return
 	 * @throws JAXBException
 	 */
-	public static String exportAsGPX(String id, ActivityMongoRepository mongoRepository) throws JAXBException {
-		Activity act = getActivityById(id, mongoRepository);
-
+	public static String exportAsGPX(Activity act) throws JAXBException {
 		GPXService xmlCreator = new GPXService();
 		com.routeanalyzer.xml.gpx11.ObjectFactory oFactory = new com.routeanalyzer.xml.gpx11.ObjectFactory();
 		com.routeanalyzer.xml.gpx11.trackpointextension.garmin.ObjectFactory extensionFactory = new com.routeanalyzer.xml.gpx11.trackpointextension.garmin.ObjectFactory();
 
 		GpxType gpx = new GpxType();
-		if (act.getDate() != null) {
+		if (!Objects.isNull(act.getDate())) {
 			MetadataType metadata = new MetadataType();
 			GregorianCalendar gregorian = new GregorianCalendar();
 			gregorian.setTime(act.getDate());
@@ -281,7 +243,7 @@ public class ActivityUtils {
 			TrksegType trkSeg = new TrksegType();
 			lap.getTracks().forEach(trackPoint -> {
 				WptType wpt = new WptType();
-				if (trackPoint.getDate() != null) {
+				if (!Objects.isNull(trackPoint.getDate())) {
 					GregorianCalendar gregorianCalendar = new GregorianCalendar();
 					gregorianCalendar.setTime(trackPoint.getDate());
 					try {
@@ -290,12 +252,12 @@ public class ActivityUtils {
 						wpt.setTime(null);
 					}
 				}
-				wpt.setLat(trackPoint.getPosition() != null && trackPoint.getPosition().getLatitudeDegrees() != null
+				wpt.setLat(!Objects.isNull(trackPoint.getPosition()) && !Objects.isNull(trackPoint.getPosition().getLatitudeDegrees())
 						? trackPoint.getPosition().getLatitudeDegrees() : null);
-				wpt.setLon(trackPoint.getPosition() != null && trackPoint.getPosition().getLongitudeDegrees() != null
+				wpt.setLon(!Objects.isNull(trackPoint.getPosition()) && !Objects.isNull(trackPoint.getPosition().getLongitudeDegrees())
 						? trackPoint.getPosition().getLongitudeDegrees() : null);
-				wpt.setEle(trackPoint.getAltitudeMeters() != null ? trackPoint.getAltitudeMeters() : null);
-				if (trackPoint.getHeartRateBpm() != null) {
+				wpt.setEle(!Objects.isNull(trackPoint.getAltitudeMeters()) ? trackPoint.getAltitudeMeters() : null);
+				if (!Objects.isNull(trackPoint.getHeartRateBpm())) {
 					ExtensionsType extensions = new ExtensionsType();
 					TrackPointExtensionT trptExtension = new TrackPointExtensionT();
 					trptExtension.setHr(trackPoint.getHeartRateBpm().shortValue());
@@ -329,9 +291,7 @@ public class ActivityUtils {
 	 *            order of creation
 	 * @return activity or null if there was any error.
 	 */
-	public static Activity removePoint(String id, String lat, String lng, String timeInMillis, String indexTrackPoint, ActivityMongoRepository mongoRepository) {
-		Activity act = mongoRepository.findById(id).orElse(null);
-
+	public static Activity removePoint(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint) {
 		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
 		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
 				? Integer.parseInt(indexTrackPoint) : null;
@@ -372,9 +332,6 @@ public class ActivityUtils {
 				LapsUtils.setTotalValuesLap(newLap);
 				LapsUtils.calculateAggregateValuesLap(newLap);
 			}
-
-			mongoRepository.save(act);
-
 			return act;
 		} else
 			return null;
@@ -391,9 +348,7 @@ public class ActivityUtils {
 	 *            of the track point which will be the divider
 	 * @return activity with the new laps.
 	 */
-	public static Activity splitLap(String id, String lat, String lng, String timeInMillis, String indexTrackPoint, ActivityMongoRepository mongoRepository) {
-		Activity act = mongoRepository.findById(id).orElse(null);
-
+	public static Activity splitLap(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint) {
 		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
 		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
 				? Integer.parseInt(indexTrackPoint) : null;
@@ -433,7 +388,6 @@ public class ActivityUtils {
 				act.getLaps().add(indexLap.intValue(), lapSplitLeft);
 				act.getLaps().add((indexLap.intValue() + 1), lapSplitRight);
 
-				mongoRepository.save(act);
 				return act;
 			} else
 				return null;
@@ -448,9 +402,7 @@ public class ActivityUtils {
 	 * @param indexLap2
 	 * @return
 	 */
-	public static Activity joinLap(String idActivity, Integer indexLap1, Integer indexLap2, ActivityMongoRepository mongoRepository) {
-		Activity act = mongoRepository.findById(idActivity).orElse(null);
-
+	public static Activity joinLap(Activity act, Integer indexLap1, Integer indexLap2) {
 		if (Objects.isNull(indexLap1) || Objects.isNull(indexLap2))
 			return null;
 		int indexLapLeft = indexLap1, indexLapRight = indexLap2;
@@ -472,8 +424,6 @@ public class ActivityUtils {
 		IntStream.range(indexLapRight, act.getLaps().size()).forEach(indexEachLap -> {
 			act.getLaps().get(indexEachLap).setIndex(act.getLaps().get(indexEachLap).getIndex() - 1);
 		});
-
-		mongoRepository.save(act);
 
 		return act;
 	}
@@ -532,9 +482,8 @@ public class ActivityUtils {
 								(!Objects.isNull(eachTrackPoint.getTime())
 										? eachTrackPoint.getTime().toGregorianCalendar().getTime() : null),
 								indexTrackPoint.incrementAndGet(),
-								new Position(eachTrackPoint.getLat(),
-										eachTrackPoint.getLon()),
-								eachTrackPoint.getEle(), null, null, null);
+								new Position(eachTrackPoint.getLat(), eachTrackPoint.getLon()), eachTrackPoint.getEle(),
+								null, null, null);
 						if (!Objects.isNull(eachTrackPoint.getExtensions())) {
 							eachTrackPoint.getExtensions().getAny()
 									.stream().filter(
@@ -643,7 +592,7 @@ public class ActivityUtils {
 										&& !Objects.isNull(trackPoint.getExtensions().getAny())) {
 									trackPoint.getExtensions().getAny().stream()
 											.filter(extension -> (!Objects.isNull(JAXBElement.class.cast(extension))
-													&& extension != null
+													&& !Objects.isNull(extension)
 													&& !Objects.isNull((JAXBElement.class.cast(extension)).getValue())
 													&& !Objects.isNull(ActivityTrackpointExtensionT.class
 															.cast((JAXBElement.class.cast(extension)).getValue()))))
@@ -684,50 +633,54 @@ public class ActivityUtils {
 							new BigDecimal(eachLap.getEndPosition().getLongitudeDegrees()));
 					AtomicInteger eachIndex = new AtomicInteger();
 					AtomicInteger indexStart = new AtomicInteger(), indexEnd = new AtomicInteger();
-					course.getTrack().forEach(track->{
+					course.getTrack().forEach(track -> {
 						track.getTrackpoint().forEach(trackpoint -> {
-							if(trackpoint.getPosition().getLatitudeDegrees() == initial.getLatitudeDegrees().doubleValue()
-									&& trackpoint.getPosition().getLongitudeDegrees() == initial.getLongitudeDegrees().doubleValue())
+							if (trackpoint.getPosition().getLatitudeDegrees() == initial.getLatitudeDegrees()
+									.doubleValue()
+									&& trackpoint.getPosition().getLongitudeDegrees() == initial.getLongitudeDegrees()
+											.doubleValue())
 								indexStart.set(eachIndex.get());
-							else if (trackpoint.getPosition().getLatitudeDegrees() == end.getLatitudeDegrees().doubleValue()
-									&& trackpoint.getPosition().getLongitudeDegrees() == end.getLongitudeDegrees().doubleValue())
+							else if (trackpoint.getPosition().getLatitudeDegrees() == end.getLatitudeDegrees()
+									.doubleValue()
+									&& trackpoint.getPosition().getLongitudeDegrees() == end.getLongitudeDegrees()
+											.doubleValue())
 								indexEnd.set(eachIndex.get());
 							eachIndex.incrementAndGet();
-								
+
 						});
 					});
-					IntStream.range(indexStart.get(), indexEnd.get()+1).forEach(index -> {
+					IntStream.range(indexStart.get(), indexEnd.get() + 1).forEach(index -> {
 						TrackpointT trT = course.getTrack().get(0).getTrackpoint().get(index);
-						TrackPoint trackpoint = new TrackPoint(
-								trT.getTime().toGregorianCalendar().getTime(),
+						TrackPoint trackpoint = new TrackPoint(trT.getTime().toGregorianCalendar().getTime(),
 								indexTrackPoint.getAndIncrement(),
 								new Position(new BigDecimal(trT.getPosition().getLatitudeDegrees()),
 										new BigDecimal(trT.getPosition().getLongitudeDegrees())),
 								new BigDecimal(trT.getAltitudeMeters().doubleValue()),
-								!Objects.isNull(trT.getDistanceMeters())?new BigDecimal(trT.getDistanceMeters().doubleValue()):null, null,
-								!Objects.isNull(trT.getHeartRateBpm())?Integer.valueOf(trT.getHeartRateBpm().getValue()):null);
-						if (!Objects.isNull(trT.getExtensions())
-								&& !Objects.isNull(trT.getExtensions().getAny())) {
+								!Objects.isNull(trT.getDistanceMeters())
+										? new BigDecimal(trT.getDistanceMeters().doubleValue()) : null,
+								null, !Objects.isNull(trT.getHeartRateBpm())
+										? Integer.valueOf(trT.getHeartRateBpm().getValue()) : null);
+						if (!Objects.isNull(trT.getExtensions()) && !Objects.isNull(trT.getExtensions().getAny())) {
 							trT.getExtensions().getAny().stream()
-							.filter(extension -> (!Objects.isNull(JAXBElement.class.cast(extension))
-									&& extension != null
-									&& !Objects.isNull((JAXBElement.class.cast(extension)).getValue())
-									&& !Objects.isNull(ActivityTrackpointExtensionT.class
-											.cast((JAXBElement.class.cast(extension)).getValue()))))
-							.forEach(extension -> {
-								ActivityTrackpointExtensionT actTrackpointExtension = ActivityTrackpointExtensionT.class
-										.cast((JAXBElement.class.cast(extension)).getValue());
-								if (!Objects.isNull(actTrackpointExtension.getSpeed())
-										&& actTrackpointExtension.getSpeed() >= 0)
-									trackpoint.setSpeed(new BigDecimal(actTrackpointExtension.getSpeed()));
-							});
+									.filter(extension -> (!Objects.isNull(JAXBElement.class.cast(extension))
+											&& !Objects.isNull(extension)
+											&& !Objects.isNull((JAXBElement.class.cast(extension)).getValue())
+											&& !Objects.isNull(ActivityTrackpointExtensionT.class
+													.cast((JAXBElement.class.cast(extension)).getValue()))))
+									.forEach(extension -> {
+										ActivityTrackpointExtensionT actTrackpointExtension = ActivityTrackpointExtensionT.class
+												.cast((JAXBElement.class.cast(extension)).getValue());
+										if (!Objects.isNull(actTrackpointExtension.getSpeed())
+												&& actTrackpointExtension.getSpeed() >= 0)
+											trackpoint.setSpeed(new BigDecimal(actTrackpointExtension.getSpeed()));
+									});
 						}
 						lap.addTrack(trackpoint);
 					});
 					// Calculate values not informed of a lap.
 					LapsUtils.calculateLapValues(lap);
 					activity.addLap(lap);
-					});
+				});
 				calculateDistanceSpeedValues(activity);
 				activities.add(activity);
 			});
@@ -791,31 +744,6 @@ public class ActivityUtils {
 	}
 
 	/**
-	 * 
-	 * @param activities
-	 * @param arrayBytes
-	 * @return
-	 * @throws AmazonClientException
-	 */
-	private static List<String> saveActivity(List<Activity> activities, byte[] arrayBytes, ActivityMongoRepository mongoRepository)
-			throws AmazonClientException {
-		List<String> ids = new ArrayList<String>();
-		activities.forEach(activity -> {
-			mongoRepository.save(activity);
-			ids.add(activity.getId());
-			try {
-				aS3Service.uploadFile(arrayBytes, activity.getId() + "." + activity.getSourceXmlType());
-			} catch (AmazonClientException aS3Exception) {
-				System.err.println("Delete activity with id: " + activity.getId()
-						+ " due to problems trying to upload file to AS3.");
-				mongoRepository.deleteById(activity.getId());
-				throw aS3Exception;
-			}
-		});
-		return ids;
-	}
-
-	/**
 	 * Method which returns an index corresponding to the lap which contains
 	 * track point with the latitude, longitude and ( time or index) contained
 	 * in the parameters.
@@ -839,15 +767,6 @@ public class ActivityUtils {
 		}).findFirst().orElse(null);
 
 		return !Objects.isNull(lap) ? laps.indexOf(lap) : -1;
-	}
-
-	/**
-	 * 
-	 * @param id
-	 * @return
-	 */
-	private static Activity getActivityById(String id, ActivityMongoRepository mongoRepository) {
-		return mongoRepository.findById(id).orElse(null);
 	}
 
 }
