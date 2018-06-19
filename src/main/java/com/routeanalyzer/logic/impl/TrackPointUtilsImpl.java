@@ -1,12 +1,16 @@
-package com.routeanalyzer.logic;
+package com.routeanalyzer.logic.impl;
 
 import java.math.BigDecimal;
 import java.util.Objects;
 
+import org.springframework.stereotype.Service;
+
+import com.routeanalyzer.logic.TrackPointUtils;
 import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
 
-public class TrackPointsUtils {
+@Service
+public class TrackPointUtilsImpl implements TrackPointUtils{
 
 	/**
 	 * Check if the track point corresponds with the values of the params
@@ -22,7 +26,8 @@ public class TrackPointsUtils {
 	 * @param index
 	 * @return true or false
 	 */
-	public static boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index) {
+	@Override
+	public boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index) {
 		boolean isTrack = !Objects.isNull(track.getPosition())
 				&& track.getPosition().getLatitudeDegrees().doubleValue() == position.getLatitudeDegrees().doubleValue()
 				&& track.getPosition().getLongitudeDegrees().doubleValue() == position.getLongitudeDegrees().doubleValue()
@@ -41,7 +46,8 @@ public class TrackPointsUtils {
 	 *            position
 	 * @return distance in meters
 	 */
-	public static double getDistanceBetweenPoints(Position origin, Position end) {
+	@Override
+	public double getDistanceBetweenPoints(Position origin, Position end) {
 		// Convert degrees to radians
 		double latP1 = degrees2Radians(origin.getLatitudeDegrees()),
 				lngP1 = degrees2Radians(origin.getLongitudeDegrees());
@@ -72,7 +78,8 @@ public class TrackPointsUtils {
 
 	}
 
-	public static double getSpeedBetweenPoints(TrackPoint previous, TrackPoint current) {
+	@Override
+	public double getSpeedBetweenPoints(TrackPoint previous, TrackPoint current) {
 		if(!Objects.isNull(previous) && !Objects.isNull(current) 
 				&& !Objects.isNull(previous.getDate())
 				&& !Objects.isNull(current.getDate())){
@@ -87,7 +94,8 @@ public class TrackPointsUtils {
 			return 0.0;
 	}
 
-	public static void calculateSpeedBetweenPoints(TrackPoint origin, TrackPoint end) {
+	@Override
+	public void calculateSpeedBetweenPoints(TrackPoint origin, TrackPoint end) {
 		double distance = getDistanceBetweenPoints(origin.getPosition(), end.getPosition());
 		double time = (end.getDate().getTime() - origin.getDate().getTime()) / 1000;
 		double speed = 0.0;

@@ -29,15 +29,18 @@ import com.routeanalyzer.model.Activity;
 @RestController
 @RequestMapping("activity")
 public class ActivityRestController {
-	
+
 	@Autowired
 	private ActivityMongoRepository mongoRepository;
+	@Autowired
+	private ActivityUtils activityUtilsService;
 
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> getActivityById(@PathVariable String id) {
 		Activity act = mongoRepository.findById(id).orElse(null);
-		if(Objects.isNull(act)){
-			String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\"" + "}";
+		if (Objects.isNull(act)) {
+			String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\""
+					+ "}";
 			return ResponseEntity.badRequest().body(error);
 		} else
 			return ResponseEntity.ok().body(act);
@@ -52,28 +55,30 @@ public class ActivityRestController {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/octet-stream");
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_tcx.xml");
-				return ResponseEntity.ok().body(ActivityUtils.exportAsTCX(activity));
+				return ResponseEntity.ok().body(activityUtilsService.exportAsTCX(activity));
 			} catch (JAXBException e1) {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
 				String errorValue = "{" + "\"error\":true,"
 						+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
 						+ e1.getMessage() + "\"" + "}";
-				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders).body(errorValue);
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders)
+						.body(errorValue);
 			}
 		case "gpx":
 			try {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/octet-stream");
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_gpx.xml");
-				return ResponseEntity.ok().headers(responseHeaders).body(ActivityUtils.exportAsGPX(activity));
+				return ResponseEntity.ok().headers(responseHeaders).body(activityUtilsService.exportAsGPX(activity));
 			} catch (JAXBException e) {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
 				String errorValue = "{" + "\"error\":true,"
 						+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
 						+ e.getMessage() + "\"" + "}";
-				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders).body(errorValue);
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders)
+						.body(errorValue);
 			}
 		default:
 			HttpHeaders responseHeaders = new HttpHeaders();
@@ -88,11 +93,11 @@ public class ActivityRestController {
 	public @ResponseBody ResponseEntity<Object> removePoint(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
 		Activity activity = mongoRepository.findById(id).orElse(null);
-		ActivityUtils.removePoint(activity, lat, lng, timeInMillis, index);
-		if(Objects.isNull(activity)){
+		activityUtilsService.removePoint(activity, lat, lng, timeInMillis, index);
+		if (Objects.isNull(activity)) {
 			String error = "{" + "\"error\":true," + "\"description\":\"Given activity not found in database.\"" + "}";
 			return ResponseEntity.badRequest().body(error);
-		}else{
+		} else {
 			mongoRepository.save(activity);
 			return ResponseEntity.ok().body(activity);
 		}
@@ -102,16 +107,17 @@ public class ActivityRestController {
 	public @ResponseBody ResponseEntity<Object> joinLaps(@PathVariable String id,
 			@RequestParam(name = "index1") String indexLap1, @RequestParam(name = "index2") String indexLap2) {
 		Activity act = mongoRepository.findById(id).orElse(null);
-		if (!Objects.isNull(indexLap1) && !Objects.isNull(indexLap2) && !indexLap1.isEmpty()  && !indexLap2.isEmpty()) {
-			act = ActivityUtils.joinLap(act, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2));
-			if(Objects.isNull(act)){
-				String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\"" + "}";
+		if (!Objects.isNull(indexLap1) && !Objects.isNull(indexLap2) && !indexLap1.isEmpty() && !indexLap2.isEmpty()) {
+			act = activityUtilsService.joinLap(act, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2));
+			if (Objects.isNull(act)) {
+				String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\""
+						+ "}";
 				return ResponseEntity.badRequest().body(error);
-			} else{
+			} else {
 				mongoRepository.save(act);
 				return ResponseEntity.ok().body(act);
 			}
-		} else{
+		} else {
 			String error = "{" + "\"error\":true," + "\"description\":\"Please check the laps indexes params.\"" + "}";
 			return ResponseEntity.badRequest().body(error);
 		}
@@ -122,10 +128,11 @@ public class ActivityRestController {
 	public @ResponseBody ResponseEntity<Object> splitLap(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
 		Activity act = mongoRepository.findById(id).orElse(null);
-		act = ActivityUtils.splitLap(act, lat, lng, timeInMillis, index);
-		if(Objects.isNull(act))
-			return ResponseEntity.badRequest().body("{" + "\"error\":true," + "\"description\":\"Error trying split the lap. Given activity id not found in database\"" + "}");
-		else{
+		act = activityUtilsService.splitLap(act, lat, lng, timeInMillis, index);
+		if (Objects.isNull(act))
+			return ResponseEntity.badRequest().body("{" + "\"error\":true,"
+					+ "\"description\":\"Error trying split the lap. Given activity id not found in database\"" + "}");
+		else {
 			mongoRepository.save(act);
 			return ResponseEntity.ok().body(act);
 		}
@@ -135,25 +142,26 @@ public class ActivityRestController {
 	public @ResponseBody ResponseEntity<Object> removeLaps(@PathVariable String id,
 			@RequestParam(name = "date") String startTimeLaps, @RequestParam(name = "index") String indexLaps) {
 		Activity act = mongoRepository.findById(id).orElse(null);
-		
-		if(!Objects.isNull(act)){
+
+		if (!Objects.isNull(act)) {
 			List<String> dates = Arrays.asList(startTimeLaps.split(",")).stream()
 					.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
 			List<String> index = Arrays.asList(indexLaps.split(",")).stream()
 					.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
-	
+
 			if (index != null && !index.isEmpty()) {
 				boolean isDates = dates != null && !dates.isEmpty();
 				IntStream.range(0, index.size()).forEach(indexArrays -> {
 					Integer indexLap = Integer.parseInt(index.get(indexArrays));
 					Long date = isDates ? Long.parseLong(dates.get(indexArrays)) : null;
-					ActivityUtils.removeLap(act, date, indexLap);
+					activityUtilsService.removeLap(act, date, indexLap);
 				});
 			}
 			mongoRepository.save(act);
 			return ResponseEntity.ok().body(act);
-		} else{
-			String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\"" + "}";
+		} else {
+			String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\""
+					+ "}";
 			return ResponseEntity.badRequest().body(error);
 		}
 	}
@@ -161,12 +169,13 @@ public class ActivityRestController {
 	@RequestMapping(value = "/{id}/color/laps", method = RequestMethod.PUT)
 	public @ResponseBody ResponseEntity<String> setColorLaps(@PathVariable String id, String data) {
 		Activity act = mongoRepository.findById(id).orElse(null);
-		// Lap splitter: @, color splitter: -, first char in hexadecimal number: #
+		// Lap splitter: @, color splitter: -, first char in hexadecimal number:
+		// #
 		String lapSplitter = "@", colorSplitter = "-", startedCharHex = "#";
 		// [color(hex)-lightColor(hex)]@[...]... number without #
 		if (!Objects.isNull(data) && !data.isEmpty()) {
 			List<String> laps = null;
-			if(data.contains(lapSplitter))
+			if (data.contains(lapSplitter))
 				laps = Arrays.asList(data.split(lapSplitter));
 			else
 				laps = Arrays.asList(data);
@@ -174,8 +183,8 @@ public class ActivityRestController {
 			laps.forEach(lap -> {
 				int indexLap = index.getAndIncrement();
 				String color = lap.split(colorSplitter)[0], lightColor = lap.split(colorSplitter)[1];
-				if (!Objects.isNull(color) && !Objects.isNull(lightColor)
-						&& !color.isEmpty() && !lightColor.isEmpty()) {
+				if (!Objects.isNull(color) && !Objects.isNull(lightColor) && !color.isEmpty()
+						&& !lightColor.isEmpty()) {
 					String hexColor = startedCharHex + color, hexLightColor = startedCharHex + lightColor;
 					act.getLaps().get(indexLap).setColor(hexColor);
 					act.getLaps().get(indexLap).setLightColor(hexLightColor);
@@ -184,7 +193,7 @@ public class ActivityRestController {
 			mongoRepository.save(act);
 			String info = "{" + "\"error\":false," + "\"description\":\"Lap's colors are updated.\"" + "}";
 			return ResponseEntity.ok().body(info);
-		}else{
+		} else {
 			String error = "{" + "\"error\":true," + "\"description\":\"Not be posible to update lap's colors.\"" + "}";
 			return ResponseEntity.badRequest().body(error);
 		}
