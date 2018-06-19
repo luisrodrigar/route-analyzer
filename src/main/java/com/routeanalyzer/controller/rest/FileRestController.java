@@ -39,10 +39,11 @@ public class FileRestController {
 
 	@Autowired
 	private ActivityMongoRepository mongoRepository;
-	
+	@Autowired
+	private ActivityUtils activityUtilsService;
 	@Autowired
 	private OriginalRouteAS3Service aS3Service;
-	
+
 	/**
 	 * Upload xml file: tcx or gpx to activity object. It allows to process the
 	 * data contained in the file
@@ -64,7 +65,7 @@ public class FileRestController {
 			switch (type) {
 			case "tcx":
 				try {
-					activities = ActivityUtils.uploadTCXFile(multiPart);
+					activities = activityUtilsService.uploadTCXFile(multiPart);
 					// Se guarda en la base de datos
 					List<String> ids = saveActivity(activities, multiPart.getBytes());
 					return ResponseEntity.ok().body(gson.toJson(ids));
@@ -81,7 +82,7 @@ public class FileRestController {
 				}
 			case "gpx":
 				try {
-					activities = ActivityUtils.uploadGPXFile(multiPart);
+					activities = activityUtilsService.uploadGPXFile(multiPart);
 					// Se guarda en la base de datos
 					List<String> ids = saveActivity(activities, multiPart.getBytes());
 					return ResponseEntity.ok().body(gson.toJson(ids));
@@ -146,7 +147,7 @@ public class FileRestController {
 			return ResponseEntity.badRequest().headers(responseHeaders).body(json);
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @param activities
@@ -154,8 +155,7 @@ public class FileRestController {
 	 * @return
 	 * @throws AmazonClientException
 	 */
-	private List<String> saveActivity(List<Activity> activities, byte[] arrayBytes)
-			throws AmazonClientException {
+	private List<String> saveActivity(List<Activity> activities, byte[] arrayBytes) throws AmazonClientException {
 		List<String> ids = new ArrayList<String>();
 		activities.forEach(activity -> {
 			mongoRepository.save(activity);
@@ -171,7 +171,7 @@ public class FileRestController {
 		});
 		return ids;
 	}
-	
+
 	/**
 	 * 
 	 * @param nameFile
@@ -180,8 +180,7 @@ public class FileRestController {
 	 * @throws AmazonClientException
 	 * @throws IOException
 	 */
-	private String getActivityAS3(String nameFile)
-			throws AmazonServiceException, AmazonClientException, IOException {
+	private String getActivityAS3(String nameFile) throws AmazonServiceException, AmazonClientException, IOException {
 		BufferedReader bufReader = aS3Service.getFile(nameFile);
 		return bufReader.lines().collect(Collectors.joining("\n"));
 	}

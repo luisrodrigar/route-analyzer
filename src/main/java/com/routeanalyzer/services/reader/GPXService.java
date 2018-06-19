@@ -3,10 +3,13 @@ package com.routeanalyzer.services.reader;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
+import org.springframework.stereotype.Service;
+
 import com.routeanalyzer.xml.gpx11.GpxType;
 import com.routeanalyzer.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
 
-public class GPXService extends XMLService<GpxType> {
+@Service
+public class GPXService extends AbstractXMLService<GpxType> {
 
 	public GPXService() {
 		super(GpxType.class);

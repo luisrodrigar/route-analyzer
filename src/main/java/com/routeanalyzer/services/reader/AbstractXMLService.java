@@ -12,14 +12,17 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.xml.sax.SAXParseException;
 
-public abstract class XMLService<T> {
+import com.routeanalyzer.services.XMLService;
+
+public abstract class AbstractXMLService<T> implements XMLService<T> {
 	
 	protected Class<T> type;
 	
-	public XMLService(Class<T> type){
+	public AbstractXMLService(Class<T> type){
 		this.type = type;
 	}
 
+	@Override
 	public T readXML(InputStream inputFileXML) throws JAXBException, SAXParseException {
 		JAXBContext ctx = getJAXBContext();
 		Unmarshaller u = ctx.createUnmarshaller();
@@ -28,6 +31,7 @@ public abstract class XMLService<T> {
 
 	}
 
+	@Override
 	public String createXML(JAXBElement<T> object) throws JAXBException {
 		JAXBContext jaxbContext = getJAXBContext();
 		Marshaller marshaller = jaxbContext.createMarshaller();
