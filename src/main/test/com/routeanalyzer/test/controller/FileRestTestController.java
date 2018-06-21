@@ -6,7 +6,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -19,6 +21,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
@@ -158,10 +161,16 @@ public class FileRestTestController {
 
 	@Test
 	public void getFileTest() throws Exception {
-		mockMvc.perform(get("/file/get//")).andExpect(status().isBadRequest())
-				.andExpect(content().contentType("application/json;charset=UTF-8"))
-				.andExpect(jsonPath("$.error", is(true)))
-				.andExpect(jsonPath("$.description", is("Problem with the type of the file which you want to get")));
+		BufferedReader gpxBufferedReader = new BufferedReader(
+				new InputStreamReader(new ClassPathResource("coruna.gpx.xml").getInputStream(), "UTF-8"));
+		BufferedReader tcxBufferedReader = new BufferedReader(
+				new InputStreamReader(new ClassPathResource("oviedo.tcx.xml").getInputStream(), "UTF-8"));
+		Mockito.when(aS3Service.getFile(Mockito.contains("gpx"))).thenReturn(gpxBufferedReader);
+		Mockito.when(aS3Service.getFile(Mockito.contains("tcx"))).thenReturn(tcxBufferedReader);
+		mockMvc.perform(get("/file/get/{type}/{id}", "gpx", "some_id")).andExpect(status().isOk())
+				.andExpect(content().contentType("application/octet-stream"));
+		mockMvc.perform(get("/file/get/{type}/{id}", "tcx", "some_id")).andExpect(status().isOk())
+				.andExpect(content().contentType("application/octet-stream"));
 	}
 
 }
