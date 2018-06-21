@@ -126,7 +126,7 @@ public class FileRestController {
 				String xml = getActivityAS3(id + "." + type);
 				responseHeaders.add("Content-Type", "application/octet-stream");
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "." + type);
-				return ResponseEntity.ok().body(xml);
+				return ResponseEntity.ok().headers(responseHeaders).body(xml);
 
 			} catch (AmazonClientException amazonException) {
 				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
@@ -138,7 +138,7 @@ public class FileRestController {
 				String json = "{" + "error:true,"
 						+ "description: 'Problem trying to get the file :: Input/Output Problem'" + "exception: "
 						+ iOException.getMessage() + " }";
-				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(json);
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders).body(json);
 			}
 		} else {
 			responseHeaders.add("Content-Type", "application/json; charset=utf-8");
