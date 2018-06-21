@@ -1,6 +1,7 @@
 package com.routeanalyzer.test.controller;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,7 +30,6 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.xml.sax.SAXParseException;
 
 import com.amazonaws.AmazonClientException;
-import com.routeanalyzer.database.ActivityMongoRepository;
 import com.routeanalyzer.logic.ActivityUtils;
 import com.routeanalyzer.model.Activity;
 import com.routeanalyzer.services.OriginalRouteAS3Service;
@@ -56,15 +56,6 @@ public class FileRestTestController {
 		activity = new Activity();
 		activity.setId("1234567890");
 
-		builder = MockMvcRequestBuilders.multipart("/file/upload");
-		builder.with(new RequestPostProcessor() {
-			@Override
-			public MockHttpServletRequest postProcessRequest(MockHttpServletRequest request) {
-				request.setMethod("POST");
-				return request;
-			}
-		});
-
 		xmlFile = new MockMultipartFile("file", "", "application/xml", "{\"xml\": \"This is a fake xml.\"}".getBytes());
 		xmlOtherFile = new MockMultipartFile("file", "", "application/xml",
 				"{\"xml\": \"This is other fake xml.\"}".getBytes());
@@ -85,18 +76,38 @@ public class FileRestTestController {
 		}
 	}
 
+	/**
+	 *
+	 * uploadFile(...) test methods
+	 * 
+	 */
+
+	private void uploadFileBuilder() {
+		builder = MockMvcRequestBuilders.multipart("/file/upload");
+		builder.with(new RequestPostProcessor() {
+			@Override
+			public MockHttpServletRequest postProcessRequest(MockHttpServletRequest request) {
+				request.setMethod("POST");
+				return request;
+			}
+		});
+	}
+
 	@Test
 	public void uploadGPXFile() throws Exception {
+		uploadFileBuilder();
 		mockMvc.perform(builder.file(xmlFile).param("type", "gpx")).andExpect(status().isOk());
 	}
 
 	@Test
 	public void uploadTCXFile() throws Exception {
+		uploadFileBuilder();
 		mockMvc.perform(builder.file(xmlFile).param("type", "tcx")).andExpect(status().isOk());
 	}
 
 	@Test
 	public void uploadUnknownFile() throws Exception {
+		uploadFileBuilder();
 		mockMvc.perform(builder.file(xmlFile).param("type", "kml")).andExpect(status().isBadRequest())
 				.andExpect(content().contentType("application/json;charset=UTF-8"))
 				.andExpect(jsonPath("$.error", is(true)))
@@ -105,6 +116,7 @@ public class FileRestTestController {
 
 	@Test
 	public void uploadSyntaxErrorJAXBExceptionFile() throws Exception {
+		uploadFileBuilder();
 		mockMvc.perform(builder.file(exceptionJAXBFile).param("type", "gpx"))
 				.andExpect(status().isInternalServerError())
 				.andExpect(content().contentType("application/json;charset=UTF-8"))
@@ -115,6 +127,7 @@ public class FileRestTestController {
 
 	@Test
 	public void uploadSyntaxErrorSAXExceptionFile() throws Exception {
+		uploadFileBuilder();
 		mockMvc.perform(builder.file(exceptionSAXFile).param("type", "tcx")).andExpect(status().isBadRequest())
 				.andExpect(content().contentType("application/json;charset=UTF-8"))
 				.andExpect(jsonPath("$.error", is(true)))
@@ -127,11 +140,28 @@ public class FileRestTestController {
 		// AWS AS3 throws an Exception when
 		Mockito.doThrow(new AmazonClientException("Problems with AWS S3")).when(aS3Service).uploadFile(Mockito.any(),
 				Mockito.anyString());
+		uploadFileBuilder();
 		mockMvc.perform(builder.file(xmlOtherFile).param("type", "tcx")).andExpect(status().isInternalServerError())
 				.andExpect(content().contentType("application/json;charset=UTF-8"))
 				.andExpect(jsonPath("$.error", is(true)))
 				.andExpect(jsonPath("$.description", is("Problem with the type of the file which you want to upload")))
 				.andExpect(jsonPath("$.exception", is("Problems with AWS S3")));
+	}
+
+	/**
+	 *
+	 * getFile(...,...) test methods
+	 * 
+	 * @throws Exception
+	 * 
+	 */
+
+	@Test
+	public void getFileTest() throws Exception {
+		mockMvc.perform(get("/file/get//")).andExpect(status().isBadRequest())
+				.andExpect(content().contentType("application/json;charset=UTF-8"))
+				.andExpect(jsonPath("$.error", is(true)))
+				.andExpect(jsonPath("$.description", is("Problem with the type of the file which you want to get")));
 	}
 
 }
