@@ -15,12 +15,13 @@ import java.util.Collections;
 import javax.xml.bind.JAXBException;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
@@ -33,31 +34,53 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.xml.sax.SAXParseException;
 
 import com.amazonaws.AmazonClientException;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
+import com.routeanalyzer.database.ActivityMongoRepository;
 import com.routeanalyzer.logic.ActivityUtils;
 import com.routeanalyzer.model.Activity;
 import com.routeanalyzer.services.OriginalRouteAS3Service;
 
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.contains;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doThrow;
+import static com.lordofthejars.nosqlunit.mongodb.MongoDbRule.MongoDbRuleBuilder.newMongoDbRule;
+
 @ActiveProfiles("test")
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest
+@SpringBootTest()
 @AutoConfigureMockMvc
 public class FileRestTestController {
+	
+	@Autowired
+    private ApplicationContext applicationContext;
+	
+	@Rule
+	public MongoDbRule mongoDbRule = newMongoDbRule().defaultSpringMongoDb(
+			"test-db");
 
 	@Autowired
 	private ActivityUtils activityUtilsService;
 	@Autowired
 	private OriginalRouteAS3Service aS3Service;
 	@Autowired
+	private ActivityMongoRepository activityMongoRepository;
+	@Autowired
 	private MockMvc mockMvc;
 
 	private MockMultipartHttpServletRequestBuilder builder;
 	private MockMultipartFile xmlFile, xmlOtherFile, exceptionJAXBFile, exceptionSAXFile;
-	private Activity activity;
+	private Activity activity, activityWithId;
+	
+	private static final String FAKE_ID = "1234567890";
 
 	@Before
 	public void setUp() {
 		activity = new Activity();
-		activity.setId("1234567890");
+		activityWithId = new Activity();
+		activityWithId.setId(FAKE_ID);
 
 		xmlFile = new MockMultipartFile("file", "", "application/xml", "{\"xml\": \"This is a fake xml.\"}".getBytes());
 		xmlOtherFile = new MockMultipartFile("file", "", "application/xml",
@@ -67,13 +90,13 @@ public class FileRestTestController {
 		exceptionSAXFile = new MockMultipartFile("file", "", "application/xml",
 				"{\"xml\": \"This xml generates a SAXParseException.\"}".getBytes());
 		try {
-			Mockito.when(activityUtilsService.uploadGPXFile(xmlFile)).thenReturn(Collections.emptyList());
-			Mockito.when(activityUtilsService.uploadTCXFile(xmlFile)).thenReturn(Collections.emptyList());
-			Mockito.when(activityUtilsService.uploadGPXFile(exceptionJAXBFile))
+			when(activityUtilsService.uploadGPXFile(xmlFile)).thenReturn(Collections.emptyList());
+			when(activityUtilsService.uploadTCXFile(xmlFile)).thenReturn(Collections.emptyList());
+			when(activityUtilsService.uploadGPXFile(exceptionJAXBFile))
 					.thenThrow(new JAXBException("Syntax error while trying to parse the file."));
-			Mockito.when(activityUtilsService.uploadTCXFile(exceptionSAXFile))
+			when(activityUtilsService.uploadTCXFile(exceptionSAXFile))
 					.thenThrow(new SAXParseException("Syntax error while trying to parse the file.", null));
-			Mockito.when(activityUtilsService.uploadTCXFile(xmlOtherFile)).thenReturn(Arrays.asList(activity));
+			when(activityUtilsService.uploadTCXFile(xmlOtherFile)).thenReturn(Arrays.asList(activity));
 		} catch (AmazonClientException | SAXParseException | IOException | JAXBException e) {
 			e.printStackTrace();
 		}
@@ -141,8 +164,9 @@ public class FileRestTestController {
 	@Test
 	public void uploadAWSS3ThrowException() throws Exception {
 		// AWS AS3 throws an Exception when
-		Mockito.doThrow(new AmazonClientException("Problems with AWS S3")).when(aS3Service).uploadFile(Mockito.any(),
-				Mockito.anyString());
+		doThrow(new AmazonClientException("Problems with AWS S3")).when(aS3Service).uploadFile(any(),
+				anyString());
+		doReturn(activityWithId).when(activityMongoRepository).save(activity);
 		uploadFileBuilder();
 		mockMvc.perform(builder.file(xmlOtherFile).param("type", "tcx")).andExpect(status().isInternalServerError())
 				.andExpect(content().contentType("application/json;charset=UTF-8"))
@@ -165,8 +189,8 @@ public class FileRestTestController {
 				new InputStreamReader(new ClassPathResource("coruna.gpx.xml").getInputStream(), "UTF-8"));
 		BufferedReader tcxBufferedReader = new BufferedReader(
 				new InputStreamReader(new ClassPathResource("oviedo.tcx.xml").getInputStream(), "UTF-8"));
-		Mockito.when(aS3Service.getFile(Mockito.contains("gpx"))).thenReturn(gpxBufferedReader);
-		Mockito.when(aS3Service.getFile(Mockito.contains("tcx"))).thenReturn(tcxBufferedReader);
+		when(aS3Service.getFile(contains("gpx"))).thenReturn(gpxBufferedReader);
+		when(aS3Service.getFile(contains("tcx"))).thenReturn(tcxBufferedReader);
 		mockMvc.perform(get("/file/get/{type}/{id}", "gpx", "some_id")).andExpect(status().isOk())
 				.andExpect(content().contentType("application/octet-stream"));
 		mockMvc.perform(get("/file/get/{type}/{id}", "tcx", "some_id")).andExpect(status().isOk())

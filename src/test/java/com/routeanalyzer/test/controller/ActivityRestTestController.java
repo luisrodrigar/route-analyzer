@@ -6,26 +6,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.routeanalyzer.controller.rest.ActivityRestController;
 import com.routeanalyzer.database.ActivityMongoRepository;
 import com.routeanalyzer.logic.ActivityUtils;
 import com.routeanalyzer.model.Activity;
 
 @ActiveProfiles("test")
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest
+@SpringBootTest()
 @AutoConfigureMockMvc
 public class ActivityRestTestController {
 
@@ -47,7 +46,6 @@ public class ActivityRestTestController {
 
 	@Test
 	public void getActivityByIdTest() throws Exception {
-		
 		mockMvc.perform(get("/activity/{id}", "fake")).andExpect(status().isBadRequest())
 				.andExpect(content().contentType("application/json;charset=UTF-8"))
 				.andExpect(jsonPath("$.error", is(true)))
