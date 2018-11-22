@@ -9,9 +9,12 @@ import java.util.stream.IntStream;
 
 import javax.xml.bind.JAXBException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +32,8 @@ import com.routeanalyzer.model.Activity;
 @RestController
 @RequestMapping("activity")
 public class ActivityRestController {
+	
+	private final Logger log = LoggerFactory.getLogger(ActivityRestController.class);
 
 	@Autowired
 	private ActivityMongoRepository mongoRepository;
@@ -39,9 +44,9 @@ public class ActivityRestController {
 	public @ResponseBody ResponseEntity<Object> getActivityById(@PathVariable String id) {
 		Activity act = mongoRepository.findById(id).orElse(null);
 		if (Objects.isNull(act)) {
-			String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\""
-					+ "}";
-			return ResponseEntity.badRequest().body(error);
+			log.debug("Given activity id not found in database.");
+			String error = "{\"error\":true, \"description\":\"Given activity id not found in database.\"}";
+			return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON_UTF8).body(error);
 		} else
 			return ResponseEntity.ok().body(act);
 	}
@@ -53,15 +58,14 @@ public class ActivityRestController {
 		case "tcx":
 			try {
 				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.add("Content-Type", "application/octet-stream");
+				responseHeaders.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_tcx.xml");
 				return ResponseEntity.ok().body(activityUtilsService.exportAsTCX(activity));
 			} catch (JAXBException e1) {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
-				String errorValue = "{" + "\"error\":true,"
-						+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
-						+ e1.getMessage() + "\"" + "}";
+				String errorValue = "{\"error\":true,\"description\":\"Problem with the file format uploaded.\"," 
+						+ "\"exception\":\"" + e1.getMessage() + "\"}";
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders)
 						.body(errorValue);
 			}

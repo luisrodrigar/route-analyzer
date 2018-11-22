@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -37,6 +39,8 @@ import com.routeanalyzer.services.OriginalRouteAS3Service;
 @RequestMapping("/file")
 public class FileRestController {
 
+	private final Logger log = LoggerFactory.getLogger(FileRestController.class);
+	
 	@Autowired
 	private ActivityMongoRepository mongoRepository;
 	@Autowired
@@ -70,11 +74,13 @@ public class FileRestController {
 					List<String> ids = saveActivity(activities, multiPart.getBytes());
 					return ResponseEntity.ok().body(gson.toJson(ids));
 				} catch (SAXParseException e) {
+					log.error(e.getClass().getSimpleName() + " error: " + e.getMessage());
 					String errorValue = "{" + "\"error\":true,"
 							+ "\"description\":\"Problem trying to parser xml file. Check if its correct.\","
 							+ "\"exception\":\"" + e.getMessage() + "\"" + "}";
 					return ResponseEntity.badRequest().body(errorValue);
 				} catch (JAXBException e) {
+					log.error(e.getClass().getSimpleName() + " error: " + e.getMessage());
 					String errorValue = "{" + "\"error\":true,"
 							+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
 							+ e.getMessage() + "\"" + "}";
@@ -87,11 +93,13 @@ public class FileRestController {
 					List<String> ids = saveActivity(activities, multiPart.getBytes());
 					return ResponseEntity.ok().body(gson.toJson(ids));
 				} catch (SAXParseException e) {
+					log.error(e.getClass().getSimpleName() + " error: " + e.getMessage());
 					String errorValue = "{" + "\"error\":true,"
 							+ "\"description\":\"Problem trying to parser xml file. Check if its correct.\","
 							+ "\"exception\":\"" + e.getMessage() + "\"" + "}";
 					return ResponseEntity.badRequest().body(errorValue);
 				} catch (JAXBException e) {
+					log.error(e.getClass().getSimpleName() + " error: " + e.getMessage());
 					String errorValue = "{" + "\"error\":true,"
 							+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
 							+ e.getMessage() + "\"" + "}";
@@ -99,6 +107,7 @@ public class FileRestController {
 				}
 			}
 		} catch (IOException | AmazonClientException e) {
+			log.error(e.getClass().getSimpleName() + " error: " + e.getMessage());
 			String errorValue = "{" + "\"error\":true,"
 					+ "\"description\":\"Problem with the type of the file which you want to upload\","
 					+ "\"exception\":\"" + e.getMessage() + "\"" + "}";
@@ -124,24 +133,26 @@ public class FileRestController {
 		if (type != null && !type.isEmpty()) {
 			try {
 				String xml = getActivityAS3(id + "." + type);
-				responseHeaders.add("Content-Type", "application/octet-stream");
+				responseHeaders.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "." + type);
 				return ResponseEntity.ok().headers(responseHeaders).body(xml);
 
 			} catch (AmazonClientException amazonException) {
-				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
+				log.error("AmazonClientException error", amazonException);
+				responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
 				String json = "{" + "error:true," + "description: 'Problem trying to get the file :: Amazon S3 Problem'"
 						+ "exception: " + amazonException.getMessage() + " }";
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders).body(json);
 			} catch (IOException iOException) {
-				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
+				log.error("IOException error", iOException);
+				responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
 				String json = "{" + "error:true,"
 						+ "description: 'Problem trying to get the file :: Input/Output Problem'" + "exception: "
 						+ iOException.getMessage() + " }";
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders).body(json);
 			}
 		} else {
-			responseHeaders.add("Content-Type", "application/json; charset=utf-8");
+			responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
 			String json = "{" + "error:true," + "description:'Problem with the type of the file which you want to get'"
 					+ "}";
 			return ResponseEntity.badRequest().headers(responseHeaders).body(json);
@@ -163,7 +174,7 @@ public class FileRestController {
 			try {
 				aS3Service.uploadFile(arrayBytes, activity.getId() + "." + activity.getSourceXmlType());
 			} catch (AmazonClientException aS3Exception) {
-				System.err.println("Delete activity with id: " + activity.getId()
+				log.error("Delete activity with id: " + activity.getId()
 						+ " due to problems trying to upload file to AS3.");
 				mongoRepository.delete(activity);
 				throw aS3Exception;
