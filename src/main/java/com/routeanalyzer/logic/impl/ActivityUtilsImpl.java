@@ -353,7 +353,7 @@ public class ActivityUtilsImpl implements ActivityUtils {
 
 	@Override
 	public Activity joinLap(Activity act, Integer indexLap1, Integer indexLap2) {
-		if (Objects.isNull(indexLap1) || Objects.isNull(indexLap2))
+		if (Objects.isNull(indexLap1) || Objects.isNull(indexLap2) || Objects.isNull(act))
 			return null;
 		int indexLapLeft = indexLap1, indexLapRight = indexLap2;
 		if (indexLap1.compareTo(indexLap2) > 0) {
@@ -380,6 +380,8 @@ public class ActivityUtilsImpl implements ActivityUtils {
 
 	@Override
 	public Activity removeLap(Activity act, Long startTime, Integer indexLap) {
+		if(Objects.isNull(act))
+			return null;
 		Lap lapToDelete = act.getLaps().stream().filter((lap) -> {
 			return lap.getIndex() == indexLap
 					&& (!Objects.isNull(startTime) ? startTime == lap.getStartTime().getTime() : true);

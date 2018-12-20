@@ -1,0 +1,360 @@
+{
+	"activities": [
+		{
+			"_id": {
+				"$oid": "5ace8caf4c147400048aa6af"
+			},
+			"device": "Garmin Connect",
+			"name": "Untitled",
+			"sourceXmlType": "tcx",
+			"date": {
+				"$date": {
+					"$numberLong": "1311586432000"
+				}
+			},
+			"laps": [
+				{
+					"startTime": {
+						"$date": {
+							"$numberLong": "1519737373000"
+						}
+					},
+					"index": {
+						"$numberInt": "1"
+					},
+					"totalTimeSeconds": {
+						"$numberDouble": "16.0"
+					},
+					"distanceMeters": {
+						"$numberDouble": "43.34577092311236"
+					},
+					"maximunSpeed": {
+						"$numberDouble": "6.143949288527114"
+					},
+					"averageSpeed": {
+						"$numberDouble": "4.112047870706494"
+					},
+					"averageHearRate": {
+						"$numberDouble": "98.6231732776618"
+					},
+					"maximunHeartRate": {
+						"$numberInt": "103"
+					},
+					"tracks": [
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737373000"
+								}
+							},
+							"index": {
+								"$numberInt": "1"
+							},
+							"position": {
+								"latitudeDegrees": "42.6131970",
+								"longitudeDegrees": "-6.5732170"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "0",
+							"speed": "0",
+							"heartRateBpm": {
+								"$numberInt": "96"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737376000"
+								}
+							},
+							"index": {
+								"$numberInt": "2"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132120",
+								"longitudeDegrees": "-6.5733020"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "7.16095400022874173373566009104251861572265625",
+							"speed": "2.386984666742913763215483413659967482089996337890625",
+							"heartRateBpm": {
+								"$numberInt": "96"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737378000"
+								}
+							},
+							"index": {
+								"$numberInt": "3"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132170",
+								"longitudeDegrees": "-6.5733730"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "13.005015472558941524994224891997873783111572265625",
+							"speed": "2.9220307361650998956292824004776775836944580078125",
+							"heartRateBpm": {
+								"$numberInt": "96"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737380000"
+								}
+							},
+							"index": {
+								"$numberInt": "4"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132120",
+								"longitudeDegrees": "-6.5734430"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "18.76735956551630835065225255675613880157470703125",
+							"speed": "2.8811720464786834128290138323791325092315673828125",
+							"heartRateBpm": {
+								"$numberInt": "96"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737383000"
+								}
+							},
+							"index": {
+								"$numberInt": "5"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132120",
+								"longitudeDegrees": "-6.5735170"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "24.829908844772916154397535137832164764404296875",
+							"speed": "2.02084975975220260124842752702534198760986328125",
+							"heartRateBpm": {
+								"$numberInt": "96"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737384000"
+								}
+							},
+							"index": {
+								"$numberInt": "6"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132120",
+								"longitudeDegrees": "-6.5735920"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "30.973858133300030459622576017864048480987548828125",
+							"speed": "6.143949288527114305225040880031883716583251953125",
+							"heartRateBpm": {
+								"$numberInt": "96"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737386000"
+								}
+							},
+							"index": {
+								"$numberInt": "7"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132120",
+								"longitudeDegrees": "-6.5736650"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "36.95465469202076036481230403296649456024169921875",
+							"speed": "2.9903982793603649525948640075512230396270751953125",
+							"heartRateBpm": {
+								"$numberInt": "99"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737389000"
+								}
+							},
+							"index": {
+								"$numberInt": "8"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132120",
+								"longitudeDegrees": "-6.5737430"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "43.34577092311236157229359378106892108917236328125",
+							"speed": "2.130372077030533883856833199388347566127777099609375",
+							"heartRateBpm": {
+								"$numberInt": "103"
+							}
+						}
+					]
+				},
+				{
+					"startTime": {
+						"$date": {
+							"$numberLong": "1519737390000"
+						}
+					},
+					"index": {
+						"$numberInt": "2"
+					},
+					"totalTimeSeconds": {
+						"$numberDouble": "9.0"
+					},
+					"distanceMeters": {
+						"$numberDouble": "28.934607828341"
+					},
+					"maximunSpeed": {
+						"$numberDouble": "7.053560612105727"
+					},
+					"averageSpeed": {
+						"$numberDouble": "5.003115597738508"
+					},
+					"averageHearRate": {
+						"$numberDouble": "113.5"
+					},
+					"maximunHeartRate": {
+						"$numberInt": "120"
+					},
+					"tracks": [
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737390000"
+								}
+							},
+							"index": {
+								"$numberInt": "1"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132120",
+								"longitudeDegrees": "-6.5738250"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "50.06350257930233738079550676047801971435546875",
+							"speed": "6.71773165618997580850191297940909862518310546875",
+							"heartRateBpm": {
+								"$numberInt": "106"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737393000"
+								}
+							},
+							"index": {
+								"$numberInt": "2"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132120",
+								"longitudeDegrees": "-6.5739120"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "57.191584795088687087627477012574672698974609375",
+							"speed": "2.376027405262116420914253467344678938388824462890625",
+							"heartRateBpm": {
+								"$numberInt": "109"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737395000"
+								}
+							},
+							"index": {
+								"$numberInt": "3"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132170",
+								"longitudeDegrees": "-6.5739970"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "64.178236716566146924378699623048305511474609375",
+							"speed": "3.49332596073872991837561130523681640625",
+							"heartRateBpm": {
+								"$numberInt": "115"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737396000"
+								}
+							},
+							"index": {
+								"$numberInt": "4"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132200",
+								"longitudeDegrees": "-6.5740830"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "71.2317973286718739700518199242651462554931640625",
+							"speed": "7.0535606121057270456731203012168407440185546875",
+							"heartRateBpm": {
+								"$numberInt": "115"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737398000"
+								}
+							},
+							"index": {
+								"$numberInt": "5"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132350",
+								"longitudeDegrees": "-6.5741700"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "78.5524299205609253249349421821534633636474609375",
+							"speed": "3.6603162959445256774415611289441585540771484375",
+							"heartRateBpm": {
+								"$numberInt": "116"
+							}
+						},
+						{
+							"date": {
+								"$date": {
+									"$numberLong": "1519737450000"
+								}
+							},
+							"index": {
+								"$numberInt": "1"
+							},
+							"position": {
+								"latitudeDegrees": "42.6132120",
+								"longitudeDegrees": "-6.5738250"
+							},
+							"altitudeMeters": "557.3",
+							"distanceMeters": "0.0",
+							"speed": "6.71773165618997580850191297940909862518310546875",
+							"heartRateBpm": {
+								"$numberInt": "120"
+							}
+						}
+					]
+				}
+			],
+			"_class": "com.routeanalyzer.model.Activity"
+		}
+	]
+}

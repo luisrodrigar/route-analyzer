@@ -2,6 +2,7 @@ package com.routeanalyzer.test.config;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.TestPropertySource;
@@ -17,7 +18,7 @@ import ch.qos.logback.classic.Logger;
 @TestPropertySource(locations="classpath:test.properties")
 public class TestConfiguration{
 	
-	@MockBean
+	@SpyBean
 	public ActivityUtils activityUtils;
 
 	@MockBean
