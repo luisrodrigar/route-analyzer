@@ -17,9 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,7 +41,7 @@ public class ActivityRestController {
 	@Autowired
 	private ActivityUtils activityUtilsService;
 
-	@RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json;")
+	@GetMapping(value = "/{id}", produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> getActivityById(@PathVariable String id) {
 		Activity act = mongoRepository.findById(id).orElse(null);
 		if (Objects.isNull(act)) {
@@ -51,7 +52,7 @@ public class ActivityRestController {
 			return ResponseEntity.ok().body(act);
 	}
 
-	@RequestMapping(value = "/{id}/export/{type}", method = RequestMethod.GET)
+	@GetMapping(value = "/{id}/export/{type}")
 	public ResponseEntity<String> exportAs(@PathVariable final String id, @PathVariable final String type) {
 		Activity activity = mongoRepository.findById(id).orElse(null);
 		switch (type.toLowerCase()) {
@@ -60,10 +61,10 @@ public class ActivityRestController {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_tcx.xml");
-				return ResponseEntity.ok().body(activityUtilsService.exportAsTCX(activity));
+				return ResponseEntity.ok().headers(responseHeaders).body(activityUtilsService.exportAsTCX(activity));
 			} catch (JAXBException e1) {
 				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
+				responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
 				String errorValue = "{\"error\":true,\"description\":\"Problem with the file format uploaded.\"," 
 						+ "\"exception\":\"" + e1.getMessage() + "\"}";
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders)
@@ -72,12 +73,12 @@ public class ActivityRestController {
 		case "gpx":
 			try {
 				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.add("Content-Type", "application/octet-stream");
+				responseHeaders.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_gpx.xml");
 				return ResponseEntity.ok().headers(responseHeaders).body(activityUtilsService.exportAsGPX(activity));
 			} catch (JAXBException e) {
 				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.add("Content-Type", "application/json; charset=utf-8");
+				responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
 				String errorValue = "{" + "\"error\":true,"
 						+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
 						+ e.getMessage() + "\"" + "}";
@@ -86,28 +87,33 @@ public class ActivityRestController {
 			}
 		default:
 			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.add("Content-Type", "application/json; charset=utf-8");
+			responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
 			String errorValue = "{" + "\"error\":true," + "\"description\":\"Select a correct type for export it.\""
 					+ "}";
 			return ResponseEntity.badRequest().headers(responseHeaders).body(errorValue);
 		}
 	}
 
-	@RequestMapping(value = "/{id}/remove/point", method = RequestMethod.PUT, produces = "application/json;")
+	@PutMapping(value = "/{id}/remove/point", produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> removePoint(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
 		Activity activity = mongoRepository.findById(id).orElse(null);
-		activityUtilsService.removePoint(activity, lat, lng, timeInMillis, index);
 		if (Objects.isNull(activity)) {
 			String error = "{" + "\"error\":true," + "\"description\":\"Given activity not found in database.\"" + "}";
 			return ResponseEntity.badRequest().body(error);
 		} else {
-			mongoRepository.save(activity);
-			return ResponseEntity.ok().body(activity);
+			try{
+				activityUtilsService.removePoint(activity, lat, lng, timeInMillis, index);
+				mongoRepository.save(activity);
+				return ResponseEntity.ok().body(activity);
+			} catch(IndexOutOfBoundsException e){
+				String error = "{" + "\"error\":true," + "\"description\":\"Check if the index is correct.\"" + "}";
+				return ResponseEntity.badRequest().body(error);
+			}
 		}
 	}
 
-	@RequestMapping(value = "/{id}/join/laps", method = RequestMethod.PUT, produces = "application/json;")
+	@PutMapping(value = "/{id}/join/laps", produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> joinLaps(@PathVariable String id,
 			@RequestParam(name = "index1") String indexLap1, @RequestParam(name = "index2") String indexLap2) {
 		Activity act = mongoRepository.findById(id).orElse(null);
@@ -128,21 +134,25 @@ public class ActivityRestController {
 
 	}
 
-	@RequestMapping(value = "/{id}/split/lap", method = RequestMethod.PUT, produces = "application/json;")
+	@PutMapping(value = "/{id}/split/lap", produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> splitLap(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
 		Activity act = mongoRepository.findById(id).orElse(null);
-		act = activityUtilsService.splitLap(act, lat, lng, timeInMillis, index);
 		if (Objects.isNull(act))
 			return ResponseEntity.badRequest().body("{" + "\"error\":true,"
-					+ "\"description\":\"Error trying split the lap. Given activity id not found in database\"" + "}");
+					+ "\"description\":\"Given activity id not found in database.\"" + "}");
 		else {
+			act = activityUtilsService.splitLap(act, lat, lng, timeInMillis, index);
+			if(Objects.isNull(act)){
+				return ResponseEntity.badRequest().body("{" + "\"error\":true,"
+						+ "\"description\":\"Error trying split the lap.\"" + "}");
+			}
 			mongoRepository.save(act);
 			return ResponseEntity.ok().body(act);
 		}
 	}
 
-	@RequestMapping(value = "/{id}/remove/laps", method = RequestMethod.PUT, produces = "application/json;")
+	@PutMapping(value = "/{id}/remove/laps", produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> removeLaps(@PathVariable String id,
 			@RequestParam(name = "date") String startTimeLaps, @RequestParam(name = "index") String indexLaps) {
 		Activity act = mongoRepository.findById(id).orElse(null);
@@ -170,14 +180,14 @@ public class ActivityRestController {
 		}
 	}
 
-	@RequestMapping(value = "/{id}/color/laps", method = RequestMethod.PUT)
-	public @ResponseBody ResponseEntity<String> setColorLaps(@PathVariable String id, String data) {
+	@PutMapping(value = "/{id}/color/laps")
+	public @ResponseBody ResponseEntity<String> setColorLaps(@PathVariable String id, @RequestParam String data) {
 		Activity act = mongoRepository.findById(id).orElse(null);
 		// Lap splitter: @, color splitter: -, first char in hexadecimal number:
 		// #
 		String lapSplitter = "@", colorSplitter = "-", startedCharHex = "#";
 		// [color(hex)-lightColor(hex)]@[...]... number without #
-		if (!Objects.isNull(data) && !data.isEmpty()) {
+		if (!Objects.isNull(data) && !data.isEmpty() && !Objects.isNull(act)) {
 			List<String> laps = null;
 			if (data.contains(lapSplitter))
 				laps = Arrays.asList(data.split(lapSplitter));
@@ -196,10 +206,10 @@ public class ActivityRestController {
 			});
 			mongoRepository.save(act);
 			String info = "{" + "\"error\":false," + "\"description\":\"Lap's colors are updated.\"" + "}";
-			return ResponseEntity.ok().body(info);
+			return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON_UTF8).body(info);
 		} else {
 			String error = "{" + "\"error\":true," + "\"description\":\"Not be posible to update lap's colors.\"" + "}";
-			return ResponseEntity.badRequest().body(error);
+			return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON_UTF8).body(error);
 		}
 	}
 }
