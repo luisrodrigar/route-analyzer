@@ -32,7 +32,7 @@ public class TrackPointUtilsImpl implements TrackPointUtils{
 				&& track.getPosition().getLatitudeDegrees().doubleValue() == position.getLatitudeDegrees().doubleValue()
 				&& track.getPosition().getLongitudeDegrees().doubleValue() == position.getLongitudeDegrees().doubleValue()
 				&& ((!Objects.isNull(timeInMillis) && track.getDate().getTime() == timeInMillis)
-						|| (!Objects.isNull(index) && track.getIndex() == index));
+						|| (!Objects.isNull(index) && track.getIndex().intValue() == index.intValue()));
 		return isTrack;
 	}
 

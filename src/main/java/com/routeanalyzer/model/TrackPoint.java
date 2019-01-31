@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import lombok.Builder;
+
+@Builder
 public class TrackPoint implements Comparable<TrackPoint>, Serializable {
 
 	private static final long serialVersionUID = 1L;

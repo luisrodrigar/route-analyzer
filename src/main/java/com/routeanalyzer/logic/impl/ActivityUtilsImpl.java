@@ -18,7 +18,6 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.commons.lang3.SerializationUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXParseException;
@@ -56,19 +55,22 @@ import com.routeanalyzer.xml.tcx.activityextension.ActivityTrackpointExtensionT;
 @Service
 public class ActivityUtilsImpl implements ActivityUtils {
 	
-	@Autowired
-	private GPXService gpxReader;
-	@Autowired
-	private TCXService tcxReader;
-	@Autowired
+	private GPXService gpxService;
+	private TCXService tcxService;
 	private LapsUtils lapsUtilsService;
+	
+	public ActivityUtilsImpl(GPXService gpxService, TCXService tcxService, LapsUtils lapsUtils) {
+		this.gpxService = gpxService;
+		this.tcxService = tcxService;
+		this.lapsUtilsService = lapsUtils;
+	}
 
 	@Override
 	public List<Activity> uploadGPXFile(MultipartFile multiPart)
 			throws IOException, AmazonClientException, JAXBException, SAXParseException {
 		InputStream inputFileGPX = multiPart.getInputStream();
 		// Get the object from xml file (type GPX)
-		GpxType gpx = gpxReader.readXML(inputFileGPX);
+		GpxType gpx = gpxService.readXML(inputFileGPX);
 		// Create each activity of the file
 		return getListActivitiesFromGPX(gpx);
 	}
@@ -78,7 +80,7 @@ public class ActivityUtilsImpl implements ActivityUtils {
 			throws IOException, JAXBException, SAXParseException {
 		InputStream inputFileTCX = multiPart.getInputStream();
 		// Get the object from xml file (type TCX)
-		TrainingCenterDatabaseT tcx = tcxReader.readXML(inputFileTCX);
+		TrainingCenterDatabaseT tcx = tcxService.readXML(inputFileTCX);
 		// Create each activity of the file
 		return getListActivitiesFromTCX(tcx);
 	}
