@@ -26,7 +26,7 @@ import com.routeanalyzer.model.Activity;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@ActiveProfiles("test-controller")
 public class MockMvcTestController {
 
 	@Rule

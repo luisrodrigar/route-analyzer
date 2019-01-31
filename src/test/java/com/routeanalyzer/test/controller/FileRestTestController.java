@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.xml.sax.SAXParseException;
 
@@ -45,6 +46,7 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doThrow;
 
 @RunWith(SpringJUnit4ClassRunner.class)
+@ActiveProfiles("test-mongodb")
 @EnableAutoConfiguration(exclude = { MongoAutoConfiguration.class, MongoDataAutoConfiguration.class,
 		MongoRepositoriesAutoConfiguration.class })
 public class FileRestTestController extends MockMvcTestController {
@@ -59,18 +61,18 @@ public class FileRestTestController extends MockMvcTestController {
 	private MockMultipartFile xmlFile, xmlOtherFile, exceptionJAXBFile, exceptionSAXFile;
 	private Activity gpxActivity, tcxActivity, unknownXml;
 
-	@Value("classpath:file-rest-controller/xml-input-fake-1.json")
+	@Value("classpath:controller/xml-input-fake-1.json")
 	private Resource fake1;
-	@Value("classpath:file-rest-controller/xml-input-fake-2.json")
+	@Value("classpath:controller/xml-input-fake-2.json")
 	private Resource fake2;
-	@Value("classpath:file-rest-controller/xml-input-fake-jaxb-exception.json")
+	@Value("classpath:controller/xml-input-fake-jaxb-exception.json")
 	private Resource fakeJAXBException;
-	@Value("classpath:file-rest-controller/xml-input-fake-sax-parse-exception.json")
+	@Value("classpath:controller/xml-input-fake-sax-parse-exception.json")
 	private Resource fakeSAXParseException;
 
-	@Value("classpath:coruna.gpx.xml")
+	@Value("classpath:controller/coruna.gpx.xml")
 	private Resource gpxXmlResource;
-	@Value("classpath:oviedo.tcx.xml")
+	@Value("classpath:controller/oviedo.tcx.xml")
 	private Resource tcxXmlResource;
 
 	@Before
@@ -109,16 +111,16 @@ public class FileRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/file-rest-controller/db-activity-gpx.json")
+	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-gpx.json")
 	public void uploadGPXFile() throws Exception {
 		uploadFileBuilder();
 		mockMvc.perform(builder.file(xmlFile).param("type", "gpx")).andExpect(status().isOk());
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/file-rest-controller/db-activity-tcx.json")
+	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx.json")
 	public void uploadTCXFile() throws Exception {
 		uploadFileBuilder();
 		mockMvc.perform(builder.file(xmlFile).param("type", "tcx")).andExpect(status().isOk());

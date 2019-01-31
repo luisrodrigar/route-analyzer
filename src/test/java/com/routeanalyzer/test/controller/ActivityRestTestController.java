@@ -14,14 +14,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
@@ -32,6 +31,7 @@ import com.routeanalyzer.model.Activity;
 import com.routeanalyzer.test.common.TestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
+@ActiveProfiles("test-mongodb")
 @EnableAutoConfiguration(exclude = { MongoAutoConfiguration.class, MongoDataAutoConfiguration.class,
 		MongoRepositoriesAutoConfiguration.class })
 public class ActivityRestTestController extends MockMvcTestController {
@@ -49,9 +49,6 @@ public class ActivityRestTestController extends MockMvcTestController {
 			JOIN_LAPS = ROOT_PATH + "/{id}/join/laps", SPLIT_LAP = ROOT_PATH + "/{id}/split/lap",
 			COLORS_LAP = ROOT_PATH + "/{id}/color/laps";
 
-	@Value("classpath:file-rest-controller/json-activity-removed-point.json")
-	private Resource tcxActRemovePointResponse;
-
 	@Before
 	public void setUp() {
 		gpxActivity = TestUtils.createGPXActivity.get();
@@ -59,7 +56,7 @@ public class ActivityRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-gpx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@UsingDataSet(locations = "/controller/db-activity-gpx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void getActivityByIdTest() throws Exception {
 		String path = ROOT_PATH + "/{id}";
 		// Activity does not exists
@@ -95,20 +92,20 @@ public class ActivityRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void exportAsTCX() throws Exception {
 		isReturningFileHTTP(get(EXPORT_AS_PATH, TestUtils.FAKE_ID_TCX, "tcx"), MediaType.APPLICATION_OCTET_STREAM);
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-gpx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@UsingDataSet(locations = "/controller/db-activity-gpx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void exportAsGPX() throws Exception {
 		isReturningFileHTTP(get(EXPORT_AS_PATH, TestUtils.FAKE_ID_GPX, "gpx"), MediaType.APPLICATION_OCTET_STREAM);
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/file-rest-controller/db-activity-tcx-without-point.json")
+	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-without-point.json")
 	public void removeExistingPointTest() throws Exception {
 		String latitudePointToDelete = "42.6132120", longitudePointToDelete = "-6.5733020",
 				timeInMillisPointToDelete = "1519737376000", indexPointToDelete = "2";
@@ -118,7 +115,7 @@ public class ActivityRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void removePointNonexistentActivityTest() throws Exception {
 		String latitudePointToDelete = "42.6131970", longitudePointToDelete = "-6.5732170",
 				timeInMillisPointToDelete = "1519737373000", indexPointToDelete = "1";
@@ -129,7 +126,7 @@ public class ActivityRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void removeLapNonexistentActivityTest() throws Exception {
 		String errorDescription = "Given activity id not found in database.";
 		isGenerateErrorHTTP(put(REMOVE_LAP, TestUtils.FAKE_ID_TCX).param("date", "1519737390000").param("index", "2"),
@@ -137,31 +134,31 @@ public class ActivityRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/file-rest-controller/db-activity-tcx-without-lap.json")
+	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-without-lap.json")
 	public void removeLapExistentActivityTest() throws Exception {
 		isReturningActivityHTTP(
 				put(REMOVE_LAP, TestUtils.FAKE_ID_TCX).param("date", "1519737390000").param("index", "2"), tcxActivity);
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/file-rest-controller/db-activity-tcx-without-laps.json")
+	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-without-laps.json")
 	public void removeLapsExistentActivityTest() throws Exception {
 		isReturningActivityHTTP(put(REMOVE_LAP, TestUtils.FAKE_ID_TCX).param("date", "1519737390000,1519737400000")
 				.param("index", "2,3"), tcxActivity);
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/file-rest-controller/db-activity-tcx-join-laps.json")
+	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-join-laps.json")
 	public void joinLapsTest() throws Exception {
 		isReturningActivityHTTP(put(JOIN_LAPS, TestUtils.FAKE_ID_TCX).param("index1", "1").param("index2", "2"),
 				tcxActivity);
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void joinLapsForgetParamsTest() throws Exception {
 		String errorDescription = "Please check the laps indexes params.";
 		isGenerateErrorHTTP(put(JOIN_LAPS, TestUtils.FAKE_ID_TCX).param("index1", "").param("index2", ""),
@@ -169,7 +166,7 @@ public class ActivityRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void joinLapNonexistentActivityTest() throws Exception {
 		String errorDescription = "Given activity id not found in database.";
 		isGenerateErrorHTTP(put(JOIN_LAPS, TestUtils.FAKE_ID_TCX).param("index1", "1").param("index2", "2"),
@@ -177,15 +174,15 @@ public class ActivityRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/file-rest-controller/db-activity-tcx-split-lap.json")
+	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-split-lap.json")
 	public void splitLapTest() throws Exception {
 		isReturningActivityHTTP(put(SPLIT_LAP, TestUtils.FAKE_ID_TCX).param("lat", "42.6132170")
 				.param("lng", "-6.5739970").param("timeInMillis", "1519737395000").param("index", "3"), tcxActivity);
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void splitLapNonexistentActivityTest() throws Exception {
 		String errorDescription = "Given activity id not found in database.";
 		isGenerateErrorHTTP(
@@ -195,7 +192,7 @@ public class ActivityRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void splitLapErrorTryingToSplitTest() throws Exception {
 		String errorDescription = "Error trying split the lap.";
 		doReturn(null).when(activityUtilsService).splitLap(any(), any(), any(), any(), any());
@@ -206,8 +203,8 @@ public class ActivityRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/file-rest-controller/db-activity-tcx-lap-colors.json")
+	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-lap-colors.json")
 	public void setColorLapsTest() throws Exception {
 		String data = "primero-primero2@segundo-segundo2@tercero-tercero2", description = "Lap's colors are updated.";
 		isGenerateErrorHTTP(put(COLORS_LAP, TestUtils.FAKE_ID_TCX).param("data", data), status().isOk(), description,
@@ -215,7 +212,7 @@ public class ActivityRestTestController extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/file-rest-controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void setColorLapsNonexistentActivityTest() throws Exception {
 		String data = "primero-primero2@segundo-segundo2@tercero-tercero2",
 				description = "Not be posible to update lap's colors.";

@@ -1,5 +1,6 @@
-package com.routeanalyzer.test.config;
+package com.routeanalyzer.test.controller.config;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +12,10 @@ import com.github.fakemongo.Fongo;
 import com.mongodb.MongoClient;
 import com.routeanalyzer.database.ActivityMongoRepository;
 
-@Profile("test")
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+
+@Profile("test-mongodb")
 @Configuration
 @ComponentScan(basePackageClasses = { ActivityMongoRepository.class })
 @EnableMongoRepositories
@@ -31,6 +35,14 @@ public class TestMongoConfig extends AbstractMongoConfiguration {
 	@Override
 	public MongoClient mongoClient() {
 		return new Fongo("routeanalyzer-test").getMongo();
+	}
+	
+	// Disabled the mongo db driver logger
+	static Logger mongodbLogger = (Logger) LoggerFactory
+	        .getLogger("org.mongodb.driver.cluster");
+
+	static {
+		mongodbLogger.setLevel(Level.OFF);
 	}
 	
 }

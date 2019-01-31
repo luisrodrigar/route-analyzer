@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<gpx creator="Garmin Connect" xmlns="http://www.topografix.com/GPX/1/1" xmlns:ns2="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">
+    <trk>
+        <trkseg>
+            <trkpt lat="42.6131970" lon="-6.5732170">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:13.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>96</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.6132170" lon="-6.5733730">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:18.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>96</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.6132120" lon="-6.5734430">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:20.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>96</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.6132120" lon="-6.5735170">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:23.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>96</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.6132120" lon="-6.5735920">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:24.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>96</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.6132120" lon="-6.5736650">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:26.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>99</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.6132120" lon="-6.5737430">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:29.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>103</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+        </trkseg>
+        <trkseg>
+            <trkpt lat="42.6132120" lon="-6.5738250">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:30.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>106</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.6132120" lon="-6.5739120">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:33.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>109</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.6132170" lon="-6.5739970">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:35.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>115</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.6132200" lon="-6.5740830">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:36.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>115</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.6132350" lon="-6.5741700">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:16:38.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>116</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+        </trkseg>
+        <trkseg>
+            <trkpt lat="42.6132120" lon="-6.5738250">
+                <ele>557.3</ele>
+                <time>2018-02-27T14:17:30.000+01:00</time>
+                <extensions>
+                    <ns2:TrackPointExtension>
+                        <ns2:hr>120</ns2:hr>
+                    </ns2:TrackPointExtension>
+                </extensions>
+            </trkpt>
+        </trkseg>
+    </trk>
+</gpx>
