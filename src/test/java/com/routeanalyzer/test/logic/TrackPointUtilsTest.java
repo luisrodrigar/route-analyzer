@@ -1,5 +1,6 @@
 package com.routeanalyzer.test.logic;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -80,6 +81,19 @@ public class TrackPointUtilsTest {
 		TrackPoint trackpoint = getTrackPoint(12123123L, 3, "12", "6", "450", "0", "0", 150);
 		assertFalse(trackpointUtils.isThisTrack(trackpoint, new Position(new BigDecimal("12"), new BigDecimal("6")),
 				12L, new Integer(0)));
+	}
+	
+	@Test
+	public void getDistanceBetweenPointsTest() {
+		Position oviedo = new Position(new BigDecimal("43.3602900"), new BigDecimal("-5.8447600"));
+		Position madrid = new Position(new BigDecimal("40.4165000"), new BigDecimal("-3.7025600"));
+		Position park = new Position(new BigDecimal("43.352478"), new BigDecimal("-5.8501170"));
+		assertEquals(round(trackpointUtils.getDistanceBetweenPoints(oviedo, park)), 970.64, 0.001);
+		assertEquals(round(trackpointUtils.getDistanceBetweenPoints(oviedo, madrid)), 372247.30, 0.001);
+	}
+	
+	private double round(double number) {
+		return Math.round(number*100)/100.00;
 	}
 
 }

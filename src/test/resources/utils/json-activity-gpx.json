@@ -1,0 +1,156 @@
+{
+	"id": null,
+	"device": "Garmin Connect",
+	"sourceXmlType": "gpx",
+	"date": "2018-02-27T14:16:13+01:00",
+	"laps": [
+		{
+			"startTime": "2018-02-27T14:16:13+01:00",
+			"index": "1",
+			"tracks": [
+				{
+					"date": "2018-02-27T14:16:13+01:00",
+					"index":  "1",
+					"position": {
+						"latitudeDegrees": "42.6131970",
+						"longitudeDegrees": "-6.5732170"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "96"
+				},
+				{
+					"date": "2018-02-27T14:16:18+01:00",
+					"index":  "2",
+					"position": {
+						"latitudeDegrees": "42.6132170",
+						"longitudeDegrees": "-6.5733730"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "96"
+				},
+				{
+					"date": "2018-02-27T14:16:20+01:00",
+					"index":  "3",
+					"position": {
+						"latitudeDegrees": "42.6132120",
+						"longitudeDegrees": "-6.5734430"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "96"
+				},
+				{
+					"date": "2018-02-27T14:16:23+01:00",
+					"index":  "4",
+					"position": {
+						"latitudeDegrees": "42.6132120",
+						"longitudeDegrees": "-6.5735170"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "96"
+				},
+				{
+					"date": "2018-02-27T14:16:24+01:00",
+					"index":  "5",
+					"position": {
+						"latitudeDegrees": "42.6132120",
+						"longitudeDegrees": "-6.5735920"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "96"
+				},
+				{
+					"date": "2018-02-27T14:16:26+01:00",
+					"index":  "6",
+					"position": {
+						"latitudeDegrees": "42.6132120",
+						"longitudeDegrees": "-6.5736650"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "99"
+				},
+				{
+					"date": "2018-02-27T14:16:29+01:00",
+					"index":  "7",
+					"position": {
+						"latitudeDegrees": "42.6132120",
+						"longitudeDegrees": "-6.5737430"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "103"
+				}
+			]
+		},
+		{
+			"startTime": "2018-02-27T14:16:30+01:00",
+			"index":  "2",
+			"tracks": [
+				{
+					"date": "2018-02-27T14:16:30+01:00",
+					"index":  "8",
+					"position": {
+						"latitudeDegrees": "42.6132120",
+						"longitudeDegrees": "-6.5738250"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "106"
+				},
+				{
+					"date": "2018-02-27T14:16:33+01:00",
+					"index":  "9",
+					"position": {
+						"latitudeDegrees": "42.6132120",
+						"longitudeDegrees": "-6.5739120"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "109"
+				},
+				{
+					"date": "2018-02-27T14:16:35+01:00",
+					"index":  "10",
+					"position": {
+						"latitudeDegrees": "42.6132170",
+						"longitudeDegrees": "-6.5739970"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "115"
+				},
+				{
+					"date": "2018-02-27T14:16:36+01:00",
+					"index":  "11",
+					"position": {
+						"latitudeDegrees": "42.6132200",
+						"longitudeDegrees": "-6.5740830"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "115"
+				},
+				{
+					"date": "2018-02-27T14:16:38+01:00",
+					"index":  "12",
+					"position": {
+						"latitudeDegrees": "42.6132350",
+						"longitudeDegrees": "-6.5741700"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "116"
+				}
+			]
+		},
+		{
+			"startTime": "2018-02-27T14:16:40+01:00",
+			"index":  "3",
+			"tracks": [
+				{
+					"date": "2018-02-27T14:17:30+01:00",
+					"index":  "13",
+					"position": {
+						"latitudeDegrees": "42.6132120",
+						"longitudeDegrees": "-6.5738250"
+					},
+					"altitudeMeters": "557.3",
+					"heartRateBpm":  "120"
+				}
+			]
+		}
+	]
+}

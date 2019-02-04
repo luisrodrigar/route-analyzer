@@ -54,7 +54,7 @@ public class TrackPointUtilsImpl implements TrackPointUtils{
 		double latP2 = degrees2Radians(end.getLatitudeDegrees()), lngP2 = degrees2Radians(end.getLongitudeDegrees());
 
 		// Radius of earth in meters
-		double earthRadiusMeters = 6378100.0;
+		double earthRadiusMeters = 6371000.0;
 
 		// Point P
 		double rho1 = earthRadiusMeters * Math.cos(latP1);
