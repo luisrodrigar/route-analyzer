@@ -44,10 +44,12 @@ public class ActivityUtilsTest {
 	private Resource gpxXmlResource;
 	@Value("classpath:utils/tcx-test.xml")
 	private Resource tcxXmlResource;
-	@Value("classpath:utils/json-activity.json")
-	private Resource activityResource;
+	@Value("classpath:utils/json-activity-tcx.json")
+	private Resource activityTcxResource;
+	@Value("classpath:utils/json-activity-gpx.json")
+	private Resource activityGpxResource;
 
-	private Activity activityTest;
+	private Activity activityTcxTest, activityGpxTest;
 	private GpxType gpxObject;
 	private TrainingCenterDatabaseT tcxObject;
 	private String gpxXmlString, tcxXmlString;
@@ -66,8 +68,10 @@ public class ActivityUtilsTest {
 	public void setUp() throws SAXParseException, JAXBException, IOException {
 		gpxXmlString = new String(TestUtils.getFileBytes(gpxXmlResource), StandardCharsets.UTF_8);
 		tcxXmlString = new String(TestUtils.getFileBytes(tcxXmlResource), StandardCharsets.UTF_8);
-		String jsonActivityString = new String(TestUtils.getFileBytes(activityResource), StandardCharsets.UTF_8);
-		activityTest = new Gson().fromJson(jsonActivityString, Activity.class);
+		String jsonActivityTcxStr = new String(TestUtils.getFileBytes(activityTcxResource), StandardCharsets.UTF_8);
+		String jsonActivityGpxStr = new String(TestUtils.getFileBytes(activityGpxResource), StandardCharsets.UTF_8);
+		activityTcxTest = new Gson().fromJson(jsonActivityTcxStr, Activity.class);
+		activityGpxTest = new Gson().fromJson(jsonActivityGpxStr, Activity.class);
 		gpxObject = new GPXService().readXML(gpxXmlResource.getInputStream());
 		tcxObject = new TCXService().readXML(tcxXmlResource.getInputStream());
 	}
@@ -75,7 +79,7 @@ public class ActivityUtilsTest {
 	@Test
 	public void exportAsTCXTest() {
 		try {
-			String tcxExportedFile = activityUtilsImpl.exportAsTCX(activityTest);
+			String tcxExportedFile = activityUtilsImpl.exportAsTCX(activityTcxTest);
 			assertEquals(tcxXmlString, tcxExportedFile);
 		} catch (Exception e) {
 			assertFalse(true);
@@ -85,7 +89,7 @@ public class ActivityUtilsTest {
 	@Test
 	public void exportAsGPXTest() {
 		try {
-			String gpxExportedFile = activityUtilsImpl.exportAsGPX(activityTest);
+			String gpxExportedFile = activityUtilsImpl.exportAsGPX(activityGpxTest);
 			assertEquals(gpxXmlString, gpxExportedFile);
 		} catch (Exception e) {
 			assertFalse(true);
@@ -96,7 +100,7 @@ public class ActivityUtilsTest {
 	public void uploadTCXFileTest() throws SAXParseException, JAXBException, IOException {
 		when(tcxService.readXML(Mockito.any())).thenReturn(tcxObject);
 		MultipartFile multipart = new MockMultipartFile("file", tcxXmlResource.getInputStream());
-		assertEquals(Arrays.asList(activityTest), activityUtilsImpl.uploadTCXFile(multipart));
+		assertEquals(Arrays.asList(activityTcxTest), activityUtilsImpl.uploadTCXFile(multipart));
 	}
 
 	@Test
@@ -104,8 +108,8 @@ public class ActivityUtilsTest {
 		when(gpxService.readXML(Mockito.any())).thenReturn(gpxObject);
 		MultipartFile multipart = new MockMultipartFile("file", gpxXmlResource.getInputStream());
 
-		System.out.println(activityTest);
-		assertEquals(Arrays.asList(activityTest), activityUtilsImpl.uploadGPXFile(multipart));
+		System.out.println(activityUtilsImpl.uploadGPXFile(multipart));
+		assertEquals(Arrays.asList(activityGpxTest), activityUtilsImpl.uploadGPXFile(multipart));
 	}
 
 	@Test
