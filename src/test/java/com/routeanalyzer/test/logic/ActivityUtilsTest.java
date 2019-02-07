@@ -3,6 +3,7 @@ package com.routeanalyzer.test.logic;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -18,6 +19,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
@@ -26,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXParseException;
 
 import com.google.gson.Gson;
+import com.routeanalyzer.common.CommonUtils;
 import com.routeanalyzer.logic.impl.ActivityUtilsImpl;
 import com.routeanalyzer.logic.impl.LapsUtilsImpl;
 import com.routeanalyzer.model.Activity;
@@ -54,9 +57,9 @@ public class ActivityUtilsTest {
 	private TrainingCenterDatabaseT tcxObject;
 	private String gpxXmlString, tcxXmlString;
 
-	@Mock
+	@Spy
 	private TCXService tcxService;
-	@Mock
+	@Spy
 	private GPXService gpxService;
 	@Mock
 	private LapsUtilsImpl lapsUtilsImpl;
@@ -66,46 +69,43 @@ public class ActivityUtilsTest {
 
 	@Before
 	public void setUp() throws SAXParseException, JAXBException, IOException {
+		Gson gson = CommonUtils.getGsonLocalDateTime();
 		gpxXmlString = new String(TestUtils.getFileBytes(gpxXmlResource), StandardCharsets.UTF_8);
 		tcxXmlString = new String(TestUtils.getFileBytes(tcxXmlResource), StandardCharsets.UTF_8);
 		String jsonActivityTcxStr = new String(TestUtils.getFileBytes(activityTcxResource), StandardCharsets.UTF_8);
 		String jsonActivityGpxStr = new String(TestUtils.getFileBytes(activityGpxResource), StandardCharsets.UTF_8);
-		activityTcxTest = new Gson().fromJson(jsonActivityTcxStr, Activity.class);
-		activityGpxTest = new Gson().fromJson(jsonActivityGpxStr, Activity.class);
+		activityTcxTest = gson.fromJson(jsonActivityTcxStr, Activity.class);
+		activityGpxTest = gson.fromJson(jsonActivityGpxStr, Activity.class);
 		gpxObject = new GPXService().readXML(gpxXmlResource.getInputStream());
 		tcxObject = new TCXService().readXML(tcxXmlResource.getInputStream());
 	}
 
 	@Test
 	public void exportAsTCXTest() {
-		try {
+		Try.run(() -> {
 			String tcxExportedFile = activityUtilsImpl.exportAsTCX(activityTcxTest);
 			assertEquals(tcxXmlString, tcxExportedFile);
-		} catch (Exception e) {
-			assertFalse(true);
-		}
+		}).onFailure((error) -> assertFalse(true));
 	}
 
 	@Test
 	public void exportAsGPXTest() {
-		try {
+		Try.run(() -> {
 			String gpxExportedFile = activityUtilsImpl.exportAsGPX(activityGpxTest);
 			assertEquals(gpxXmlString, gpxExportedFile);
-		} catch (Exception e) {
-			assertFalse(true);
-		}
+		}).onFailure((error) -> assertFalse(true));
 	}
 
 	@Test
 	public void uploadTCXFileTest() throws SAXParseException, JAXBException, IOException {
-		when(tcxService.readXML(Mockito.any())).thenReturn(tcxObject);
+		doReturn(tcxObject).when(tcxService).readXML(Mockito.any());
 		MultipartFile multipart = new MockMultipartFile("file", tcxXmlResource.getInputStream());
 		assertEquals(Arrays.asList(activityTcxTest), activityUtilsImpl.uploadTCXFile(multipart));
 	}
 
 	@Test
 	public void uploadGPXFileTest() throws SAXParseException, JAXBException, IOException {
-		when(gpxService.readXML(Mockito.any())).thenReturn(gpxObject);
+		doReturn(gpxObject).when(gpxService).readXML(Mockito.any());
 		MultipartFile multipart = new MockMultipartFile("file", gpxXmlResource.getInputStream());
 
 		System.out.println(activityUtilsImpl.uploadGPXFile(multipart));
@@ -116,7 +116,8 @@ public class ActivityUtilsTest {
 	public void uploadTCXFileThrowExceptionTest() throws IOException, SAXParseException, JAXBException {
 		doThrow(new SAXParseException("", null)).when(tcxService).readXML(Mockito.any());
 		MultipartFile multipart = new MockMultipartFile("file", tcxXmlResource.getInputStream());
-		Try.of(() -> activityUtilsImpl.uploadTCXFile(multipart)).onSuccess((success) -> assertTrue(false))
+		Try.of(() -> activityUtilsImpl.uploadTCXFile(multipart))
+				.onSuccess((success) -> assertTrue(false))
 				.onFailure((error) -> assertTrue(error instanceof SAXParseException));
 	}
 
@@ -124,7 +125,8 @@ public class ActivityUtilsTest {
 	public void uploadGPXFileThrowExceptionTest() throws IOException, SAXParseException, JAXBException {
 		doThrow(new JAXBException("")).when(gpxService).readXML(Mockito.any());
 		MultipartFile multipart = new MockMultipartFile("file", gpxXmlResource.getInputStream());
-		Try.of(() -> activityUtilsImpl.uploadGPXFile(multipart)).onSuccess((success) -> assertTrue(false))
+		Try.of(() -> activityUtilsImpl.uploadGPXFile(multipart))
+				.onSuccess((success) -> assertTrue(false))
 				.onFailure((error) -> assertTrue(error instanceof JAXBException));
 	}
 

@@ -25,6 +25,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
 	<nosqlunit.version>1.0.0-rc.5</nosqlunit.version>
 	<fongo.version>2.2.0-RC1</fongo.version>
 	<jackson.version>2.9.4</jackson.version>
+	<lombok.version>1.16.16</lombok.version>
   </properties>
   
   <dependencies>
@@ -103,8 +104,14 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
 	<dependency>
 	    <groupId>org.projectlombok</groupId>
 	    <artifactId>lombok</artifactId>
-	    <version>1.16.20</version>
+	    <version>${lombok.version}</version>
 	    <scope>provided</scope>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+	<dependency>
+	    <groupId>com.google.guava</groupId>
+	    <artifactId>guava</artifactId>
+	    <version>23.0</version>
 	</dependency>
 
 	<!-- test dependencies -->
@@ -141,11 +148,29 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
   </dependencies>
 	<build>
         <plugins>
-            <plugin>
+	        <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.version}</version>
+                <configuration>
+                	<source>1.8</source>
+					<target>1.8</target>
+                	<compilerArguments>
+                        <javaAgentClass>lombok.launch.Agent</javaAgentClass>
+                    </compilerArguments>
+                </configuration>
             </plugin>
+            <plugin>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok-maven-plugin</artifactId>
+				<version>${lombok.version}</version>
+				<configuration>
+					<encoding>UTF-8</encoding>
+					<addOutputDirectory>false</addOutputDirectory>
+					<sourceDirectory>src/main/java</sourceDirectory>
+					<withoutUnicodeEscape>true</withoutUnicodeEscape>
+				</configuration>
+			</plugin>
         </plugins>
     </build>
 </project>

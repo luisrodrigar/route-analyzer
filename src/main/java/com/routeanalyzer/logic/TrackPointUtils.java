@@ -31,10 +31,16 @@ public interface TrackPointUtils {
 	 *            position
 	 * @return distance in meters
 	 */
-	public double getDistanceBetweenPoints(Position origin, Position end);
+	public double calculateDistance(Position origin, Position end);
 
-	public double getSpeedBetweenPoints(TrackPoint previous, TrackPoint current);
-
-	public void calculateSpeedBetweenPoints(TrackPoint origin, TrackPoint end);
+	/**
+	 * Speed calculated with the distance information of both track points.
+	 * It is a mandatory that every track point has distance attribute informed.
+	 * 
+	 * @param origin
+	 * @param end
+	 * @return speed
+	 */
+	public double calculateSpeed(TrackPoint origin, TrackPoint end);
 	
 }

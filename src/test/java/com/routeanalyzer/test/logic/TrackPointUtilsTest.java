@@ -1,99 +1,158 @@
 package com.routeanalyzer.test.logic;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
-import java.math.BigDecimal;
-import java.util.Date;
-
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.routeanalyzer.common.CommonUtils;
 import com.routeanalyzer.logic.TrackPointUtils;
 import com.routeanalyzer.logic.impl.TrackPointUtilsImpl;
 import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
+import static com.routeanalyzer.common.CommonUtils.toPosition;
+import static com.routeanalyzer.common.CommonUtils.round;
+import static com.routeanalyzer.common.CommonUtils.toTrackPoint;
+import static com.routeanalyzer.common.CommonUtils.toTrackPointPosition;
+import static com.routeanalyzer.common.CommonUtils.toTimeMillis;;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class TrackPointUtilsTest {
 
-	TrackPointUtils trackpointUtils = new TrackPointUtilsImpl();
-
-	private TrackPoint getTrackPoint(long timeMillis, int index, String lat, String lng, String alt, String dist,
-			String speed, int heartRate) {
-		return new TrackPoint(new Date(timeMillis), new Integer(index),
-				lat!=null && lng!=null ? new Position(new BigDecimal(lat), new BigDecimal(lng)):null, new BigDecimal(alt), new BigDecimal(dist),
-				new BigDecimal(speed), heartRate);
-	}
-
-	private TrackPoint getTrackPointPosition(long timeMillis, int index, Position position, String alt, String dist,
-			String speed, int heartRate) {
-		return getTrackPoint(timeMillis, index, position!=null?String.valueOf(position.getLatitudeDegrees().doubleValue()):null,
-				position!=null?String.valueOf(position.getLongitudeDegrees().doubleValue()):null, alt, dist, speed, heartRate);
+	private TrackPointUtils trackpointUtils = new TrackPointUtilsImpl();
+	private Position oviedo;
+	private Position madrid;
+	private Position park;
+	private TrackPoint oviedoTrack;
+	private TrackPoint parkTrack;
+	private TrackPoint madridTrack;
+	
+	@Before
+	public void setUp() {
+		// Given
+		oviedo = toPosition("43.3602900", "-5.8447600");
+		madrid = toPosition("40.4165000", "-3.7025600");
+		park = toPosition("43.352478", "-5.8501170");
+		LocalDateTime now = LocalDateTime.now();
+		oviedoTrack = toTrackPointPosition(toTimeMillis(now), 1, oviedo, "100", "0",
+				null, 78);
+		parkTrack = toTrackPointPosition(toTimeMillis(now.plusMinutes(15L)), 2,
+				park, "100", "970.64", null, 78);
+		madridTrack = toTrackPointPosition(toTimeMillis(now.plusHours(6L)), 3,
+				madrid, "100", "372247.30", null, 78);
 	}
 
 	@Test
 	public void isThisTrackPositionNullTest() {
-		TrackPoint trackpoint = getTrackPointPosition(12123123L, 0, null, "450", "0", "0", 150);
-		assertFalse(trackpointUtils.isThisTrack(trackpoint, new Position(new BigDecimal("12"), new BigDecimal("6")),
-				12123123L, new Integer(0)));
+		// Given
+		TrackPoint trackpoint = toTrackPointPosition(12123123L, 0, null, "450", "0", "0", 150);
+		// When
+		boolean isThisTrack = trackpointUtils.isThisTrack(trackpoint, toPosition("12", "6"), 12123123L, 0);
+		// Then
+		assertThat(isThisTrack).isFalse();
 	}
 
 	@Test
 	public void isThisTrackPositionEqualTest() {
-		TrackPoint trackpoint = getTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
-		assertTrue(trackpointUtils.isThisTrack(trackpoint, new Position(new BigDecimal("12"), new BigDecimal("6")),
-				12123123L, new Integer(0)));
+		// Given
+		TrackPoint trackpoint = toTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
+		// When
+		boolean isThisTrack = trackpointUtils.isThisTrack(trackpoint, toPosition("12", "6"), 12123123L, 0);
+		// Then
+		assertThat(isThisTrack).isTrue();
 	}
 
 	@Test
 	public void isThisTrackPositionLatNotEqualTest() {
-		TrackPoint trackpoint = getTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
-		assertFalse(trackpointUtils.isThisTrack(trackpoint, new Position(new BigDecimal("5.67"), new BigDecimal("6")),
-				12123123L, new Integer(0)));
+		// Given
+		TrackPoint trackpoint = toTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
+		// When
+		boolean isThisTrack = trackpointUtils.isThisTrack(trackpoint, toPosition("5.67", "6"), 12123123L, 0);
+		// Then
+		assertThat(isThisTrack).isFalse();
 	}
 
 	@Test
 	public void isThisTrackPositionLngNotEqualTest() {
-		TrackPoint trackpoint = getTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
-		assertFalse(trackpointUtils.isThisTrack(trackpoint, new Position(new BigDecimal("12"), new BigDecimal("3")),
-				12123123L, new Integer(0)));
+		// Given
+		TrackPoint trackpoint = toTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
+		// When
+		boolean isThisTrack = trackpointUtils.isThisTrack(trackpoint, toPosition("12", "3"), 12123123L, 0);
+		// Then
+		assertThat(isThisTrack).isFalse();
 	}
-	
+
 	@Test
 	public void isThisTrackPositionIndexEqualTimeMillisNotEqualTest() {
-		TrackPoint trackpoint = getTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
-		assertTrue(trackpointUtils.isThisTrack(trackpoint, new Position(new BigDecimal("12"), new BigDecimal("6")),
-				12L, new Integer(0)));
+		// Given
+		TrackPoint trackpoint = toTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
+		// When
+		boolean isThisTrack = trackpointUtils.isThisTrack(trackpoint, toPosition("12", "6"), 12L, 0);
+		// Then
+		assertThat(isThisTrack).isTrue();
 	}
-	
+
 	@Test
 	public void isThisTrackPositionTimeMillisEqualIndexNotEqualTest() {
-		TrackPoint trackpoint = getTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
-		assertTrue(trackpointUtils.isThisTrack(trackpoint, new Position(new BigDecimal("12"), new BigDecimal("6")),
-				12123123L, new Integer(13)));
+		// Given
+		TrackPoint trackpoint = toTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
+		// When
+		boolean isThisTrack = trackpointUtils.isThisTrack(trackpoint, toPosition("12", "6"), 12123123L, 13);
+		// Then
+		assertThat(isThisTrack).isTrue();
 	}
-	
+
 	@Test
 	public void isThisTrackPositionIndexTimeMillisNotEqualTest() {
-		TrackPoint trackpoint = getTrackPoint(12123123L, 3, "12", "6", "450", "0", "0", 150);
-		assertFalse(trackpointUtils.isThisTrack(trackpoint, new Position(new BigDecimal("12"), new BigDecimal("6")),
-				12L, new Integer(0)));
+		// Given
+		TrackPoint trackpoint = toTrackPoint(12123123L, 3, "12", "6", "450", "0", "0", 150);
+		// When
+		boolean isThisTrack = trackpointUtils.isThisTrack(trackpoint, toPosition("12", "6"), 12L, 0);
+		// Then
+		assertThat(isThisTrack).isFalse();
 	}
-	
+
 	@Test
-	public void getDistanceBetweenPointsTest() {
-		Position oviedo = new Position(new BigDecimal("43.3602900"), new BigDecimal("-5.8447600"));
-		Position madrid = new Position(new BigDecimal("40.4165000"), new BigDecimal("-3.7025600"));
-		Position park = new Position(new BigDecimal("43.352478"), new BigDecimal("-5.8501170"));
-		assertEquals(round(trackpointUtils.getDistanceBetweenPoints(oviedo, park)), 970.64, 0.001);
-		assertEquals(round(trackpointUtils.getDistanceBetweenPoints(oviedo, madrid)), 372247.30, 0.001);
+	public void calculateDistanceTest() {
+		// When
+		double distanceOvdPark = trackpointUtils.calculateDistance(oviedo, park);
+		double distanceOvdMad = trackpointUtils.calculateDistance(oviedo, madrid);
+		// Then
+		assertThat(round(distanceOvdPark, 2)).isEqualTo(970.64);
+		assertThat(round(distanceOvdMad, 2)).isEqualTo(372247.30);
 	}
-	
-	private double round(double number) {
-		return Math.round(number*100)/100.00;
+
+	@Test
+	public void calculateDistanceSamePoint() {
+		// When
+		double distanceOvdOvd = trackpointUtils.calculateDistance(oviedo, oviedo);
+		// Then
+		assertThat(round(distanceOvdOvd, 2)).isEqualTo(0.0);
+	}
+
+	@Test
+	public void calculateSpeed() {
+		// When
+		double speedOvdPark = trackpointUtils.calculateSpeed(oviedoTrack, parkTrack);
+		double speedParkMad = trackpointUtils.calculateSpeed(parkTrack, madridTrack);
+		// Then
+		assertThat(round(speedOvdPark, 2)).isEqualTo(1.08);
+		assertThat(round(speedParkMad, 2)).isEqualTo(17.96);
+	}
+
+	@Test
+	public void calculateSpeedSamePoint() {
+		// Given
+		TrackPoint oviedoTrack = toTrackPointPosition(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC), 1,
+				oviedo, "100", "10", null, 78);
+		// When 
+		double speedOvdOvd = trackpointUtils.calculateSpeed(oviedoTrack, oviedoTrack);
+		// Then
+		assertThat(round(speedOvdOvd, 2)).isEqualTo(0.0);
 	}
 
 }

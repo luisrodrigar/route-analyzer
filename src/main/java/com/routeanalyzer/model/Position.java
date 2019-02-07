@@ -3,32 +3,19 @@ package com.routeanalyzer.model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-public class Position implements Serializable{
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+@AllArgsConstructor
+public class Position implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	
-	private BigDecimal latitudeDegrees, longitudeDegrees;
 
-	public Position(BigDecimal latitudeDegrees, BigDecimal longitudeDegrees) {
-		this.latitudeDegrees = latitudeDegrees;
-		this.longitudeDegrees = longitudeDegrees;
-	}
-
-	public BigDecimal getLatitudeDegrees() {
-		return latitudeDegrees;
-	}
-
-	public void setLatitudeDegrees(BigDecimal latitudeDegrees) {
-		this.latitudeDegrees = latitudeDegrees;
-	}
-
-	public BigDecimal getLongitudeDegrees() {
-		return longitudeDegrees;
-	}
-
-	public void setLongitudeDegrees(BigDecimal longitudeDegrees) {
-		this.longitudeDegrees = longitudeDegrees;
-	}
+	private BigDecimal latitudeDegrees;
+	private BigDecimal longitudeDegrees;
 
 	@Override
 	public int hashCode() {
@@ -61,8 +48,4 @@ public class Position implements Serializable{
 		return true;
 	}
 
-	@Override
-	public String toString() {
-		return "Position [latitudeDegrees=" + latitudeDegrees.doubleValue() + ", longitudeDegrees=" + longitudeDegrees.doubleValue() + "]";
-	}
 }

@@ -1,91 +1,51 @@
 package com.routeanalyzer.model;
 
-import java.util.Date;
 import java.util.List;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-@Document(collection="activities")
-public class Activity implements Serializable{
+import com.google.common.collect.Lists;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@Builder
+@ToString
+@AllArgsConstructor
+@NoArgsConstructor
+@Document(collection = "activities")
+public class Activity implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	@Id
 	private String id;
-	private String idUser, device, sport, name, sourceXmlType;
-	private Date date;
+	private String idUser;
+	private String device;
+	private String sport;
+	private String name;
+	private String sourceXmlType;
+	private LocalDateTime date;
 	@Field
-	private List<Lap> laps;
-	
-	public Activity(){
-		laps = new ArrayList<>();
-	}
-	
-	public String getIdUser() {
-		return idUser;
-	}
-	public void setIdUser(String idUser) {
-		this.idUser = idUser;
-	}
-	public String getDevice() {
-		return device;
-	}
-	public void setDevice(String device) {
-		this.device = device;
-	}
-	public String getSport() {
-		return sport;
-	}
-	public void setSport(String sport) {
-		this.sport = sport;
-	}
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public Date getDate() {
-		return date;
-	}
-	public void setDate(Date date) {
-		this.date = date;
-	}
-	public List<Lap> getLaps() {
-		return laps;
-	}
+	@Builder.Default	
+	private List<Lap> laps = Lists.newArrayList();
 
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public String getSourceXmlType() {
-		return sourceXmlType;
-	}
-
-	public void setSourceXmlType(String sourceXmlType) {
-		this.sourceXmlType = sourceXmlType;
-	}
-	
-	public boolean addLap(Lap lap){
+	public boolean addLap(Lap lap) {
 		int sizeBeforeAdding = laps.size();
 		laps.add(lap);
 		return sizeBeforeAdding + 1 == laps.size();
 	}
-	
-	public void setLaps(List<Lap> laps){
-		this.laps = laps;
-	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -94,6 +54,7 @@ public class Activity implements Serializable{
 		result = prime * result + ((idUser == null) ? 0 : idUser.hashCode());
 		return result;
 	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -116,16 +77,4 @@ public class Activity implements Serializable{
 		return true;
 	}
 
-	@Override
-	public String toString() {
-		return "Activity [\n\tid=" + id 
-				+ (idUser!=null ? ",\n\t idUser=" + idUser : "") 
-				+ (device!=null ? (",\n\t device=" + device) : "")
-				+ (sport!=null ? (",\n\t sport=" + sport) : "")
-				+ (name!=null ? (",\n\t name=" + name) : "")
-				+ (date!=null ? (",\n\t date=" + date) : "")
-				+ (laps!=null && !laps.isEmpty() ? ",\n\t laps=" + 
-						laps.stream().map(Object::toString).collect(Collectors.joining(",\n\t")):"")
-				+ "\n]";
-	}
 }
