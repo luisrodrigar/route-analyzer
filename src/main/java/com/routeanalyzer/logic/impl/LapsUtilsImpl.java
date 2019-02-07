@@ -23,6 +23,8 @@ import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
 import com.routeanalyzer.services.googlemaps.GoogleMapsServiceImpl;
 
+import static com.routeanalyzer.common.CommonUtils.toTimeMillis;
+
 @Service
 public class LapsUtilsImpl implements LapsUtils {
 	
@@ -98,8 +100,8 @@ public class LapsUtilsImpl implements LapsUtils {
 	@Override
 	public void setTotalValuesLap(Lap lap) {
 		if (Objects.isNull(lap.getTotalTimeSeconds()))
-			lap.setTotalTimeSeconds(Double.valueOf((lap.getTracks().get(lap.getTracks().size() - 1).getDate().getTime()
-					- lap.getTracks().get(0).getDate().getTime()) / 1000));
+			lap.setTotalTimeSeconds(Double.valueOf((toTimeMillis(lap.getTracks().get(lap.getTracks().size() - 1).getDate())
+					- toTimeMillis(lap.getTracks().get(0).getDate())) / 1000));
 		if (Objects.isNull(lap.getDistanceMeters()))
 			lap.setDistanceMeters(lap.getTracks().get(lap.getTracks().size() - 1).getDistanceMeters().doubleValue()
 					- lap.getTracks().get(0).getDistanceMeters().doubleValue());
@@ -148,7 +150,7 @@ public class LapsUtilsImpl implements LapsUtils {
 			switch (indexTrack) {
 			case 0:
 				if (!Objects.isNull(previousLapLastTrackpoint)) {
-					distance = trackpointUtilsService.getDistanceBetweenPoints(track.getPosition(),
+					distance = trackpointUtilsService.calculateDistance(track.getPosition(),
 							previousLapLastTrackpoint.getPosition());
 					track.setDistanceMeters(
 							new BigDecimal(previousLapLastTrackpoint.getDistanceMeters().doubleValue() + distance));
@@ -157,7 +159,7 @@ public class LapsUtilsImpl implements LapsUtils {
 				break;
 			default:
 				TrackPoint previousTrackpoint = lap.getTracks().get(indexTrack - 1);
-				distance = trackpointUtilsService.getDistanceBetweenPoints(previousTrackpoint.getPosition(),
+				distance = trackpointUtilsService.calculateDistance(previousTrackpoint.getPosition(),
 						track.getPosition());
 				track.setDistanceMeters(
 						new BigDecimal(previousTrackpoint.getDistanceMeters().doubleValue() + distance));
@@ -174,12 +176,12 @@ public class LapsUtilsImpl implements LapsUtils {
 			if (Objects.isNull(track.getSpeed())) {
 				switch (indexTrack) {
 				case 0:
-					speed = trackpointUtilsService.getSpeedBetweenPoints(previousLapLastTrackpoint, track);
+					speed = trackpointUtilsService.calculateSpeed(previousLapLastTrackpoint, track);
 					track.setSpeed(new BigDecimal(speed));
 					break;
 				default:
 					TrackPoint previousTrackpoint = lap.getTracks().get(indexTrack - 1);
-					speed = trackpointUtilsService.getSpeedBetweenPoints(previousTrackpoint, track);
+					speed = trackpointUtilsService.calculateSpeed(previousTrackpoint, track);
 					track.setSpeed(new BigDecimal(speed));
 					break;
 				}
