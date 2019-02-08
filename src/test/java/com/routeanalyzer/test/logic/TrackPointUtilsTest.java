@@ -9,7 +9,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.routeanalyzer.common.CommonUtils;
 import com.routeanalyzer.logic.TrackPointUtils;
 import com.routeanalyzer.logic.impl.TrackPointUtilsImpl;
 import com.routeanalyzer.model.Position;

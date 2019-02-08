@@ -16,8 +16,10 @@
 target/
 build/
 .settings/
+.settings/*
 
 # Files #
 .project
 .classpath
+
 
