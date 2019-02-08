@@ -1,9 +1,5 @@
 package com.routeanalyzer.common;
 
-import static com.routeanalyzer.common.CommonUtils.toBigDecimal;
-import static com.routeanalyzer.common.CommonUtils.toCoordenate;
-import static com.routeanalyzer.common.CommonUtils.toPosition;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -18,7 +14,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
-import com.routeanalyzer.test.common.TestUtils;
 
 import lombok.experimental.UtilityClass;
 
