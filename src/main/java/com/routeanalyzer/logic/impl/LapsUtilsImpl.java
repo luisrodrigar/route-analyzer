@@ -2,15 +2,18 @@ package com.routeanalyzer.logic.impl;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,7 +30,7 @@ import static com.routeanalyzer.common.CommonUtils.toTimeMillis;
 
 @Service
 public class LapsUtilsImpl implements LapsUtils {
-	
+
 	@Autowired
 	private GoogleMapsServiceImpl googleMapsService;
 	@Autowired
@@ -36,46 +39,59 @@ public class LapsUtilsImpl implements LapsUtils {
 	@Override
 	public Lap joinLaps(Lap lapLeft, Lap lapRight) {
 		// Join the track points of the two laps
-		List<TrackPoint> tracks = new ArrayList<TrackPoint>();
-		tracks.addAll(lapLeft.getTracks());
-		tracks.addAll(lapRight.getTracks());
+		List<TrackPoint> tracks = joinTrackPointLaps(lapLeft, lapRight);
 
-		Lap newLap = new Lap();
-		// Tracks joined
-		newLap.setTracks(tracks);
-		// Start time is the first left lap's track point time
-		newLap.setStartTime(newLap.getTracks().get(0).getDate());
-		// Calories are the total sum
-		Integer leftCal = null, rightCal = null;
-		if (!Objects.isNull(lapLeft.getCalories()))
-			leftCal = lapLeft.getCalories();
-		if (!Objects.isNull(lapRight.getCalories()))
-			rightCal = lapRight.getCalories();
-		newLap.setCalories(Objects.isNull(leftCal) && Objects.isNull(rightCal) ? null
-				: ((Objects.isNull(leftCal) ? 0 : leftCal) + (Objects.isNull(rightCal) ? 0 : rightCal)));
-		// Intensidad
-		newLap.setIntensity(
-				!Objects.isNull(lapLeft.getIntensity())
-						? (!Objects.isNull(lapRight.getIntensity())
-								? (lapLeft.getIntensity().equals(lapRight.getIntensity()) ? lapLeft.getIntensity()
-										: (lapLeft.getDistanceMeters() > lapRight.getDistanceMeters()
-												? lapLeft.getIntensity() : lapRight.getIntensity()))
-								: (lapLeft.getIntensity()))
-						: (!Objects.isNull(lapRight.getIntensity()) ? (lapRight.getIntensity()) : null));
-
-		// Total time seconds is the left lap total time plus right lap total
-		// time
-		newLap.setTotalTimeSeconds(lapLeft.getTotalTimeSeconds() + lapRight.getTotalTimeSeconds());
-		// Total distance
-		newLap.setDistanceMeters(lapLeft.getDistanceMeters() + lapRight.getDistanceMeters());
+		Lap newLap = Lap.builder()
+				// Tracks joined
+				.tracks(tracks)
+				// Start time is the first left lap's track point time
+				.startTime(tracks.get(0).getDate())
+				// Calories are the total sum
+				.calories(sumIntFieldLaps(lapLeft, lapRight, Lap::getCalories).orElse(null))
+				// Total time seconds
+				.totalTimeSeconds(sumDoubleFieldLaps(lapLeft, lapRight, Lap::getTotalTimeSeconds).orElse(null))
+				// Total distance
+				.distanceMeters(sumDoubleFieldLaps(lapLeft, lapRight, Lap::getDistanceMeters).orElse(null))
+				// Index of the left lap
+				.index(lapLeft.getIndex())
+				// Intensity
+				.intensity(getIntensity(lapLeft, lapRight)).build();
 
 		calculateAggregateHeartRate(newLap);
 		calculateAggregateSpeed(newLap);
 
-		// Index of the left lap
-		newLap.setIndex(lapLeft.getIndex());
-
 		return newLap;
+	}
+
+	private List<TrackPoint> joinTrackPointLaps(Lap lapLeft, Lap lapRight) {
+		return Stream
+				.concat(Optional.ofNullable(lapLeft).map(Lap::getTracks).orElseGet(Collections::emptyList).stream(),
+						Optional.ofNullable(lapRight).map(Lap::getTracks).orElseGet(Collections::emptyList).stream())
+				.collect(Collectors.toList());
+	}
+
+	private Optional<Double> sumDoubleFieldLaps(Lap lapLeft, Lap lapRight, Function<Lap, Double> methodGetter) {
+		return Stream.of(getValue(lapLeft, methodGetter), getValue(lapRight, methodGetter))
+				.reduce(Optional.<Double>empty(), (l1, l2) -> !l1.isPresent() ? l2 : !l2.isPresent() ? l1 : Optional.of(l1.get() + l2.get()));
+	}
+
+	private Optional<Integer> sumIntFieldLaps(Lap lapLeft, Lap lapRight, Function<Lap, Integer> methodGetter) {
+		return Stream.of(getValue(lapLeft, methodGetter), getValue(lapRight, methodGetter))
+				.reduce(Optional.<Integer>empty(), (l1, l2) -> !l1.isPresent() ? l2 : !l2.isPresent() ? l1 : Optional.of(l1.get() + l2.get()));
+	}
+
+	private <T> Optional<T> getValue(Lap lap, Function<Lap, T> methodGetter) {
+		return Optional.ofNullable(lap).map(methodGetter);
+	}
+
+	private String getIntensity(Lap lapLeft, Lap lapRight) {
+		return !Objects.isNull(lapLeft.getIntensity())
+				? (!Objects.isNull(lapRight.getIntensity())
+						? (lapLeft.getIntensity().equals(lapRight.getIntensity()) ? lapLeft.getIntensity()
+								: (lapLeft.getDistanceMeters() > lapRight.getDistanceMeters() ? lapLeft.getIntensity()
+										: lapRight.getIntensity()))
+						: (lapLeft.getIntensity()))
+				: (!Objects.isNull(lapRight.getIntensity()) ? (lapRight.getIntensity()) : null);
 	}
 
 	@Override
@@ -84,8 +100,8 @@ public class LapsUtilsImpl implements LapsUtils {
 		calculateAltitude(lap);
 		// Fill aggregate heart rate fields
 		calculateAggregateHeartRate(lap);
-		boolean hasSpeedValues = hasLapTrackpointValue(lap, track->!Objects.isNull(track.getSpeed()));
-		if(hasSpeedValues)
+		boolean hasSpeedValues = hasLapTrackpointValue(lap, track -> !Objects.isNull(track.getSpeed()));
+		if (hasSpeedValues)
 			calculateAggregateSpeed(lap);
 	}
 
@@ -100,8 +116,9 @@ public class LapsUtilsImpl implements LapsUtils {
 	@Override
 	public void setTotalValuesLap(Lap lap) {
 		if (Objects.isNull(lap.getTotalTimeSeconds()))
-			lap.setTotalTimeSeconds(Double.valueOf((toTimeMillis(lap.getTracks().get(lap.getTracks().size() - 1).getDate())
-					- toTimeMillis(lap.getTracks().get(0).getDate())) / 1000));
+			lap.setTotalTimeSeconds(
+					Double.valueOf((toTimeMillis(lap.getTracks().get(lap.getTracks().size() - 1).getDate())
+							- toTimeMillis(lap.getTracks().get(0).getDate())) / 1000));
 		if (Objects.isNull(lap.getDistanceMeters()))
 			lap.setDistanceMeters(lap.getTracks().get(lap.getTracks().size() - 1).getDistanceMeters().doubleValue()
 					- lap.getTracks().get(0).getDistanceMeters().doubleValue());
@@ -199,8 +216,7 @@ public class LapsUtilsImpl implements LapsUtils {
 	}
 
 	@Override
-	public int indexOfTrackpoint(Activity activity, Integer indexLap, Position position, Long time,
-			Integer index) {
+	public int indexOfTrackpoint(Activity activity, Integer indexLap, Position position, Long time, Integer index) {
 		TrackPoint trackPoint = activity.getLaps().get(indexLap).getTracks().stream().filter(track -> {
 			return trackpointUtilsService.isThisTrack(track, position, time, index);
 		}).findFirst().orElse(null);
