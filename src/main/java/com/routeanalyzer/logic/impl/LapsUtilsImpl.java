@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
@@ -265,25 +266,19 @@ public class LapsUtilsImpl implements LapsUtils {
 				&& !Objects.isNull(lap.getMaximunSpeed());
 		if (hasSpeedValues && !hasSpeedAggregateValues) {
 			// Max Speed
-			double maxSpeed = getMaxValueTrackPoint(lap, (track1, track2) -> Double
-					.compare(track1.getSpeed().doubleValue(), track2.getSpeed().doubleValue())).getSpeed()
-							.doubleValue();
+			Optional<Double> maxSpeed = getMaxValueTrackPoint(lap, (track1, track2) -> Double
+					.compare(track1.getSpeed().doubleValue(), track2.getSpeed().doubleValue())).map(TrackPoint::getSpeed)
+							.map(BigDecimal::doubleValue);
 			if (!Objects.isNull(lap.getMaximunSpeed()) && lap.getMaximunSpeed().doubleValue() > 0) {
-				TrackPoint trackpoint = existsValue(lap,
+				Optional<TrackPoint> trackpoint = existsValue(lap,
 						track -> track.getSpeed().doubleValue() == lap.getMaximunSpeed().doubleValue());
-				if (Objects.isNull(trackpoint)) {
-					lap.setMaximunSpeed(maxSpeed);
-				}
+				maxSpeed.filter(speed -> !trackpoint.isPresent()).ifPresent(lap::setMaximunSpeed);
 			} else {
-				lap.setMaximunSpeed(maxSpeed);
+				lap.setMaximunSpeed(maxSpeed.orElse(null));
 			}
 			// Average Speed
-			double avgSpeed = getAvgValueTrackPoint(lap, trackpoint -> trackpoint.getSpeed().doubleValue());
-			if (!Objects.isNull(lap.getAverageSpeed()) && lap.getAverageSpeed().doubleValue() > 0
-					&& lap.getAverageSpeed().doubleValue() != avgSpeed) {
-				lap.setAverageSpeed(avgSpeed);
-			} else
-				lap.setAverageSpeed(avgSpeed);
+			OptionalDouble avgSpeed = getAvgValueTrackPoint(lap, trackpoint -> trackpoint.getSpeed().doubleValue());
+			lap.setAverageSpeed(avgSpeed.isPresent() ? avgSpeed.getAsDouble() : null);
 		}
 	}
 
@@ -298,25 +293,19 @@ public class LapsUtilsImpl implements LapsUtils {
 		// Heart Rate
 		if (hasHeartRateValues && !hasHeartRateAggregateValues) {
 			// Max Heart Rate
-			int maxBpm = getMaxValueTrackPoint(lap,
+			Optional<Integer> maxBpm = getMaxValueTrackPoint(lap,
 					(track1, track2) -> Integer.compare(track1.getHeartRateBpm(), track2.getHeartRateBpm()))
-							.getHeartRateBpm();
+							.map(TrackPoint::getHeartRateBpm);
 			if (!Objects.isNull(lap.getMaximunHeartRate()) && lap.getMaximunHeartRate().doubleValue() > 0) {
-				TrackPoint trackpoint = existsValue(lap,
+				Optional<TrackPoint> trackpoint = existsValue(lap,
 						track -> track.getHeartRateBpm().intValue() == lap.getMaximunHeartRate().intValue());
-				if (trackpoint == null) {
-					lap.setMaximunHeartRate(maxBpm);
-				}
+				maxBpm.filter(bpm -> !trackpoint.isPresent()).ifPresent(lap::setMaximunHeartRate);
 			} else {
-				lap.setMaximunHeartRate(maxBpm);
+				lap.setMaximunHeartRate(maxBpm.orElse(null));
 			}
 			// Average heart rate
-			double avgHeartRate = getAvgValueTrackPoint(lap, trackpoint -> trackpoint.getHeartRateBpm().doubleValue());
-			if (!Objects.isNull(lap.getAverageHearRate()) && lap.getAverageHearRate().doubleValue() > 0
-					&& lap.getAverageHearRate().doubleValue() != avgHeartRate) {
-				lap.setAverageHearRate(avgHeartRate);
-			} else
-				lap.setAverageHearRate(avgHeartRate);
+			OptionalDouble avgHeartRate = getAvgValueTrackPoint(lap, trackpoint -> trackpoint.getHeartRateBpm().doubleValue());
+			lap.setAverageHearRate(avgHeartRate.isPresent() ? avgHeartRate.getAsDouble() : null);
 		}
 	}
 
@@ -326,8 +315,9 @@ public class LapsUtilsImpl implements LapsUtils {
 	 * @param function
 	 * @return
 	 */
-	private TrackPoint existsValue(Lap lap, Predicate<TrackPoint> predicate) {
-		return lap.getTracks().stream().filter(predicate).findAny().orElse(null);
+	private Optional<TrackPoint> existsValue(Lap lap, Predicate<TrackPoint> predicate) {
+		return getValue(lap, Lap::getTracks).orElseGet(Collections::emptyList)
+					.stream().filter(predicate).findAny();
 	}
 
 	/**
@@ -337,7 +327,8 @@ public class LapsUtilsImpl implements LapsUtils {
 	 * @return
 	 */
 	private boolean hasLapTrackpointValue(Lap lap, Function<TrackPoint, Boolean> function) {
-		return lap.getTracks().stream().map(function).reduce(Boolean::logicalAnd).orElse(false);
+		return getValue(lap, Lap::getTracks).orElseGet(Collections::emptyList)
+					.stream().map(function).reduce(Boolean::logicalAnd).orElse(false);
 	}
 
 	/**
@@ -346,15 +337,16 @@ public class LapsUtilsImpl implements LapsUtils {
 	 * @param comparator
 	 * @return
 	 */
-	private TrackPoint getMaxValueTrackPoint(Lap lap, Comparator<TrackPoint> comparator) {
-		TrackPoint trackpoint = lap.getTracks().stream().max(comparator).orElse(null);
-		return trackpoint;
+	private Optional<TrackPoint> getMaxValueTrackPoint(Lap lap, Comparator<TrackPoint> comparator) {
+		return getValue(lap, Lap::getTracks).orElseGet(Collections::emptyList)
+					.stream().max(comparator);
 	}
 
 	/**
 	 * 
 	 */
-	private double getAvgValueTrackPoint(Lap lap, ToDoubleFunction<TrackPoint> function) {
-		return lap.getTracks().stream().mapToDouble(function).average().orElse(0.0);
+	private OptionalDouble getAvgValueTrackPoint(Lap lap, ToDoubleFunction<TrackPoint> function) {
+		return getValue(lap, Lap::getTracks).orElseGet(Collections::emptyList)
+				.stream().mapToDouble(function).average();
 	}
 }
