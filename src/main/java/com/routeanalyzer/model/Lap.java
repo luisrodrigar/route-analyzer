@@ -35,7 +35,6 @@ public class Lap implements Comparable<Lap>, Serializable {
 	public Lap(LocalDateTime startTime, Double totalTimeSeconds, Double distanceMeters, Double maximunSpeed,
 			Integer calories, Double averageSpeed, Double averageHearRate, Integer maximunHeartRate, String intensity,
 			String triggerMethod) {
-		super();
 		this.startTime = startTime;
 		this.totalTimeSeconds = totalTimeSeconds;
 		this.distanceMeters = distanceMeters;
@@ -58,8 +57,8 @@ public class Lap implements Comparable<Lap>, Serializable {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((index == null) ? 0 : index.hashCode());
-		result = prime * result + ((startTime == null) ? 0 : startTime.hashCode());
+		result = prime * result + ((getIndex() == null) ? 0 : getIndex().hashCode());
+		result = prime * result + ((getStartTime() == null) ? 0 : getStartTime().hashCode());
 		return result;
 	}
 
@@ -72,22 +71,22 @@ public class Lap implements Comparable<Lap>, Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		Lap other = (Lap) obj;
-		if (index == null) {
-			if (other.index != null)
+		if (getIndex() == null) {
+			if (other.getIndex() != null)
 				return false;
-		} else if (!index.equals(other.index))
+		} else if (!getIndex().equals(other.getIndex()))
 			return false;
-		if (startTime == null) {
-			if (other.startTime != null)
+		if (getStartTime() == null) {
+			if (other.getStartTime() != null)
 				return false;
-		} else if (!startTime.equals(other.startTime))
+		} else if (!getStartTime().equals(other.getStartTime()))
 			return false;
 		return true;
 	}
 
 	@Override
 	public int compareTo(Lap o) {
-		if (startTime != null && o.getStartTime() != null)
+		if (getStartTime() != null && o.getStartTime() != null)
 			return getStartTime().compareTo(o.getStartTime());
 		else
 			return getIndex().compareTo(o.getIndex());

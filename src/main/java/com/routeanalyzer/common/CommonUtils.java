@@ -9,6 +9,8 @@ import java.util.Optional;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.google.common.base.Function;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -16,6 +18,8 @@ import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
 
 import lombok.experimental.UtilityClass;
+
+import static java.util.Optional.ofNullable;
 
 @UtilityClass
 public class CommonUtils {
@@ -71,10 +75,15 @@ public class CommonUtils {
 	 */
 	
 	public Position toPosition(String lat, String lng) {
-		return Optional.ofNullable(lat)
-				.map(latitude -> Optional.ofNullable(lng).map(longitude -> Position.builder()
-						.latitudeDegrees(toBigDecimal(latitude)).longitudeDegrees(toBigDecimal(longitude)).build())
-						.orElse(null))
+		return ofNullable(lat)
+				.filter(StringUtils::isNotEmpty)
+				.flatMap(latitude -> ofNullable(lng)
+						.filter(StringUtils::isNotEmpty)
+						.map(longitude -> 
+							Position.builder()
+								.latitudeDegrees(toBigDecimal(latitude))
+								.longitudeDegrees(toBigDecimal(longitude))
+								.build()))
 				.orElse(null);
 	}
 	
