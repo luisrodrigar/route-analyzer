@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+import com.routeanalyzer.common.CommonUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,8 +17,6 @@ import com.routeanalyzer.model.TrackPoint;
 import static com.routeanalyzer.common.CommonUtils.toPosition;
 import static com.routeanalyzer.common.CommonUtils.round;
 import static com.routeanalyzer.common.CommonUtils.toTrackPoint;
-import static com.routeanalyzer.common.CommonUtils.toTrackPointPosition;
-import static com.routeanalyzer.common.CommonUtils.toTimeMillis;;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class TrackPointUtilsTest {
@@ -37,18 +36,18 @@ public class TrackPointUtilsTest {
 		madrid = toPosition("40.4165000", "-3.7025600");
 		park = toPosition("43.352478", "-5.8501170");
 		LocalDateTime now = LocalDateTime.now();
-		oviedoTrack = toTrackPointPosition(toTimeMillis(now), 1, oviedo, "100", "0",
+		oviedoTrack = toTrackPoint(now, 1, oviedo, "100", "0",
 				null, 78);
-		parkTrack = toTrackPointPosition(toTimeMillis(now.plusMinutes(15L)), 2,
+		parkTrack = toTrackPoint(now.plusMinutes(15L), 2,
 				park, "100", "970.64", null, 78);
-		madridTrack = toTrackPointPosition(toTimeMillis(now.plusHours(6L)), 3,
+		madridTrack = toTrackPoint(now.plusHours(6L), 3,
 				madrid, "100", "372247.30", null, 78);
 	}
 
 	@Test
 	public void isThisTrackPositionNullTest() {
 		// Given
-		TrackPoint trackpoint = toTrackPointPosition(12123123L, 0, null, "450", "0", "0", 150);
+		TrackPoint trackpoint = CommonUtils.toTrackPoint(12123123L, 0, null, "450", "0", "0", 150);
 		// When
 		boolean isThisTrack = trackpointUtils.isThisTrack(trackpoint, toPosition("12", "6"), 12123123L, 0);
 		// Then
@@ -146,7 +145,7 @@ public class TrackPointUtilsTest {
 	@Test
 	public void calculateSpeedSamePoint() {
 		// Given
-		TrackPoint oviedoTrack = toTrackPointPosition(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC), 1,
+		TrackPoint oviedoTrack = CommonUtils.toTrackPoint(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC), 1,
 				oviedo, "100", "10", null, 78);
 		// When 
 		double speedOvdOvd = trackpointUtils.calculateSpeed(oviedoTrack, oviedoTrack);

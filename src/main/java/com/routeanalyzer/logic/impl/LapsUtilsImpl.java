@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.routeanalyzer.common.CommonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,8 @@ import com.routeanalyzer.model.TrackPoint;
 import com.routeanalyzer.services.googlemaps.GoogleMapsServiceImpl;
 
 import static com.routeanalyzer.common.CommonUtils.toTimeMillis;
+import static com.routeanalyzer.common.CommonUtils.millisToSeconds;
+import static java.util.Optional.ofNullable;
 
 @Service
 public class LapsUtilsImpl implements LapsUtils {
@@ -42,22 +45,13 @@ public class LapsUtilsImpl implements LapsUtils {
 		// Join the track points of the two laps
 		List<TrackPoint> tracks = joinTrackPointLaps(lapLeft, lapRight);
 
-		Lap newLap = Lap.builder()
-				// Tracks joined
-				.tracks(tracks)
-				// Start time is the first left lap's track point time
-				.startTime(tracks.get(0).getDate())
-				// Calories are the total sum
-				.calories(sumIntFieldLaps(lapLeft, lapRight, Lap::getCalories).orElse(null))
-				// Total time seconds
-				.totalTimeSeconds(sumDoubleFieldLaps(lapLeft, lapRight, Lap::getTotalTimeSeconds).orElse(null))
-				// Total distance
-				.distanceMeters(sumDoubleFieldLaps(lapLeft, lapRight, Lap::getDistanceMeters).orElse(null))
-				// Index of the left lap
-				.index(lapLeft.getIndex())
-				// Intensity
-				.intensity(getIntensity(lapLeft, lapRight)).build();
-
+		Lap newLap = new Lap(tracks.get(0).getDate(),
+				sumDoubleFieldLaps(lapLeft, lapRight, Lap::getTotalTimeSeconds).orElse(null),
+				sumDoubleFieldLaps(lapLeft, lapRight, Lap::getDistanceMeters).orElse(null),
+				null, sumIntFieldLaps(lapLeft, lapRight, Lap::getCalories).orElse(null), null,
+				null, null, getIntensity(lapLeft, lapRight), null);
+		newLap.setTracks(tracks);
+		newLap.setIndex(lapLeft.getIndex());
 		calculateAggregateHeartRate(newLap);
 		calculateAggregateSpeed(newLap);
 
@@ -109,20 +103,36 @@ public class LapsUtilsImpl implements LapsUtils {
 	@Override
 	public void resetAggregateValues(Lap lap) {
 		lap.setAverageHearRate(null);
-		lap.setMaximunHeartRate(null);
+		lap.setMaximumHeartRate(null);
 		lap.setAverageSpeed(null);
-		lap.setMaximunSpeed(null);
+		lap.setMaximumSpeed(null);
 	}
 
 	@Override
 	public void setTotalValuesLap(Lap lap) {
-		if (Objects.isNull(lap.getTotalTimeSeconds()))
-			lap.setTotalTimeSeconds(
-					Double.valueOf((toTimeMillis(lap.getTracks().get(lap.getTracks().size() - 1).getDate())
-							- toTimeMillis(lap.getTracks().get(0).getDate())) / 1000));
-		if (Objects.isNull(lap.getDistanceMeters()))
-			lap.setDistanceMeters(lap.getTracks().get(lap.getTracks().size() - 1).getDistanceMeters().doubleValue()
-					- lap.getTracks().get(0).getDistanceMeters().doubleValue());
+		Optional<TrackPoint> optLastTrackPoint = getLastTrackPoint(lap);
+		optLastTrackPoint
+				.map(TrackPoint::getDate)
+				.map(lastLocalDateTimeTrackPoint ->
+						toTimeMillis(lastLocalDateTimeTrackPoint).orElse(0L) -
+								toTimeMillis(lap.getTracks().get(0).getDate()).orElse(0L))
+				.map(CommonUtils::millisToSeconds)
+				.ifPresent(totalTimeSeconds -> lap.setTotalTimeSeconds(totalTimeSeconds));
+		optLastTrackPoint
+				.map(TrackPoint::getDistanceMeters)
+				.map(lastDistanceMetersTrackPoint ->
+						lastDistanceMetersTrackPoint.doubleValue() -
+								lap.getTracks().get(0).getDistanceMeters().doubleValue())
+				.ifPresent(distanceLap -> lap.setDistanceMeters(distanceLap));
+	}
+
+	private Optional<TrackPoint> getLastTrackPoint(Lap lap){
+		Function<Integer, Integer> decreaseUnit = (number) -> number - 1;
+		return ofNullable(lap)
+				.map(Lap::getTracks)
+				.map(List::size)
+				.map(decreaseUnit)
+				.map(lap.getTracks()::get);
 	}
 
 	@Override
@@ -263,18 +273,18 @@ public class LapsUtilsImpl implements LapsUtils {
 	private void calculateAggregateSpeed(Lap lap) {
 		boolean hasSpeedValues = hasLapTrackpointValue(lap, (track) -> !Objects.isNull(track.getSpeed()));
 		boolean hasSpeedAggregateValues = !Objects.isNull(lap.getAverageSpeed())
-				&& !Objects.isNull(lap.getMaximunSpeed());
+				&& !Objects.isNull(lap.getMaximumSpeed());
 		if (hasSpeedValues && !hasSpeedAggregateValues) {
 			// Max Speed
 			Optional<Double> maxSpeed = getMaxValueTrackPoint(lap, (track1, track2) -> Double
 					.compare(track1.getSpeed().doubleValue(), track2.getSpeed().doubleValue())).map(TrackPoint::getSpeed)
 							.map(BigDecimal::doubleValue);
-			if (!Objects.isNull(lap.getMaximunSpeed()) && lap.getMaximunSpeed().doubleValue() > 0) {
+			if (!Objects.isNull(lap.getMaximumSpeed()) && lap.getMaximumSpeed().doubleValue() > 0) {
 				Optional<TrackPoint> trackpoint = existsValue(lap,
-						track -> track.getSpeed().doubleValue() == lap.getMaximunSpeed().doubleValue());
-				maxSpeed.filter(speed -> !trackpoint.isPresent()).ifPresent(lap::setMaximunSpeed);
+						track -> track.getSpeed().doubleValue() == lap.getMaximumSpeed().doubleValue());
+				maxSpeed.filter(speed -> !trackpoint.isPresent()).ifPresent(lap::setMaximumSpeed);
 			} else {
-				lap.setMaximunSpeed(maxSpeed.orElse(null));
+				lap.setMaximumSpeed(maxSpeed.orElse(null));
 			}
 			// Average Speed
 			OptionalDouble avgSpeed = getAvgValueTrackPoint(lap, trackpoint -> trackpoint.getSpeed().doubleValue());
@@ -289,19 +299,19 @@ public class LapsUtilsImpl implements LapsUtils {
 	private void calculateAggregateHeartRate(Lap lap) {
 		boolean hasHeartRateValues = hasLapTrackpointValue(lap, (track) -> !Objects.isNull(track.getHeartRateBpm()));
 		boolean hasHeartRateAggregateValues = !Objects.isNull(lap.getAverageHearRate())
-				&& !Objects.isNull(lap.getMaximunHeartRate());
+				&& !Objects.isNull(lap.getMaximumHeartRate());
 		// Heart Rate
 		if (hasHeartRateValues && !hasHeartRateAggregateValues) {
 			// Max Heart Rate
 			Optional<Integer> maxBpm = getMaxValueTrackPoint(lap,
 					(track1, track2) -> Integer.compare(track1.getHeartRateBpm(), track2.getHeartRateBpm()))
 							.map(TrackPoint::getHeartRateBpm);
-			if (!Objects.isNull(lap.getMaximunHeartRate()) && lap.getMaximunHeartRate().doubleValue() > 0) {
+			if (!Objects.isNull(lap.getMaximumHeartRate()) && lap.getMaximumHeartRate().doubleValue() > 0) {
 				Optional<TrackPoint> trackpoint = existsValue(lap,
-						track -> track.getHeartRateBpm().intValue() == lap.getMaximunHeartRate().intValue());
-				maxBpm.filter(bpm -> !trackpoint.isPresent()).ifPresent(lap::setMaximunHeartRate);
+						track -> track.getHeartRateBpm().intValue() == lap.getMaximumHeartRate().intValue());
+				maxBpm.filter(bpm -> !trackpoint.isPresent()).ifPresent(lap::setMaximumHeartRate);
 			} else {
-				lap.setMaximunHeartRate(maxBpm.orElse(null));
+				lap.setMaximumHeartRate(maxBpm.orElse(null));
 			}
 			// Average heart rate
 			OptionalDouble avgHeartRate = getAvgValueTrackPoint(lap, trackpoint -> trackpoint.getHeartRateBpm().doubleValue());
@@ -312,7 +322,7 @@ public class LapsUtilsImpl implements LapsUtils {
 	/**
 	 * 
 	 * @param lap
-	 * @param function
+	 * @param predicate
 	 * @return
 	 */
 	private Optional<TrackPoint> existsValue(Lap lap, Predicate<TrackPoint> predicate) {

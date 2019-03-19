@@ -34,7 +34,7 @@ import com.routeanalyzer.test.common.TestUtils;
 @ActiveProfiles("test-mongodb")
 @EnableAutoConfiguration(exclude = { MongoAutoConfiguration.class, MongoDataAutoConfiguration.class,
 		MongoRepositoriesAutoConfiguration.class })
-public class ActivityRestTestController extends MockMvcTestController {
+public class ActivityRestControllerTest extends MockMvcTestController {
 	@Autowired
 	protected ApplicationContext applicationContext;
 	@Autowired
