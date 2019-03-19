@@ -49,7 +49,7 @@ import static org.mockito.Mockito.doThrow;
 @ActiveProfiles("test-mongodb")
 @EnableAutoConfiguration(exclude = { MongoAutoConfiguration.class, MongoDataAutoConfiguration.class,
 		MongoRepositoriesAutoConfiguration.class })
-public class FileRestTestController extends MockMvcTestController {
+public class FileRestControllerTest extends MockMvcTestController {
 
 	@Autowired
 	protected ApplicationContext applicationContext;

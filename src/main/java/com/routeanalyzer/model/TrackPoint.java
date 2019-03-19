@@ -1,20 +1,18 @@
 package com.routeanalyzer.model;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Builder
 @ToString
-@AllArgsConstructor
 public class TrackPoint implements Comparable<TrackPoint>, Serializable {
 
 	private static final long serialVersionUID = 1L;

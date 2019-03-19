@@ -1,28 +1,26 @@
 package com.routeanalyzer.model;
 
-import java.util.List;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
-
 import com.google.common.collect.Lists;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
 @Builder
 @ToString
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Document(collection = "activities")
 public class Activity implements Serializable {
 
@@ -37,10 +35,10 @@ public class Activity implements Serializable {
 	private String sourceXmlType;
 	private LocalDateTime date;
 	@Field
-	@Builder.Default	
+	@Builder.Default
 	private List<Lap> laps = Lists.newArrayList();
 
-	public boolean addLap(Lap lap) {
+	public boolean addLap(Lap lap){
 		int sizeBeforeAdding = laps.size();
 		laps.add(lap);
 		return sizeBeforeAdding + 1 == laps.size();
@@ -54,7 +52,6 @@ public class Activity implements Serializable {
 		result = prime * result + ((idUser == null) ? 0 : idUser.hashCode());
 		return result;
 	}
-
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
