@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import static com.routeanalyzer.common.CommonUtils.meteersBetweenCoordinates;
@@ -32,7 +31,7 @@ public class TrackPointUtilsImpl implements TrackPointUtils {
 				(localDateTime) -> toTimeMillis(LocalDateTime.class.cast(localDateTime)).orElse(null), timeInMillis);
 		// Index
 		boolean isIndex = isEqualsValueTrack(track, TrackPoint::getIndex,
-				(indexParm) -> ((Integer) indexParm).longValue(), index.longValue());
+				(indexParam) -> ((Integer) indexParam).longValue(), index.longValue());
 		
 		return isLat && isLng && (isTimeMillis || isIndex);
 	}

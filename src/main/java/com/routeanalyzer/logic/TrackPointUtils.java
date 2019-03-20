@@ -10,16 +10,15 @@ public interface TrackPointUtils {
 	 * 
 	 * @param track
 	 *            point
-	 * @param lat:
+	 * @param position:
 	 *            latitude degrees
-	 * @param lng:
 	 *            longitude degrees
 	 * @param timeInMillis:
 	 *            time in milliseconds
 	 * @param index
 	 * @return true or false
 	 */
-	public boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index);
+	boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index);
 
 	/**
 	 * Distance between two positions. Degrees to radians and then, radians to
@@ -31,7 +30,7 @@ public interface TrackPointUtils {
 	 *            position
 	 * @return distance in meters
 	 */
-	public double calculateDistance(Position origin, Position end);
+	double calculateDistance(Position origin, Position end);
 
 	/**
 	 * Speed calculated with the distance information of both track points.
@@ -41,6 +40,6 @@ public interface TrackPointUtils {
 	 * @param end
 	 * @return speed
 	 */
-	public double calculateSpeed(TrackPoint origin, TrackPoint end);
+	double calculateSpeed(TrackPoint origin, TrackPoint end);
 	
 }

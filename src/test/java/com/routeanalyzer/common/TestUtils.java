@@ -1,4 +1,4 @@
-package com.routeanalyzer.test.common;
+package com.routeanalyzer.common;
 
 import java.io.BufferedReader;
 import java.math.BigDecimal;

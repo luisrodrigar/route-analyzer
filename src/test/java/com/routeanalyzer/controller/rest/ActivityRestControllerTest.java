@@ -1,4 +1,4 @@
-package com.routeanalyzer.test.controller;
+package com.routeanalyzer.controller.rest;
 
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.any;
@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import javax.xml.bind.JAXBException;
 
+import com.routeanalyzer.logic.file.export.impl.GpxExportServiceImpl;
+import com.routeanalyzer.logic.file.export.impl.TcxExportServiceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,7 +30,7 @@ import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
 import com.routeanalyzer.logic.ActivityUtils;
 import com.routeanalyzer.model.Activity;
-import com.routeanalyzer.test.common.TestUtils;
+import com.routeanalyzer.common.TestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ActiveProfiles("test-mongodb")
@@ -38,7 +40,11 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 	@Autowired
 	protected ApplicationContext applicationContext;
 	@Autowired
-	private ActivityUtils activityUtilsService;
+	private GpxExportServiceImpl gpxService;
+	@Autowired
+	private TcxExportServiceImpl tcxService;
+	@Autowired
+	private ActivityUtils activityUtils;
 
 	private Activity gpxActivity, tcxActivity;
 
@@ -69,7 +75,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 	@Test
 	public void exportAsTCXThrowExceptionTest() throws Exception {
 		String exceptionDescription = "Syntax error while trying to parse the object.";
-		doThrow(new JAXBException(exceptionDescription)).when(activityUtilsService).exportAsTCX(Mockito.any());
+		doThrow(new JAXBException(exceptionDescription)).when(tcxService).export(Mockito.any());
 		String descriptionErrorValue = "Problem with the file format uploaded.";
 		isThrowingExceptionHTTP(get(EXPORT_AS_PATH, TestUtils.FAKE_ID_TCX, "tcx"), status().isInternalServerError(),
 				descriptionErrorValue, exceptionDescription);
@@ -78,7 +84,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 	@Test
 	public void exportAsGPXThrowExceptionTest() throws Exception {
 		String exceptionDescription = "Syntax error while trying to parse the object.";
-		doThrow(new JAXBException(exceptionDescription)).when(activityUtilsService).exportAsGPX(any());
+		doThrow(new JAXBException(exceptionDescription)).when(gpxService).export(any());
 		String descriptionErrorValue = "Problem with the file format uploaded.";
 		isThrowingExceptionHTTP(get(EXPORT_AS_PATH, TestUtils.FAKE_ID_GPX, "gpx"), status().isInternalServerError(),
 				descriptionErrorValue, exceptionDescription);
@@ -195,7 +201,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void splitLapErrorTryingToSplitTest() throws Exception {
 		String errorDescription = "Error trying split the lap.";
-		doReturn(null).when(activityUtilsService).splitLap(any(), any(), any(), any(), any());
+		doReturn(null).when(activityUtils).splitLap(any(), any(), any(), any(), any());
 		isGenerateErrorHTTP(
 				put(SPLIT_LAP, TestUtils.FAKE_ID_TCX).param("lat", "42.6132170").param("lng", "-6.5739970")
 						.param("timeInMillis", "1519737395000").param("index", "3"),

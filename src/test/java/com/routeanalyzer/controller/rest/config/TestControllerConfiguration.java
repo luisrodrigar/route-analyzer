@@ -1,4 +1,4 @@
-package com.routeanalyzer.test.controller.config;
+package com.routeanalyzer.controller.rest.config;
 
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;

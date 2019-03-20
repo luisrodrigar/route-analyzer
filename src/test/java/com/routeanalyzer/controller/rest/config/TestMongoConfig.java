@@ -1,4 +1,4 @@
-package com.routeanalyzer.test.controller.config;
+package com.routeanalyzer.controller.rest.config;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;

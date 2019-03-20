@@ -1,29 +1,5 @@
 package com.routeanalyzer.logic.impl;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.stream.IntStream;
-
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.datatype.DatatypeFactory;
-
-import org.apache.commons.lang3.SerializationUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import org.xml.sax.SAXParseException;
-
-import com.amazonaws.AmazonClientException;
-import com.google.common.collect.Lists;
-import com.routeanalyzer.common.CommonUtils;
 import com.routeanalyzer.logic.ActivityUtils;
 import com.routeanalyzer.logic.LapsUtils;
 import com.routeanalyzer.model.Activity;
@@ -32,232 +8,65 @@ import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
 import com.routeanalyzer.services.reader.GPXService;
 import com.routeanalyzer.services.reader.TCXService;
-import com.routeanalyzer.xml.gpx11.ExtensionsType;
-import com.routeanalyzer.xml.gpx11.GpxType;
-import com.routeanalyzer.xml.gpx11.MetadataType;
-import com.routeanalyzer.xml.gpx11.TrkType;
-import com.routeanalyzer.xml.gpx11.TrksegType;
-import com.routeanalyzer.xml.gpx11.WptType;
-import com.routeanalyzer.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
-import com.routeanalyzer.xml.tcx.ActivityLapT;
-import com.routeanalyzer.xml.tcx.ActivityListT;
-import com.routeanalyzer.xml.tcx.ActivityT;
-import com.routeanalyzer.xml.tcx.ExtensionsT;
-import com.routeanalyzer.xml.tcx.HeartRateInBeatsPerMinuteT;
-import com.routeanalyzer.xml.tcx.IntensityT;
-import com.routeanalyzer.xml.tcx.PositionT;
-import com.routeanalyzer.xml.tcx.SportT;
-import com.routeanalyzer.xml.tcx.TrackT;
-import com.routeanalyzer.xml.tcx.TrackpointT;
-import com.routeanalyzer.xml.tcx.TrainingCenterDatabaseT;
-import com.routeanalyzer.xml.tcx.activityextension.ActivityLapExtensionT;
-import com.routeanalyzer.xml.tcx.activityextension.ActivityTrackpointExtensionT;
+import org.apache.commons.lang3.SerializationUtils;
+import org.springframework.stereotype.Service;
 
-import io.vavr.control.Try;
+import java.math.BigDecimal;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
-import static com.routeanalyzer.common.CommonUtils.toBigDecimal;
-import static com.routeanalyzer.common.CommonUtils.toDate;
-import static com.routeanalyzer.common.CommonUtils.toLocalDateTime;
-import static com.routeanalyzer.common.CommonUtils.toPosition;
-import static com.routeanalyzer.common.CommonUtils.toTrackPoint;
 import static java.util.Optional.ofNullable;
 
 @Service
 public class ActivityUtilsImpl implements ActivityUtils {
 
-	private GPXService gpxService;
-	private TCXService tcxService;
 	private LapsUtils lapsUtilsService;
 
 	public ActivityUtilsImpl(GPXService gpxService, TCXService tcxService, LapsUtils lapsUtils) {
-		this.gpxService = gpxService;
-		this.tcxService = tcxService;
 		this.lapsUtilsService = lapsUtils;
 	}
 
 	@Override
-	public List<Activity> uploadGPXFile(MultipartFile multiPart)
-			throws IOException, AmazonClientException, JAXBException, SAXParseException {
-		InputStream inputFileGPX = multiPart.getInputStream();
-		// Get the object from xml file (type GPX)
-		GpxType gpx = gpxService.readXML(inputFileGPX);
-		// Create each activity of the file
-		return getListActivitiesFromGPX(gpx);
-	}
-
-	@Override
-	public List<Activity> uploadTCXFile(MultipartFile multiPart) throws IOException, JAXBException, SAXParseException {
-		InputStream inputFileTCX = multiPart.getInputStream();
-		// Get the object from xml file (type TCX)
-		TrainingCenterDatabaseT tcx = tcxService.readXML(inputFileTCX);
-		// Create each activity of the file
-		return getListActivitiesFromTCX(tcx);
-	}
-
-	@Override
-	public String exportAsTCX(Activity act) throws JAXBException {
-		com.routeanalyzer.xml.tcx.ObjectFactory oFactory = new com.routeanalyzer.xml.tcx.ObjectFactory();
-		com.routeanalyzer.xml.tcx.activityextension.ObjectFactory extensionFactory = new com.routeanalyzer.xml.tcx.activityextension.ObjectFactory();
-
-		TrainingCenterDatabaseT trainingCenterDatabaseT = new TrainingCenterDatabaseT();
-		ActivityListT actListT = new ActivityListT();
-		ActivityT activityT = new ActivityT();
-		// Sport is an enum
-		if (!Objects.isNull(act.getSport())) {
-			SportT sport = SportT.valueOf(act.getSport());
-			activityT.setSport(sport);
-		}
-		// Set xml gregorian calendar date
-		if (!Objects.isNull(act.getDate())) {
-			GregorianCalendar gregorianCalendar = new GregorianCalendar();
-			gregorianCalendar.setTime(toDate(act.getDate()).orElse(null));
-			activityT.setId(Try.of(() -> DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar))
-					.getOrElse(() -> null));
-		}
-		act.getLaps().forEach(lap -> {
-			ActivityLapT lapT = new ActivityLapT();
-			// heart rate average in beats per minute
-			HeartRateInBeatsPerMinuteT avgBpm = new HeartRateInBeatsPerMinuteT();
-			avgBpm.setValue(!Objects.isNull(lap.getAverageHearRate()) && lap.getAverageHearRate().shortValue() > 0.0
-					? lap.getAverageHearRate().shortValue() : 0);
-			if (avgBpm.getValue() > 0)
-				lapT.setAverageHeartRateBpm(avgBpm);
-			// calories
-			if (!Objects.isNull(lap.getCalories()))
-				lapT.setCalories(lap.getCalories());
-			// distance in meters
-			if (!Objects.isNull(lap.getDistanceMeters()))
-				lapT.setDistanceMeters(lap.getDistanceMeters());
-			// max speed in meters per second
-			if (!Objects.isNull(lap.getMaximumSpeed()))
-				lapT.setMaximumSpeed(lap.getMaximumSpeed());
-			// max heart rate in beats per minute
-			HeartRateInBeatsPerMinuteT maxBpm = new HeartRateInBeatsPerMinuteT();
-			maxBpm.setValue(!Objects.isNull(lap.getMaximumHeartRate()) && lap.getMaximumHeartRate().shortValue() > 0
-					? lap.getMaximumHeartRate().shortValue() : 0);
-			if (maxBpm.getValue() > 0)
-				lapT.setMaximumHeartRateBpm(maxBpm);
-			// Start time in xml gregorian calendar
-			if (!Objects.isNull(lap.getStartTime())) {
-				GregorianCalendar gregorian = new GregorianCalendar();
-				gregorian.setTime(toDate(lap.getStartTime()).orElse(null));
-				lapT.setStartTime(Try.of(() -> DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorian))
-						.getOrElse(() -> null));
-			} else
-				lapT.setStartTime(null);
-			// total time in seconds
-			if (!Objects.isNull(lap.getTotalTimeSeconds()) && lap.getTotalTimeSeconds() > 0)
-				lapT.setTotalTimeSeconds(lap.getTotalTimeSeconds());
-			// intensity
-			if (!Objects.isNull(lap.getIntensity()))
-				lapT.setIntensity(IntensityT.valueOf(lap.getIntensity()));
-
-			if (!Objects.isNull(lap.getAverageSpeed())) {
-				ExtensionsT extT = new ExtensionsT();
-				ActivityLapExtensionT actExtensionT = new ActivityLapExtensionT();
-				actExtensionT.setAvgSpeed(lap.getAverageSpeed());
-				extT.addAny(extensionFactory.createLX(actExtensionT));
-				lapT.setExtensions(extT);
-			}
-			TrackT trackT = new TrackT();
-			lap.getTracks().forEach(trackPoint -> {
-				TrackpointT trackPointT = new TrackpointT();
-				if (!Objects.isNull(trackPoint.getDate())) {
-					GregorianCalendar gregorian = new GregorianCalendar();
-					gregorian.setTime(toDate(trackPoint.getDate()).orElse(null));
-					trackPointT.setTime(Try.of(() -> DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorian))
-							.getOrElse(() -> null));
-				}
-				if (!Objects.isNull(trackPoint.getPosition())) {
-					PositionT positionT = new PositionT();
-					positionT.setLatitudeDegrees(trackPoint.getPosition().getLatitudeDegrees().doubleValue());
-					positionT.setLongitudeDegrees(trackPoint.getPosition().getLongitudeDegrees().doubleValue());
-					trackPointT.setPosition(positionT);
-				}
-				trackPointT.setAltitudeMeters(!Objects.isNull(trackPoint.getAltitudeMeters())
-						? trackPoint.getAltitudeMeters().doubleValue() : null);
-				trackPointT.setDistanceMeters(!Objects.isNull(trackPoint.getDistanceMeters())
-						? trackPoint.getDistanceMeters().doubleValue() : null);
-				if (!Objects.isNull(trackPoint.getHeartRateBpm())) {
-					HeartRateInBeatsPerMinuteT bpm = new HeartRateInBeatsPerMinuteT();
-					bpm.setValue(trackPoint.getHeartRateBpm().shortValue());
-					trackPointT.setHeartRateBpm(bpm);
-				}
-				if (!Objects.isNull(trackPoint.getSpeed())) {
-					ExtensionsT extension = new ExtensionsT();
-
-					ActivityTrackpointExtensionT trackPointExtension = new ActivityTrackpointExtensionT();
-					trackPointExtension.setSpeed(trackPoint.getSpeed().doubleValue());
-					extension.addAny(extensionFactory.createTPX(trackPointExtension));
-					trackPointT.setExtensions(extension);
-				}
-				trackT.addTrackpoint(trackPointT);
-			});
-			lapT.addTrack(trackT);
-			activityT.addLap(lapT);
-		});
-		actListT.addActivity(activityT);
-		trainingCenterDatabaseT.setActivities(actListT);
-
-		return tcxService.createXML(oFactory.createTrainingCenterDatabase(trainingCenterDatabaseT));
-	}
-
-	@Override
-	public String exportAsGPX(Activity act) throws JAXBException {
-		com.routeanalyzer.xml.gpx11.ObjectFactory oFactory = new com.routeanalyzer.xml.gpx11.ObjectFactory();
-		com.routeanalyzer.xml.gpx11.trackpointextension.garmin.ObjectFactory extensionFactory = new com.routeanalyzer.xml.gpx11.trackpointextension.garmin.ObjectFactory();
-
-		GpxType gpx = new GpxType();
-		if (Objects.nonNull(act.getDate())) {
-			MetadataType metadata = new MetadataType();
-			GregorianCalendar gregorian = new GregorianCalendar();
-			gregorian.setTime(toDate(act.getDate()).orElse(null));
-			metadata.setTime(
-					Try.of(() -> DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorian)).getOrElse(()->null));
-		}
-		gpx.setCreator(act.getDevice());
-		TrkType trk = new TrkType();
-		act.getLaps().forEach(lap -> {
-			TrksegType trkSeg = new TrksegType();
-			lap.getTracks().forEach(trackPoint -> {
-				WptType wpt = new WptType();
-				if (!Objects.isNull(trackPoint.getDate())) {
-					GregorianCalendar gregorianCalendar = new GregorianCalendar();
-					gregorianCalendar.setTime(toDate(trackPoint.getDate()).orElse(null));
-					wpt.setTime(Try.of(() -> DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar))
-							.getOrElse(() -> null));
-				}
-				wpt.setLat(!Objects.isNull(trackPoint.getPosition())
-						&& !Objects.isNull(trackPoint.getPosition().getLatitudeDegrees())
-								? trackPoint.getPosition().getLatitudeDegrees() : null);
-				wpt.setLon(!Objects.isNull(trackPoint.getPosition())
-						&& !Objects.isNull(trackPoint.getPosition().getLongitudeDegrees())
-								? trackPoint.getPosition().getLongitudeDegrees() : null);
-				wpt.setEle(!Objects.isNull(trackPoint.getAltitudeMeters()) ? trackPoint.getAltitudeMeters() : null);
-				if (!Objects.isNull(trackPoint.getHeartRateBpm())) {
-					ExtensionsType extensions = new ExtensionsType();
-					TrackPointExtensionT trptExtension = new TrackPointExtensionT();
-					trptExtension.setHr(trackPoint.getHeartRateBpm().shortValue());
-					extensions.addAny(extensionFactory.createTrackPointExtension(trptExtension));
-					wpt.setExtensions(extensions);
-				}
-				trkSeg.addTrkpt(wpt);
-			});
-			trk.addTrkseg(trkSeg);
-		});
-		gpx.addTrk(trk);
-
-		return gpxService.createXML(oFactory.createGpx(gpx));
-	}
-
-	@Override
 	public Activity removePoint(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint) {
+//		Predicate<Integer> nonNegative = num -> num >= 0;
+//		ofNullable(toPosition(lat, lng))
+//				.flatMap(position ->
+//						ofNullable(act)
+//								.flatMap(activity ->
+//										ofNullable(timeInMillis)
+//												.filter(StringUtils::isNotEmpty)
+//												.map(Long::parseLong)
+//												.flatMap(time -> ofNullable(indexTrackPoint)
+//														.filter(StringUtils::isNotEmpty)
+//														.map(Integer::parseInt)
+//														.flatMap(index -> ofNullable(index)
+//																.map(indexModel -> indexOfALap(activity, position, time, indexModel))
+//																.flatMap(indexLap -> ofNullable(indexLap)
+//																		.map(indexLapParam ->
+//																				lapsUtilsService.indexOfTrackpoint(activity, indexLap, position, time, index))
+//																		.flatMap(indexTrack -> ofNullable(indexTrack)
+//																				.map(indexTrackParam -> activity.getLaps().get(indexLap).getTracks().size())
+//																				.filter(size -> indexTrack > 0 && size > 1))
+//																				.map(size -> SerializationUtils.clone(activity.getLaps().get(indexLap)))
+//																				.filter(newLap -> )
+//
+//																)
+//																.map(indexLap ->
+//																		)
+//																.flatMap(indexPosition -> ofNullable()))
+//												)
+//								)
+//				)
+//				.orElse(null);
 		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
 		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
 				? Integer.parseInt(indexTrackPoint) : null;
 
 		Position position = new Position(new BigDecimal(lat), new BigDecimal(lng));
-
 		// Remove element from the laps stored in state
 		// If it is not at the begining or in the end of a lap
 		// the lap splits into two new ones.
@@ -386,235 +195,11 @@ public class ActivityUtilsImpl implements ActivityUtils {
 		return act;
 	}
 
-	/**
-	 * 
-	 * @param gpx
-	 * @return
-	 */
-	private List<Activity> getListActivitiesFromGPX(GpxType gpx) {
-		List<Activity> activities = Lists.newArrayList();
-		AtomicInteger indexLap = new AtomicInteger(), indexTrackPoint = new AtomicInteger();
-		gpx.getTrk().forEach(track -> {
-			Activity activity = new Activity();
-			activity.setSourceXmlType("gpx");
-			activity.setDate(!Objects.isNull(gpx.getMetadata()) && !Objects.isNull(gpx.getMetadata().getTime())
-					&& !Objects.isNull(indexLap.get())
-							? LocalDateTime
-									.from(gpx.getMetadata().getTime().toGregorianCalendar().getTime().toInstant())
-							: (!Objects.isNull(track.getTrkseg()) && !Objects.isNull(track.getTrkseg().get(0))
-									&& !Objects.isNull(track.getTrkseg().get(0).getTrkpt())
-									&& !Objects.isNull(track.getTrkseg().get(0).getTrkpt().get(0))
-									&& !Objects.isNull(track.getTrkseg().get(0).getTrkpt().get(0).getTime())
-											?  toLocalDateTime(track.getTrkseg().get(0).getTrkpt().get(0).getTime()).orElse(null)
-											: null));
-			activity.setDevice(gpx.getCreator());
-			activity.setName(!Objects.isNull(track.getName()) ? track.getName().trim() : null);
-			track.getTrkseg().forEach(eachLap -> {
-				Lap lap = new Lap();
-				if (!Objects.isNull(eachLap.getTrkpt()) && !eachLap.getTrkpt().isEmpty()
-						&& !Objects.isNull(eachLap.getTrkpt().get(0).getTime()))
-					lap.setStartTime(toLocalDateTime(eachLap.getTrkpt().get(0).getTime()).orElse(null));
-				lap.setIndex(indexLap.incrementAndGet());
-				eachLap.getTrkpt().forEach(eachTrackPoint -> {
-					// Adding track point only if position is informed
-					if (!Objects.isNull(eachTrackPoint.getLat()) && !Objects.isNull(eachTrackPoint.getLon())) {
-						TrackPoint tkp = toTrackPoint(eachTrackPoint.getTime(), indexTrackPoint.incrementAndGet(),
-								toPosition(eachTrackPoint.getLat(), eachTrackPoint.getLon()), String.valueOf(eachTrackPoint.getEle()),
-								null, null, null);
-						if (!Objects.isNull(eachTrackPoint.getExtensions())) {
-							eachTrackPoint.getExtensions().getAny()
-									.stream().filter(
-											item -> (!Objects.isNull(JAXBElement.class.cast(item))
-													&& !Objects.isNull(item)
-													&& !Objects.isNull(JAXBElement.class.cast(item).getValue())
-													&& !Objects.isNull(TrackPointExtensionT.class
-															.cast(JAXBElement.class.cast(item).getValue()))))
-									.forEach(item -> {
-										TrackPointExtensionT trpExt = TrackPointExtensionT.class
-												.cast((JAXBElement.class.cast(item)).getValue());
-										if (!Objects.isNull(trpExt.getHr()))
-											tkp.setHeartRateBpm(trpExt.getHr().intValue());
-									});
-						}
-						lap.addTrack(tkp);
-					}
-				});
-				lapsUtilsService.calculateLapValues(lap);
-				activity.addLap(lap);
-			});
-			// Check if no speed nor distance values
-			calculateDistanceSpeedValues(activity);
 
-			activities.add(activity);
-		});
-		return activities;
-	}
 
-	/**
-	 * 
-	 * @param tcx
-	 * @return
-	 */
-	private List<Activity> getListActivitiesFromTCX(TrainingCenterDatabaseT tcx) {
 
-		List<Activity> activities = Lists.newArrayList();
 
-		AtomicInteger indexLap = new AtomicInteger(), indexTrackPoint = new AtomicInteger();
-		if (!Objects.isNull(tcx.getActivities())) {
-			tcx.getActivities().getActivity().forEach(eachActivity -> {
-				Activity activity = new Activity();
-				activity.setSourceXmlType("tcx");
-				if (!Objects.isNull(eachActivity.getCreator()))
-					activity.setDevice(eachActivity.getCreator().getName());
-				if (!Objects.isNull(eachActivity.getId()))
-					activity.setDate(toLocalDateTime(eachActivity.getId()).orElse(null));
-				if (!Objects.isNull(eachActivity.getSport()))
-					activity.setSport(eachActivity.getSport().toString());
-				eachActivity.getLap().forEach(eachLap -> {
-					Lap lap = new Lap();
-					if (!Objects.isNull(eachLap.getAverageHeartRateBpm())
-							&& eachLap.getAverageHeartRateBpm().getValue() > 0)
-						lap.setAverageHearRate(new Double(eachLap.getAverageHeartRateBpm().getValue()));
-					if (eachLap.getCalories() > 0)
-						lap.setCalories(eachLap.getCalories());
-					if (eachLap.getDistanceMeters() > 0)
-						lap.setDistanceMeters(eachLap.getDistanceMeters());
-					if (!Objects.isNull(eachLap.getMaximumSpeed()) && eachLap.getMaximumSpeed() > 0)
-						lap.setMaximumSpeed(eachLap.getMaximumSpeed());
-					if (!Objects.isNull(eachLap.getMaximumHeartRateBpm())
-							&& eachLap.getMaximumHeartRateBpm().getValue() > 0)
-						lap.setMaximumHeartRate(new Integer(eachLap.getMaximumHeartRateBpm().getValue()));
-					if (!Objects.isNull(eachLap.getStartTime()))
-						lap.setStartTime(toLocalDateTime(eachLap.getStartTime()).orElse(null));
-					lap.setIndex(indexLap.incrementAndGet());
-					if (eachLap.getTotalTimeSeconds() > 0.0)
-						lap.setTotalTimeSeconds(eachLap.getTotalTimeSeconds());
-					if (!Objects.isNull(eachLap.getIntensity()))
-						lap.setIntensity(eachLap.getIntensity().toString());
-					if (!Objects.isNull(eachLap.getExtensions()) && !Objects.isNull(eachLap.getExtensions().getAny())
-							&& !eachLap.getExtensions().getAny().isEmpty()) {
-						eachLap.getExtensions().getAny().stream()
-								.filter(extension -> (!Objects.isNull(extension)
-										&& !Objects.isNull(JAXBElement.class.cast(extension))
-										&& !Objects.isNull(JAXBElement.class.cast(extension).getValue())
-										&& !Objects.isNull(ActivityLapExtensionT.class
-												.cast(JAXBElement.class.cast(extension).getValue()))))
-								.forEach(extension -> {
-									ActivityLapExtensionT actTrackpointExtension = ActivityLapExtensionT.class
-											.cast(JAXBElement.class.cast(extension).getValue());
-									lap.setAverageSpeed(actTrackpointExtension.getAvgSpeed());
-								});
-					}
-					eachLap.getTrack().forEach(track -> {
-						track.getTrackpoint().forEach(trackPoint -> {
-							// Adding track point only if position is informed
-							if (!Objects.isNull(trackPoint.getPosition())) {
-								TrackPoint trp = toTrackPoint(trackPoint.getTime(),
-										indexTrackPoint.incrementAndGet(),trackPoint.getPosition(),
-										trackPoint.getAltitudeMeters(), trackPoint.getDistanceMeters(),
-										trackPoint.getHeartRateBpm());
-								setExtensions(trackPoint, trp);
-								lap.addTrack(trp);
-							}
-						});
-					});
-					// Calculate values not informed of a lap.
-					lapsUtilsService.calculateLapValues(lap);
-					activity.addLap(lap);
-				});
-				calculateDistanceSpeedValues(activity);
-				activities.add(activity);
-			});
-		} else if (!Objects.isNull(tcx.getCourses())) {
-			tcx.getCourses().getCourse().forEach(course -> {
-				Activity activity = new Activity();
-				activity.setSourceXmlType("tcx");
-				activity.setName(course.getName());
-				course.getLap().forEach(eachLap -> {
-					Lap lap = new Lap();
-					lap.setAverageHearRate(!Objects.isNull(eachLap.getAverageHeartRateBpm())
-							? Double.valueOf(eachLap.getAverageHeartRateBpm().getValue()) : null);
-					lap.setTotalTimeSeconds(eachLap.getTotalTimeSeconds());
-					lap.setDistanceMeters(eachLap.getDistanceMeters());
-					lap.setIndex(indexLap.getAndIncrement());
-					Position initial = toPosition(eachLap.getBeginPosition().getLatitudeDegrees(),
-							eachLap.getBeginPosition().getLongitudeDegrees());
-					Position end = Position.builder()
-							.latitudeDegrees(toBigDecimal(eachLap.getEndPosition().getLatitudeDegrees()))
-							.longitudeDegrees(toBigDecimal(eachLap.getEndPosition().getLongitudeDegrees()))
-							.build();
-					AtomicInteger eachIndex = new AtomicInteger();
-					AtomicInteger indexStart = new AtomicInteger();
-					AtomicInteger indexEnd = new AtomicInteger();
-					course.getTrack().forEach(track -> {
-						track.getTrackpoint().forEach(trackpoint -> {
-							if (trackpoint.getPosition().getLatitudeDegrees() == initial.getLatitudeDegrees()
-									.doubleValue()
-									&& trackpoint.getPosition().getLongitudeDegrees() == initial.getLongitudeDegrees()
-											.doubleValue())
-								indexStart.set(eachIndex.get());
-							else if (trackpoint.getPosition().getLatitudeDegrees() == end.getLatitudeDegrees()
-									.doubleValue()
-									&& trackpoint.getPosition().getLongitudeDegrees() == end.getLongitudeDegrees()
-											.doubleValue())
-								indexEnd.set(eachIndex.get());
-							eachIndex.incrementAndGet();
-
-						});
-					});
-					IntStream.range(indexStart.get(), indexEnd.get() + 1).forEach(index -> {
-						TrackpointT trT = course.getTrack().get(0).getTrackpoint().get(index);
-						TrackPoint trackpoint = toTrackPoint(trT.getTime(), indexTrackPoint.getAndIncrement(),
-								trT.getPosition(), trT.getAltitudeMeters(), trT.getDistanceMeters(), trT.getHeartRateBpm());
-						setExtensions(trT, trackpoint);
-						lap.addTrack(trackpoint);
-					});
-					// Calculate values not informed of a lap.
-					lapsUtilsService.calculateLapValues(lap);
-					activity.addLap(lap);
-				});
-				calculateDistanceSpeedValues(activity);
-				activities.add(activity);
-			});
-		}
-		return activities;
-	}
-
-	private void setExtensions(TrackpointT xmlTrackPoint, TrackPoint modeltrackpoint) {
-		ofNullable(xmlTrackPoint)
-				.map(TrackpointT::getExtensions)
-				.map(ExtensionsT::getAny)
-				.ifPresent(extension ->
-						extension.stream()
-								.filter(Objects::nonNull)
-								.filter(JAXBElement.class::isInstance)
-								.map(JAXBElement.class::cast)
-								.map(JAXBElement::getValue)
-								.filter(ActivityTrackpointExtensionT.class::isInstance)
-								.map(ActivityTrackpointExtensionT.class::cast)
-								.map(ActivityTrackpointExtensionT::getSpeed)
-								.map(CommonUtils::toBigDecimal)
-								.findFirst()
-								.ifPresent(speed -> modeltrackpoint.setSpeed(speed))
-				);
-		if (!Objects.isNull(xmlTrackPoint.getExtensions()) && !Objects.isNull(xmlTrackPoint.getExtensions().getAny())) {
-			xmlTrackPoint.getExtensions().getAny().stream()
-					.filter(extension -> (!Objects.isNull(JAXBElement.class.cast(extension))
-							&& !Objects.isNull(extension)
-							&& !Objects.isNull((JAXBElement.class.cast(extension)).getValue())
-							&& !Objects.isNull(ActivityTrackpointExtensionT.class
-									.cast((JAXBElement.class.cast(extension)).getValue()))))
-					.forEach(extension -> {
-						ActivityTrackpointExtensionT actTrackpointExtension = ActivityTrackpointExtensionT.class
-								.cast((JAXBElement.class.cast(extension)).getValue());
-						if (!Objects.isNull(actTrackpointExtension.getSpeed())
-								&& actTrackpointExtension.getSpeed() >= 0)
-							modeltrackpoint.setSpeed(toBigDecimal(actTrackpointExtension.getSpeed()));
-					});
-		}
-	}
-
-	private void calculateDistanceSpeedValues(Activity activity) {
+	public void calculateDistanceSpeedValues(Activity activity) {
 		boolean hasActivityDateTrackPointValues = hasActivityTrackPointsValue(activity,
 				track -> !Objects.isNull(track.getDate()));
 		if (hasActivityDateTrackPointValues) {
@@ -688,12 +273,12 @@ public class ActivityUtilsImpl implements ActivityUtils {
 	 * @return index of the lapº
 	 */
 	private int indexOfALap(Activity activity, Position position, Long timeInMillis, Integer index) {
-		List<Lap> laps = activity.getLaps();
-		Lap lap = laps.stream().filter(eachLap -> {
-			return lapsUtilsService.fulfillCriteriaPositionTime(eachLap, position, timeInMillis, index);
-		}).findFirst().orElse(null);
-
-		return !Objects.isNull(lap) ? laps.indexOf(lap) : -1;
+		Predicate<Lap> isThisLap = lap ->
+				lapsUtilsService.fulfillCriteriaPositionTime(lap, position, timeInMillis, index);
+		return ofNullable(activity)
+				.map(Activity::getLaps)
+				.flatMap(laps -> laps.stream().filter(isThisLap).findFirst().map(laps::indexOf))
+				.orElse(-1);
 	}
 
 }
