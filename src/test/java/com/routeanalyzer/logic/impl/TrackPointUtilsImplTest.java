@@ -1,4 +1,4 @@
-package com.routeanalyzer.test.logic;
+package com.routeanalyzer.logic.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDateTime;
@@ -19,7 +19,7 @@ import static com.routeanalyzer.common.CommonUtils.round;
 import static com.routeanalyzer.common.CommonUtils.toTrackPoint;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-public class TrackPointUtilsTest {
+public class TrackPointUtilsImplTest {
 
 	private TrackPointUtils trackpointUtils = new TrackPointUtilsImpl();
 	private Position oviedo;

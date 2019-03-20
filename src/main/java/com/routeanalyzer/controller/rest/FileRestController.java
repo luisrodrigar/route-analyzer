@@ -8,6 +8,10 @@ import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBException;
 
+import com.routeanalyzer.logic.file.upload.UploadService;
+import com.routeanalyzer.logic.file.upload.impl.GpxUploadServiceImpl;
+import com.routeanalyzer.logic.file.upload.impl.TcxUploadServiceImpl;
+import io.vavr.control.Try;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,9 +48,11 @@ public class FileRestController {
 	@Autowired
 	private ActivityMongoRepository mongoRepository;
 	@Autowired
-	private ActivityUtils activityUtilsService;
-	@Autowired
 	private OriginalRouteAS3Service aS3Service;
+	@Autowired
+	private TcxUploadServiceImpl tcxService;
+	@Autowired
+	private GpxUploadServiceImpl gpxService;
 
 	/**
 	 * Upload xml file: tcx or gpx to activity object. It allows to process the
@@ -62,49 +68,12 @@ public class FileRestController {
 	@PostMapping(value = "/upload", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile multiPart,
 			@RequestParam("type") String type) {
-		GsonBuilder gsonBuilder = new GsonBuilder();
-		Gson gson = gsonBuilder.create();
-		List<Activity> activities = null;
 		try {
 			switch (type) {
-			case "tcx":
-				try {
-					activities = activityUtilsService.uploadTCXFile(multiPart);
-					// Se guarda en la base de datos
-					List<String> ids = saveActivity(activities, multiPart.getBytes());
-					return ResponseEntity.ok().body(gson.toJson(ids));
-				} catch (SAXParseException e) {
-					log.error(e.getClass().getSimpleName() + " error: " + e.getMessage());
-					String errorValue = "{" + "\"error\":true,"
-							+ "\"description\":\"Problem trying to parser xml file. Check if its correct.\","
-							+ "\"exception\":\"" + e.getMessage() + "\"" + "}";
-					return ResponseEntity.badRequest().body(errorValue);
-				} catch (JAXBException e) {
-					log.error(e.getClass().getSimpleName() + " error: " + e.getMessage());
-					String errorValue = "{" + "\"error\":true,"
-							+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
-							+ e.getMessage() + "\"" + "}";
-					return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorValue);
-				}
-			case "gpx":
-				try {
-					activities = activityUtilsService.uploadGPXFile(multiPart);
-					// Se guarda en la base de datos
-					List<String> ids = saveActivity(activities, multiPart.getBytes());
-					return ResponseEntity.ok().body(gson.toJson(ids));
-				} catch (SAXParseException e) {
-					log.error(e.getClass().getSimpleName() + " error: " + e.getMessage());
-					String errorValue = "{" + "\"error\":true,"
-							+ "\"description\":\"Problem trying to parser xml file. Check if its correct.\","
-							+ "\"exception\":\"" + e.getMessage() + "\"" + "}";
-					return ResponseEntity.badRequest().body(errorValue);
-				} catch (JAXBException e) {
-					log.error(e.getClass().getSimpleName() + " error: " + e.getMessage());
-					String errorValue = "{" + "\"error\":true,"
-							+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
-							+ e.getMessage() + "\"" + "}";
-					return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorValue);
-				}
+				case "tcx":
+					return generateActivityCreatedResponse(multiPart, tcxService);
+				case "gpx":
+					return generateActivityCreatedResponse(multiPart, gpxService);
 			}
 		} catch (IOException | AmazonClientException e) {
 			log.error(e.getClass().getSimpleName() + " error: " + e.getMessage());
@@ -116,6 +85,29 @@ public class FileRestController {
 		String errorValue = "{" + "\"error\":true,"
 				+ "\"description\":\"Problem with the type of the file which you want to upload\"" + "}";
 		return ResponseEntity.badRequest().body(errorValue);
+	}
+
+	private ResponseEntity<String> generateActivityCreatedResponse(MultipartFile multiPart, UploadService service)
+			throws AmazonClientException, IOException {
+		GsonBuilder gsonBuilder = new GsonBuilder();
+		Gson gson = gsonBuilder.create();
+		return Try.of(() -> service.upload(multiPart))
+				.flatMap(activities ->
+					Try.of(() -> saveActivity(activities, multiPart.getBytes()))
+							.map((ids) -> ResponseEntity.ok().body(gson.toJson(ids))))
+				.recover(SAXParseException.class, (error) -> {
+					log.error(error.getClass().getSimpleName() + " error: " + error.getMessage());
+					String errorValue = "{" + "\"error\":true,"
+							+ "\"description\":\"Problem trying to parser xml file. Check if its correct.\","
+							+ "\"exception\":\"" + error.getMessage() + "\"" + "}";
+					return ResponseEntity.badRequest().body(errorValue);
+				}).recover(JAXBException.class, (error) -> {
+			log.error(error.getClass().getSimpleName() + " error: " + error.getMessage());
+			String errorValue = "{" + "\"error\":true,"
+					+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
+					+ error.getMessage() + "\"" + "}";
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorValue);
+		}).get();
 	}
 
 	/**

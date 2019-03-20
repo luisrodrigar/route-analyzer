@@ -45,13 +45,22 @@ public class LapsUtilsImpl implements LapsUtils {
 		// Join the track points of the two laps
 		List<TrackPoint> tracks = joinTrackPointLaps(lapLeft, lapRight);
 
-		Lap newLap = new Lap(tracks.get(0).getDate(),
-				sumDoubleFieldLaps(lapLeft, lapRight, Lap::getTotalTimeSeconds).orElse(null),
-				sumDoubleFieldLaps(lapLeft, lapRight, Lap::getDistanceMeters).orElse(null),
-				null, sumIntFieldLaps(lapLeft, lapRight, Lap::getCalories).orElse(null), null,
-				null, null, getIntensity(lapLeft, lapRight), null);
-		newLap.setTracks(tracks);
-		newLap.setIndex(lapLeft.getIndex());
+		Lap newLap = Lap.builder()
+				// Tracks joined
+				.tracks(tracks)
+				// Start time is the first left lap's track point time
+				.startTime(tracks.get(0).getDate())
+				// Calories are the total sum
+				.calories(sumIntFieldLaps(lapLeft, lapRight, Lap::getCalories).orElse(null))
+				// Total time seconds
+				.totalTimeSeconds(sumDoubleFieldLaps(lapLeft, lapRight, Lap::getTotalTimeSeconds).orElse(null))
+				// Total distance
+				.distanceMeters(sumDoubleFieldLaps(lapLeft, lapRight, Lap::getDistanceMeters).orElse(null))
+				// Index of the left lap
+				.index(lapLeft.getIndex())
+				// Intensity
+				.intensity(getIntensity(lapLeft, lapRight)).build();
+
 		calculateAggregateHeartRate(newLap);
 		calculateAggregateSpeed(newLap);
 
@@ -220,10 +229,16 @@ public class LapsUtilsImpl implements LapsUtils {
 	}
 
 	@Override
-	public boolean fulfillCriteriaPositionTime(Lap lap, Position position, Long timeInMillis, Integer index) {
-		return lap.getTracks().stream().anyMatch(track -> {
-			return trackpointUtilsService.isThisTrack(track, position, timeInMillis, index);
-		});
+	public boolean fulfillCriteriaPositionTime(Lap lap, Position positionParam, Long timeInMillis, Integer index) {
+		return ofNullable(lap)
+				.map(Lap::getTracks)
+				.flatMap(tracks ->
+						ofNullable(positionParam).map(position ->
+								tracks.stream().anyMatch(track ->
+										trackpointUtilsService.isThisTrack(track, position, timeInMillis, index)
+								)
+						)
+				).orElse(false);
 	}
 
 	@Override

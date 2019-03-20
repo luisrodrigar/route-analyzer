@@ -1,4 +1,4 @@
-package com.routeanalyzer.test.controller;
+package com.routeanalyzer.controller.rest;
 
 import static com.lordofthejars.nosqlunit.mongodb.MongoDbRule.MongoDbRuleBuilder.newMongoDbRule;
 import static org.hamcrest.CoreMatchers.is;

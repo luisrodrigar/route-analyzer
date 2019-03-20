@@ -1,4 +1,4 @@
-package com.routeanalyzer.test.controller;
+package com.routeanalyzer.controller.rest;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -12,6 +12,8 @@ import java.util.Optional;
 
 import javax.xml.bind.JAXBException;
 
+import com.routeanalyzer.logic.file.upload.impl.GpxUploadServiceImpl;
+import com.routeanalyzer.logic.file.upload.impl.TcxUploadServiceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +38,7 @@ import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
 import com.routeanalyzer.logic.ActivityUtils;
 import com.routeanalyzer.model.Activity;
 import com.routeanalyzer.services.OriginalRouteAS3Service;
-import com.routeanalyzer.test.common.TestUtils;
+import com.routeanalyzer.common.TestUtils;
 
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.contains;
@@ -57,7 +59,11 @@ public class FileRestControllerTest extends MockMvcTestController {
 	private ActivityUtils activityUtilsService;
 	@Autowired
 	private OriginalRouteAS3Service aS3Service;
-	
+	@Autowired
+	private TcxUploadServiceImpl tcxService;
+	@Autowired
+	private GpxUploadServiceImpl gpxService;
+
 	private MockMultipartFile xmlFile, xmlOtherFile, exceptionJAXBFile, exceptionSAXFile;
 	private Activity gpxActivity, tcxActivity, unknownXml;
 
@@ -87,14 +93,14 @@ public class FileRestControllerTest extends MockMvcTestController {
 
 	private void setMockBehaviour() throws AmazonClientException, SAXParseException, IOException, JAXBException {
 		String exceptionDescription = "Syntax error while trying to parse the file.";
-		doReturn(Arrays.asList(gpxActivity)).when(activityUtilsService).uploadGPXFile(xmlFile);
-		doReturn(Arrays.asList(tcxActivity)).when(activityUtilsService).uploadTCXFile(xmlFile);
+		doReturn(Arrays.asList(gpxActivity)).when(gpxService).upload(xmlFile);
+		doReturn(Arrays.asList(tcxActivity)).when(tcxService).upload(xmlFile);
 		doThrow(new JAXBException(exceptionDescription))
-				.when(activityUtilsService).uploadGPXFile(exceptionJAXBFile);
+				.when(gpxService).upload(exceptionJAXBFile);
 		doThrow(new SAXParseException(exceptionDescription, null))
-				.when(activityUtilsService).uploadTCXFile(exceptionSAXFile);
+				.when(tcxService).upload(exceptionSAXFile);
 		doReturn(Arrays.asList(unknownXml))
-				.when(activityUtilsService).uploadTCXFile(xmlOtherFile);
+				.when(tcxService).upload(xmlOtherFile);
 	}
 
 	private void loadMultiPartFiles() {

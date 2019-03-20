@@ -7,9 +7,11 @@ import com.routeanalyzer.model.Position;
 import com.routeanalyzer.model.TrackPoint;
 import com.routeanalyzer.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.xml.tcx.PositionT;
+import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -29,7 +31,7 @@ public class CommonUtils {
 	public static final double EARTHS_RADIUS_METERS = 6371000.0;
 
 	/**
-	 * Local Date Time operations
+	 * Date Time operations
 	 */
 	public static Optional<Date> toDate(LocalDateTime localDateTime) {
 		return getInstant(localDateTime)
@@ -70,6 +72,17 @@ public class CommonUtils {
 		return ofNullable(instant)
 				.map(inst -> inst.atZone(ZoneId.systemDefault()))
 				.map(ZonedDateTime::toLocalDateTime);
+	}
+
+	public static GregorianCalendar createGregorianCalendar(Date date) {
+		GregorianCalendar gregorianCalendar = new GregorianCalendar();
+		gregorianCalendar.setTime(date);
+		return gregorianCalendar;
+	};
+
+	public static XMLGregorianCalendar createXmlGregorianCalendar(GregorianCalendar gregorianCalendar) {
+		return Try.of(() -> DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar))
+				.getOrElse(() -> null);
 	}
 	
 	/**

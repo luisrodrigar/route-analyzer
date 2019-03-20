@@ -9,6 +9,8 @@ import java.util.stream.IntStream;
 
 import javax.xml.bind.JAXBException;
 
+import com.routeanalyzer.logic.file.export.impl.GpxExportServiceImpl;
+import com.routeanalyzer.logic.file.export.impl.TcxExportServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,10 @@ public class ActivityRestController {
 	private ActivityMongoRepository mongoRepository;
 	@Autowired
 	private ActivityUtils activityUtilsService;
+	@Autowired
+	private TcxExportServiceImpl tcxExportService;
+	@Autowired
+	private GpxExportServiceImpl gpxExportService;
 
 	@GetMapping(value = "/{id}", produces = "application/json;")
 	public @ResponseBody ResponseEntity<Object> getActivityById(@PathVariable String id) {
@@ -61,7 +67,7 @@ public class ActivityRestController {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_tcx.xml");
-				return ResponseEntity.ok().headers(responseHeaders).body(activityUtilsService.exportAsTCX(activity));
+				return ResponseEntity.ok().headers(responseHeaders).body(tcxExportService.export(activity));
 			} catch (JAXBException e1) {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
@@ -75,7 +81,7 @@ public class ActivityRestController {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
 				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_gpx.xml");
-				return ResponseEntity.ok().headers(responseHeaders).body(activityUtilsService.exportAsGPX(activity));
+				return ResponseEntity.ok().headers(responseHeaders).body(gpxExportService.export(activity));
 			} catch (JAXBException e) {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
