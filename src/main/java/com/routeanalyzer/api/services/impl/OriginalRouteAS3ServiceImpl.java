@@ -1,4 +1,4 @@
-package com.routeanalyzer.services.impl;
+package com.routeanalyzer.api.services.impl;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -18,7 +18,7 @@ import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
-import com.routeanalyzer.services.OriginalRouteAS3Service;
+import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 
 @Service
 public class OriginalRouteAS3ServiceImpl implements OriginalRouteAS3Service {

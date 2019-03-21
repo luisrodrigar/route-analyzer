@@ -1,7 +1,7 @@
-package com.routeanalyzer.logic.file.upload;
+package com.routeanalyzer.api.logic.file.upload;
 
 import com.amazonaws.AmazonClientException;
-import com.routeanalyzer.model.Activity;
+import com.routeanalyzer.api.model.Activity;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXParseException;
 

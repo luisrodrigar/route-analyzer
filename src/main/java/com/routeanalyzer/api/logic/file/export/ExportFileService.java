@@ -1,6 +1,6 @@
-package com.routeanalyzer.logic.file.export;
+package com.routeanalyzer.api.logic.file.export;
 
-import com.routeanalyzer.model.Activity;
+import com.routeanalyzer.api.model.Activity;
 
 import javax.xml.bind.JAXBException;
 

@@ -6,7 +6,7 @@
 //
 
 
-package com.routeanalyzer.xml.tcx;
+package com.routeanalyzer.api.xml.tcx;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.annotation.XmlElementDecl;

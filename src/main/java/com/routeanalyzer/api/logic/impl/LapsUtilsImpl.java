@@ -1,4 +1,4 @@
-package com.routeanalyzer.logic.impl;
+package com.routeanalyzer.api.logic.impl;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -16,20 +16,19 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.routeanalyzer.common.CommonUtils;
+import com.routeanalyzer.api.common.CommonUtils;
+import com.routeanalyzer.api.logic.LapsUtils;
+import com.routeanalyzer.api.logic.TrackPointUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.routeanalyzer.logic.LapsUtils;
-import com.routeanalyzer.logic.TrackPointUtils;
-import com.routeanalyzer.model.Activity;
-import com.routeanalyzer.model.Lap;
-import com.routeanalyzer.model.Position;
-import com.routeanalyzer.model.TrackPoint;
-import com.routeanalyzer.services.googlemaps.GoogleMapsServiceImpl;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.model.Lap;
+import com.routeanalyzer.api.model.Position;
+import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.services.googlemaps.GoogleMapsServiceImpl;
 
-import static com.routeanalyzer.common.CommonUtils.toTimeMillis;
-import static com.routeanalyzer.common.CommonUtils.millisToSeconds;
+import static com.routeanalyzer.api.common.CommonUtils.toTimeMillis;
 import static java.util.Optional.ofNullable;
 
 @Service

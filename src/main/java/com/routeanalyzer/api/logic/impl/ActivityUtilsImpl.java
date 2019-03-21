@@ -1,13 +1,13 @@
-package com.routeanalyzer.logic.impl;
+package com.routeanalyzer.api.logic.impl;
 
-import com.routeanalyzer.logic.ActivityUtils;
-import com.routeanalyzer.logic.LapsUtils;
-import com.routeanalyzer.model.Activity;
-import com.routeanalyzer.model.Lap;
-import com.routeanalyzer.model.Position;
-import com.routeanalyzer.model.TrackPoint;
-import com.routeanalyzer.services.reader.GPXService;
-import com.routeanalyzer.services.reader.TCXService;
+import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.logic.LapsUtils;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.model.Lap;
+import com.routeanalyzer.api.model.Position;
+import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.services.reader.GPXService;
+import com.routeanalyzer.api.services.reader.TCXService;
 import org.apache.commons.lang3.SerializationUtils;
 import org.springframework.stereotype.Service;
 

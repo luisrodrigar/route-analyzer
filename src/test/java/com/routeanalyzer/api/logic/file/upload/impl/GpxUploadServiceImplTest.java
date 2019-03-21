@@ -1,4 +1,4 @@
-package com.routeanalyzer.logic.file.upload.impl;
+package com.routeanalyzer.api.logic.file.upload.impl;
 
 import com.google.gson.Gson;
 import com.routeanalyzer.api.common.CommonUtils;
@@ -7,7 +7,7 @@ import com.routeanalyzer.api.logic.LapsUtils;
 import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.GPXService;
-import com.routeanalyzer.common.TestUtils;
+import com.routeanalyzer.api.common.TestUtils;
 import com.routeanalyzer.api.xml.gpx11.GpxType;
 import io.vavr.control.Try;
 import org.junit.Before;

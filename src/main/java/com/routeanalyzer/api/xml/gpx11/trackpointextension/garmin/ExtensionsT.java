@@ -6,7 +6,7 @@
 //
 
 
-package com.routeanalyzer.xml.gpx11.trackpointextension.garmin;
+package com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin;
 
 import java.util.ArrayList;
 import java.util.List;

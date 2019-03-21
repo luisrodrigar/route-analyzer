@@ -6,4 +6,4 @@
 //
 
 @javax.xml.bind.annotation.XmlSchema(namespace = "http://www.garmin.com/xmlschemas/ActivityExtension/v2", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
-package com.routeanalyzer.xml.tcx.activityextension;
+package com.routeanalyzer.api.xml.tcx.activityextension;

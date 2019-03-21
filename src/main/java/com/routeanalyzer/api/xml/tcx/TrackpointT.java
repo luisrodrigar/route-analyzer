@@ -6,7 +6,7 @@
 //
 
 
-package com.routeanalyzer.xml.tcx;
+package com.routeanalyzer.api.xml.tcx;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

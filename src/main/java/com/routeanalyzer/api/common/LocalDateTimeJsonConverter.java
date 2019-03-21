@@ -1,4 +1,4 @@
-package com.routeanalyzer.common;
+package com.routeanalyzer.api.common;
 
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;

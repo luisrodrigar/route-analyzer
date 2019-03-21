@@ -1,13 +1,6 @@
-package com.routeanalyzer.logic;
+package com.routeanalyzer.api.logic;
 
-import java.io.IOException;
-import java.util.List;
-import javax.xml.bind.JAXBException;
-import org.springframework.web.multipart.MultipartFile;
-import org.xml.sax.SAXParseException;
-
-import com.amazonaws.AmazonClientException;
-import com.routeanalyzer.model.Activity;
+import com.routeanalyzer.api.model.Activity;
 
 public interface ActivityUtils {
 

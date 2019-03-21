@@ -1,4 +1,4 @@
-package com.routeanalyzer.controller.rest.config;
+package com.routeanalyzer.api.controller.rest.config;
 
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.TestPropertySource;
 
-import com.routeanalyzer.logic.ActivityUtils;
-import com.routeanalyzer.services.OriginalRouteAS3Service;
+import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 
 @Configuration
 @Profile("test-controller")

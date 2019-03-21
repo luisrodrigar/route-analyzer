@@ -1,4 +1,4 @@
-package com.routeanalyzer.logic.impl;
+package com.routeanalyzer.api.logic.impl;
 
 import org.junit.Before;
 import org.junit.Test;

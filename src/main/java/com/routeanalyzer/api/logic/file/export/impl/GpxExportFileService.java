@@ -1,19 +1,20 @@
-package com.routeanalyzer.logic.file.export.impl;
+package com.routeanalyzer.api.logic.file.export.impl;
 
-import com.routeanalyzer.common.CommonUtils;
-import com.routeanalyzer.logic.file.export.ExportFileService;
-import com.routeanalyzer.model.Activity;
-import com.routeanalyzer.model.Lap;
-import com.routeanalyzer.model.Position;
-import com.routeanalyzer.model.TrackPoint;
-import com.routeanalyzer.services.reader.GPXService;
-import com.routeanalyzer.xml.gpx11.ExtensionsType;
-import com.routeanalyzer.xml.gpx11.GpxType;
-import com.routeanalyzer.xml.gpx11.MetadataType;
-import com.routeanalyzer.xml.gpx11.TrkType;
-import com.routeanalyzer.xml.gpx11.TrksegType;
-import com.routeanalyzer.xml.gpx11.WptType;
-import com.routeanalyzer.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
+import com.routeanalyzer.api.common.CommonUtils;
+import com.routeanalyzer.api.logic.file.export.ExportFileService;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.model.Lap;
+import com.routeanalyzer.api.model.Position;
+import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.services.reader.GPXService;
+import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.ObjectFactory;
+import com.routeanalyzer.api.xml.gpx11.ExtensionsType;
+import com.routeanalyzer.api.xml.gpx11.GpxType;
+import com.routeanalyzer.api.xml.gpx11.MetadataType;
+import com.routeanalyzer.api.xml.gpx11.TrkType;
+import com.routeanalyzer.api.xml.gpx11.TrksegType;
+import com.routeanalyzer.api.xml.gpx11.WptType;
+import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
 import org.springframework.stereotype.Service;
 
 import javax.xml.bind.JAXBElement;
@@ -35,8 +36,8 @@ public class GpxExportFileService implements ExportFileService {
 
     @Override
     public String export(Activity act) throws JAXBException {
-        com.routeanalyzer.xml.gpx11.ObjectFactory oFactory =
-                new com.routeanalyzer.xml.gpx11.ObjectFactory();
+        com.routeanalyzer.api.xml.gpx11.ObjectFactory oFactory =
+                new com.routeanalyzer.api.xml.gpx11.ObjectFactory();
 
         GpxType gpx = new GpxType();
 
@@ -72,8 +73,8 @@ public class GpxExportFileService implements ExportFileService {
     }
 
     private void gpxTrackPointsMapping(Lap lap, TrksegType trkSeg) {
-        com.routeanalyzer.xml.gpx11.trackpointextension.garmin.ObjectFactory extensionFactory =
-                new com.routeanalyzer.xml.gpx11.trackpointextension.garmin.ObjectFactory();
+        ObjectFactory extensionFactory =
+                new ObjectFactory();
         ofNullable(lap)
                 .map(Lap::getTracks)
                 .ifPresent(trackPoints -> {

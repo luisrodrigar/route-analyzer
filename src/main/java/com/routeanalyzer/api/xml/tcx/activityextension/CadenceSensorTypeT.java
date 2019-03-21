@@ -6,7 +6,7 @@
 //
 
 
-package com.routeanalyzer.xml.tcx.activityextension;
+package com.routeanalyzer.api.xml.tcx.activityextension;
 
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;

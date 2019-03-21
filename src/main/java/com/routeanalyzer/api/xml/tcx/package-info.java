@@ -14,7 +14,7 @@
 				@XmlNs(prefix= "nspe" ,namespaceURI="http://www.garmin.com/xmlschemas/ProfileExtension/v1")
 		},
 		elementFormDefault = XmlNsForm.QUALIFIED)
-package com.routeanalyzer.xml.tcx;
+package com.routeanalyzer.api.xml.tcx;
 
 import javax.xml.bind.annotation.XmlSchema;
 import javax.xml.bind.annotation.XmlNsForm;

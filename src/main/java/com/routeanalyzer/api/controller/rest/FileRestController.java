@@ -1,4 +1,4 @@
-package com.routeanalyzer.controller.rest;
+package com.routeanalyzer.api.controller.rest;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,9 +8,9 @@ import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBException;
 
-import com.routeanalyzer.logic.file.upload.UploadFileService;
-import com.routeanalyzer.logic.file.upload.impl.GpxUploadFileService;
-import com.routeanalyzer.logic.file.upload.impl.TcxUploadFileService;
+import com.routeanalyzer.api.logic.file.upload.UploadFileService;
+import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
+import com.routeanalyzer.api.logic.file.upload.impl.TcxUploadFileService;
 import io.vavr.control.Try;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +33,9 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.routeanalyzer.database.ActivityMongoRepository;
-import com.routeanalyzer.model.Activity;
-import com.routeanalyzer.services.OriginalRouteAS3Service;
+import com.routeanalyzer.api.database.ActivityMongoRepository;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController()

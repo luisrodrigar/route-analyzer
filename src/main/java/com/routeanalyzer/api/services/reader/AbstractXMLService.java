@@ -1,4 +1,4 @@
-package com.routeanalyzer.services.reader;
+package com.routeanalyzer.api.services.reader;
 
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -10,9 +10,8 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 
+import com.routeanalyzer.api.services.XMLService;
 import org.xml.sax.SAXParseException;
-
-import com.routeanalyzer.services.XMLService;
 
 public abstract class AbstractXMLService<T> implements XMLService<T> {
 	

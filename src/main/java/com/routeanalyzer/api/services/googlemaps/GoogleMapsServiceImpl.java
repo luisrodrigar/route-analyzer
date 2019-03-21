@@ -1,14 +1,12 @@
-package com.routeanalyzer.services.googlemaps;
+package com.routeanalyzer.api.services.googlemaps;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import com.routeanalyzer.api.services.ElevationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import com.routeanalyzer.services.ElevationService;
-import com.routeanalyzer.services.googlemaps.GMResponse;
 
 @Service
 public class GoogleMapsServiceImpl implements ElevationService {

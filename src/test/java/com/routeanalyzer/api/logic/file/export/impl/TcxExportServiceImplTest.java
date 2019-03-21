@@ -1,11 +1,11 @@
-package com.routeanalyzer.logic.file.export.impl;
+package com.routeanalyzer.api.logic.file.export.impl;
 
 import com.google.gson.Gson;
 import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.TCXService;
-import com.routeanalyzer.common.TestUtils;
+import com.routeanalyzer.api.common.TestUtils;
 import io.vavr.control.Try;
 import org.junit.Before;
 import org.junit.Test;
