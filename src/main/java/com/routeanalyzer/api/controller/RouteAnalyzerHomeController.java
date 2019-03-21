@@ -16,7 +16,7 @@ public class RouteAnalyzerHomeController {
 	private static final String HOME_PAGE = "home";
 
 	@RequestMapping(value = "/")
-	public String helloWorld() {
+	public String getHomePage() {
 		Context context = new Context();
 		return templateGenerator.process(HOME_PAGE, context);
 	}
