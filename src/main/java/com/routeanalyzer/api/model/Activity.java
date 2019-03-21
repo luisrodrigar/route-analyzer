@@ -1,4 +1,4 @@
-package com.routeanalyzer.model;
+package com.routeanalyzer.api.model;
 
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;

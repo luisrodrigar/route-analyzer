@@ -1,25 +1,26 @@
-package com.routeanalyzer.logic.file.export.impl;
+package com.routeanalyzer.api.logic.file.export.impl;
 
-import com.routeanalyzer.common.CommonUtils;
-import com.routeanalyzer.logic.file.export.ExportFileService;
-import com.routeanalyzer.model.Activity;
-import com.routeanalyzer.model.Lap;
-import com.routeanalyzer.model.Position;
-import com.routeanalyzer.model.TrackPoint;
-import com.routeanalyzer.services.reader.TCXService;
-import com.routeanalyzer.xml.tcx.ActivityLapT;
-import com.routeanalyzer.xml.tcx.ActivityListT;
-import com.routeanalyzer.xml.tcx.ActivityT;
-import com.routeanalyzer.xml.tcx.ExtensionsT;
-import com.routeanalyzer.xml.tcx.HeartRateInBeatsPerMinuteT;
-import com.routeanalyzer.xml.tcx.IntensityT;
-import com.routeanalyzer.xml.tcx.PositionT;
-import com.routeanalyzer.xml.tcx.SportT;
-import com.routeanalyzer.xml.tcx.TrackT;
-import com.routeanalyzer.xml.tcx.TrackpointT;
-import com.routeanalyzer.xml.tcx.TrainingCenterDatabaseT;
-import com.routeanalyzer.xml.tcx.activityextension.ActivityLapExtensionT;
-import com.routeanalyzer.xml.tcx.activityextension.ActivityTrackpointExtensionT;
+import com.routeanalyzer.api.common.CommonUtils;
+import com.routeanalyzer.api.logic.file.export.ExportFileService;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.model.Lap;
+import com.routeanalyzer.api.model.Position;
+import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.services.reader.TCXService;
+import com.routeanalyzer.api.xml.tcx.activityextension.ObjectFactory;
+import com.routeanalyzer.api.xml.tcx.ActivityLapT;
+import com.routeanalyzer.api.xml.tcx.ActivityListT;
+import com.routeanalyzer.api.xml.tcx.ActivityT;
+import com.routeanalyzer.api.xml.tcx.ExtensionsT;
+import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
+import com.routeanalyzer.api.xml.tcx.IntensityT;
+import com.routeanalyzer.api.xml.tcx.PositionT;
+import com.routeanalyzer.api.xml.tcx.SportT;
+import com.routeanalyzer.api.xml.tcx.TrackT;
+import com.routeanalyzer.api.xml.tcx.TrackpointT;
+import com.routeanalyzer.api.xml.tcx.TrainingCenterDatabaseT;
+import com.routeanalyzer.api.xml.tcx.activityextension.ActivityLapExtensionT;
+import com.routeanalyzer.api.xml.tcx.activityextension.ActivityTrackpointExtensionT;
 import org.springframework.stereotype.Service;
 
 import javax.xml.bind.JAXBElement;
@@ -42,8 +43,8 @@ public class TcxExportFileService implements ExportFileService {
 
     @Override
     public String export(Activity act) throws JAXBException {
-        com.routeanalyzer.xml.tcx.ObjectFactory oFactory =
-                new com.routeanalyzer.xml.tcx.ObjectFactory();
+        com.routeanalyzer.api.xml.tcx.ObjectFactory oFactory =
+                new com.routeanalyzer.api.xml.tcx.ObjectFactory();
 
         TrainingCenterDatabaseT trainingCenterDatabaseT = new TrainingCenterDatabaseT();
         ActivityListT actListT = new ActivityListT();
@@ -71,8 +72,8 @@ public class TcxExportFileService implements ExportFileService {
     }
 
     private void tcxLapsMapping(ActivityT activityT, Optional<List<Lap>> optLapList) {
-        com.routeanalyzer.xml.tcx.activityextension.ObjectFactory extensionFactory =
-                new com.routeanalyzer.xml.tcx.activityextension.ObjectFactory();
+        ObjectFactory extensionFactory =
+                new ObjectFactory();
         optLapList.map(List::stream)
                 .ifPresent(laps -> {
                     laps.forEach(lap -> {
@@ -133,8 +134,8 @@ public class TcxExportFileService implements ExportFileService {
     }
 
     private TrackT tcxTrackPointsMapping(Optional<List<TrackPoint>> optTrackPointList) {
-        com.routeanalyzer.xml.tcx.activityextension.ObjectFactory extensionFactory =
-                new com.routeanalyzer.xml.tcx.activityextension.ObjectFactory();
+        ObjectFactory extensionFactory =
+                new ObjectFactory();
         TrackT trackT = new TrackT();
         optTrackPointList
                 .ifPresent(tracks -> tracks.forEach(trackPoint -> {

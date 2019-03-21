@@ -6,7 +6,7 @@
 //
 
 
-package com.routeanalyzer.xml.gpx11;
+package com.routeanalyzer.api.xml.gpx11;
 
 import java.util.ArrayList;
 import java.util.List;

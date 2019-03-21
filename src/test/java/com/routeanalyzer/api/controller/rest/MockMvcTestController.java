@@ -1,4 +1,4 @@
-package com.routeanalyzer.controller.rest;
+package com.routeanalyzer.api.controller.rest;
 
 import static com.lordofthejars.nosqlunit.mongodb.MongoDbRule.MongoDbRuleBuilder.newMongoDbRule;
 import static org.hamcrest.CoreMatchers.is;
@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.routeanalyzer.model.Activity;
+import com.routeanalyzer.api.model.Activity;
 
 @SpringBootTest
 @AutoConfigureMockMvc

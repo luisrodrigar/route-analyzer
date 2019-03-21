@@ -1,16 +1,16 @@
-package com.routeanalyzer.logic.file.upload.impl;
+package com.routeanalyzer.api.logic.file.upload.impl;
 
 import com.amazonaws.AmazonClientException;
 import com.google.common.collect.Lists;
-import com.routeanalyzer.logic.ActivityUtils;
-import com.routeanalyzer.logic.LapsUtils;
-import com.routeanalyzer.logic.file.upload.UploadFileService;
-import com.routeanalyzer.model.Activity;
-import com.routeanalyzer.model.Lap;
-import com.routeanalyzer.model.TrackPoint;
-import com.routeanalyzer.services.reader.GPXService;
-import com.routeanalyzer.xml.gpx11.GpxType;
-import com.routeanalyzer.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
+import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.logic.LapsUtils;
+import com.routeanalyzer.api.logic.file.upload.UploadFileService;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.model.Lap;
+import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.services.reader.GPXService;
+import com.routeanalyzer.api.xml.gpx11.GpxType;
+import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXParseException;
@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.routeanalyzer.common.CommonUtils.toLocalDateTime;
-import static com.routeanalyzer.common.CommonUtils.toPosition;
-import static com.routeanalyzer.common.CommonUtils.toTrackPoint;
+import static com.routeanalyzer.api.common.CommonUtils.toLocalDateTime;
+import static com.routeanalyzer.api.common.CommonUtils.toPosition;
+import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 
 @Service
 public class GpxUploadFileService implements UploadFileService {

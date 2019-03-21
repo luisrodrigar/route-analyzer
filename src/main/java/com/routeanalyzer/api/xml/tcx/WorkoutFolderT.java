@@ -6,7 +6,7 @@
 //
 
 
-package com.routeanalyzer.xml.tcx;
+package com.routeanalyzer.api.xml.tcx;
 
 import java.util.ArrayList;
 import java.util.List;

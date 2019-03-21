@@ -1,4 +1,4 @@
-package com.routeanalyzer.services.googlemaps;
+package com.routeanalyzer.api.services.googlemaps;
 
 import java.util.List;
 

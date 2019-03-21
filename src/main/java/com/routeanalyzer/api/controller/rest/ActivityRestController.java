@@ -1,4 +1,4 @@
-package com.routeanalyzer.controller.rest;
+package com.routeanalyzer.api.controller.rest;
 
 import java.util.Arrays;
 import java.util.List;
@@ -9,8 +9,8 @@ import java.util.stream.IntStream;
 
 import javax.xml.bind.JAXBException;
 
-import com.routeanalyzer.logic.file.export.impl.GpxExportFileService;
-import com.routeanalyzer.logic.file.export.impl.TcxExportFileService;
+import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
+import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +27,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.routeanalyzer.database.ActivityMongoRepository;
-import com.routeanalyzer.logic.ActivityUtils;
-import com.routeanalyzer.model.Activity;
+import com.routeanalyzer.api.database.ActivityMongoRepository;
+import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.model.Activity;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController

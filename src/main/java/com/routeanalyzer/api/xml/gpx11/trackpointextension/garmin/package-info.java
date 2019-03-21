@@ -6,4 +6,4 @@
 //
 
 @javax.xml.bind.annotation.XmlSchema(namespace = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
-package com.routeanalyzer.xml.gpx11.trackpointextension.garmin;
+package com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin;

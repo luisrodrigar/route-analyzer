@@ -1,18 +1,18 @@
-package com.routeanalyzer.logic.impl;
+package com.routeanalyzer.api.logic.impl;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
-import com.routeanalyzer.common.CommonUtils;
-import com.routeanalyzer.logic.TrackPointUtils;
-import com.routeanalyzer.model.Position;
-import com.routeanalyzer.model.TrackPoint;
+import com.routeanalyzer.api.common.CommonUtils;
+import com.routeanalyzer.api.logic.TrackPointUtils;
+import com.routeanalyzer.api.model.Position;
+import com.routeanalyzer.api.model.TrackPoint;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import static com.routeanalyzer.common.CommonUtils.meteersBetweenCoordinates;
-import static com.routeanalyzer.common.CommonUtils.toTimeMillis;
+import static com.routeanalyzer.api.common.CommonUtils.meteersBetweenCoordinates;
+import static com.routeanalyzer.api.common.CommonUtils.toTimeMillis;
 import static java.util.Optional.ofNullable;
 
 @Service

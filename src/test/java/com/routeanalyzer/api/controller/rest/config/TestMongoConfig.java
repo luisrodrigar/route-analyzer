@@ -1,4 +1,4 @@
-package com.routeanalyzer.controller.rest.config;
+package com.routeanalyzer.api.controller.rest.config;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 
 import com.github.fakemongo.Fongo;
 import com.mongodb.MongoClient;
-import com.routeanalyzer.database.ActivityMongoRepository;
+import com.routeanalyzer.api.database.ActivityMongoRepository;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;

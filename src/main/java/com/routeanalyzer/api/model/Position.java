@@ -1,4 +1,4 @@
-package com.routeanalyzer.model;
+package com.routeanalyzer.api.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

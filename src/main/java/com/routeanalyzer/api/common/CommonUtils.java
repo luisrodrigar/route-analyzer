@@ -1,12 +1,12 @@
-package com.routeanalyzer.common;
+package com.routeanalyzer.api.common;
 
 import com.google.common.base.Function;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.routeanalyzer.model.Position;
-import com.routeanalyzer.model.TrackPoint;
-import com.routeanalyzer.xml.tcx.HeartRateInBeatsPerMinuteT;
-import com.routeanalyzer.xml.tcx.PositionT;
+import com.routeanalyzer.api.model.Position;
+import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
+import com.routeanalyzer.api.xml.tcx.PositionT;
 import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +21,6 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 import static java.util.Optional.ofNullable;
 

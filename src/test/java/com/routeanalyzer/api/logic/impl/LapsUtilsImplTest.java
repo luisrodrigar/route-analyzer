@@ -1,4 +1,4 @@
-package com.routeanalyzer.logic.impl;
+package com.routeanalyzer.api.logic.impl;
 
 public class LapsUtilsImplTest {
 

@@ -1,4 +1,4 @@
-package com.routeanalyzer.controller.rest;
+package com.routeanalyzer.api.controller.rest;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -12,8 +12,8 @@ import java.util.Optional;
 
 import javax.xml.bind.JAXBException;
 
-import com.routeanalyzer.logic.file.upload.impl.GpxUploadFileService;
-import com.routeanalyzer.logic.file.upload.impl.TcxUploadFileService;
+import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
+import com.routeanalyzer.api.logic.file.upload.impl.TcxUploadFileService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,10 +35,10 @@ import com.amazonaws.AmazonClientException;
 import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.routeanalyzer.logic.ActivityUtils;
-import com.routeanalyzer.model.Activity;
-import com.routeanalyzer.services.OriginalRouteAS3Service;
-import com.routeanalyzer.common.TestUtils;
+import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.services.OriginalRouteAS3Service;
+import com.routeanalyzer.api.common.TestUtils;
 
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.contains;

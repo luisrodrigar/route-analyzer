@@ -1,21 +1,21 @@
-package com.routeanalyzer.logic.file.upload.impl;
+package com.routeanalyzer.api.logic.file.upload.impl;
 
 import com.amazonaws.AmazonClientException;
 import com.google.common.collect.Lists;
-import com.routeanalyzer.common.CommonUtils;
-import com.routeanalyzer.logic.ActivityUtils;
-import com.routeanalyzer.logic.LapsUtils;
-import com.routeanalyzer.logic.file.upload.UploadFileService;
-import com.routeanalyzer.model.Activity;
-import com.routeanalyzer.model.Lap;
-import com.routeanalyzer.model.Position;
-import com.routeanalyzer.model.TrackPoint;
-import com.routeanalyzer.services.reader.TCXService;
-import com.routeanalyzer.xml.tcx.ExtensionsT;
-import com.routeanalyzer.xml.tcx.TrackpointT;
-import com.routeanalyzer.xml.tcx.TrainingCenterDatabaseT;
-import com.routeanalyzer.xml.tcx.activityextension.ActivityLapExtensionT;
-import com.routeanalyzer.xml.tcx.activityextension.ActivityTrackpointExtensionT;
+import com.routeanalyzer.api.common.CommonUtils;
+import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.logic.LapsUtils;
+import com.routeanalyzer.api.logic.file.upload.UploadFileService;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.model.Lap;
+import com.routeanalyzer.api.model.Position;
+import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.services.reader.TCXService;
+import com.routeanalyzer.api.xml.tcx.ExtensionsT;
+import com.routeanalyzer.api.xml.tcx.TrackpointT;
+import com.routeanalyzer.api.xml.tcx.TrainingCenterDatabaseT;
+import com.routeanalyzer.api.xml.tcx.activityextension.ActivityLapExtensionT;
+import com.routeanalyzer.api.xml.tcx.activityextension.ActivityTrackpointExtensionT;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXParseException;
@@ -29,10 +29,10 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-import static com.routeanalyzer.common.CommonUtils.toBigDecimal;
-import static com.routeanalyzer.common.CommonUtils.toLocalDateTime;
-import static com.routeanalyzer.common.CommonUtils.toPosition;
-import static com.routeanalyzer.common.CommonUtils.toTrackPoint;
+import static com.routeanalyzer.api.common.CommonUtils.toBigDecimal;
+import static com.routeanalyzer.api.common.CommonUtils.toLocalDateTime;
+import static com.routeanalyzer.api.common.CommonUtils.toPosition;
+import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static java.util.Optional.ofNullable;
 
 @Service

@@ -1,4 +1,4 @@
-package com.routeanalyzer.controller.rest;
+package com.routeanalyzer.api.controller.rest;
 
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.any;
@@ -9,8 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import javax.xml.bind.JAXBException;
 
-import com.routeanalyzer.logic.file.export.impl.GpxExportFileService;
-import com.routeanalyzer.logic.file.export.impl.TcxExportFileService;
+import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
+import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,9 +28,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.routeanalyzer.logic.ActivityUtils;
-import com.routeanalyzer.model.Activity;
-import com.routeanalyzer.common.TestUtils;
+import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.common.TestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ActiveProfiles("test-mongodb")

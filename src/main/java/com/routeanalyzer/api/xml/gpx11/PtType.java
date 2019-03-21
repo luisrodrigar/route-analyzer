@@ -6,7 +6,7 @@
 //
 
 
-package com.routeanalyzer.xml.gpx11;
+package com.routeanalyzer.api.xml.gpx11;
 
 import java.math.BigDecimal;
 import javax.xml.bind.annotation.XmlAccessType;
