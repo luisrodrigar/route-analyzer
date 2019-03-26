@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -104,7 +105,6 @@ public class LapsOperationsImpl implements LapsOperations {
 	@Override
 	public void calculateDistanceLap(Lap lap, TrackPoint previousLapLastTrackPoint) {
 		ofNullable(lap)
-				.filter(hasPositionValues)
 				.map(Lap::getTracks)
 				.ifPresent(trackPoints -> trackPoints.forEach(trackPoint ->
 						ofNullable(trackPoint)
@@ -132,27 +132,25 @@ public class LapsOperationsImpl implements LapsOperations {
 	@Override
 	public void calculateSpeedLap(Lap lap, TrackPoint previousLapLastTrackPoint) {
 		ofNullable(lap)
-				.filter(hasPositionValues)
 				.map(Lap::getTracks)
-				.ifPresent(trackPoints -> trackPoints
-						.forEach(trackPoint ->
-								ofNullable(trackPoints.indexOf(trackPoint))
-										.filter(indexTrackPoint -> Objects.nonNull(trackPoint.getSpeed()))
-										.ifPresent(indexTrackPoint ->
-											ofNullable(
-													ofNullable(indexTrackPoint)
-															.filter(MathUtils::isPositiveNonZero)
-															.map(MathUtils::decreaseUnit)
-															.map(trackPoints::get)
-															.orElse(previousLapLastTrackPoint))
-													.map(previousTrack ->
-															trackPointOperationsService
-																	.calculateSpeed(previousTrack, trackPoint))
-													.map(MathUtils::toBigDecimal)
-													.ifPresent(trackPoint::setSpeed)
-										)
-						)
-				);
+				.ifPresent(trackPoints -> trackPoints.forEach(trackPoint ->
+						ofNullable(trackPoint)
+								.map(trackPoints::indexOf)
+								.map(indexTrackPoint ->
+												ofNullable(
+														ofNullable(indexTrackPoint)
+																.map(MathUtils::decreaseUnit)
+																.filter(MathUtils::isPositiveOrZero)
+																.map(trackPoints::get)
+																.orElse(previousLapLastTrackPoint)
+												).flatMap(previousTrack -> ofNullable(previousTrack)
+														.map(previousTrackParam ->
+																trackPointOperationsService
+																		.calculateSpeed(previousTrackParam, trackPoint))
+														.map(MathUtils::toBigDecimal)
+												).orElseGet(() -> toBigDecimal(0.0))
+								).ifPresent(trackPoint::setSpeed)
+				));
 		setTotalValuesLap(lap);
 		calculateAggregateSpeed(lap);
 	}
@@ -162,9 +160,11 @@ public class LapsOperationsImpl implements LapsOperations {
 		return ofNullable(lap)
 				.map(Lap::getTracks)
 				.flatMap(tracks ->
-						ofNullable(positionParam).map(position ->
-								tracks.stream().anyMatch(track ->
-										trackPointOperationsService.isThisTrack(track, position, timeInMillis, index)))
+						ofNullable(positionParam)
+								.map(position ->
+										tracks.stream().anyMatch(track ->
+												trackPointOperationsService
+														.isThisTrack(track, position, timeInMillis, index)))
 				).orElse(false);
 	}
 
@@ -262,13 +262,14 @@ public class LapsOperationsImpl implements LapsOperations {
 
 	private Optional<TrackPoint> getLastTrackPoint(Lap lap){
 		return getLapField(lap, Lap::getTracks)
-				.filter(isNotEmpty)
-				.map(List::size)
-				.map(size -> ofNullable(size)
-						.filter(MathUtils::isPositiveNonZero)
-						.map(MathUtils::decreaseUnit)
-						.orElse(0))
-				.map(lap.getTracks()::get);
+				.flatMap(trackPointList -> ofNullable(trackPointList)
+						.filter(isNotEmpty)
+						.map(List::size)
+						.map(size -> ofNullable(size)
+								.filter(MathUtils::isPositiveNonZero)
+								.map(MathUtils::decreaseUnit)
+								.orElse(0))
+						.map(trackPointList::get));
 	}
 
 	private Optional<TrackPoint> getFirstTrackPoint(Lap lap){
@@ -332,24 +333,25 @@ public class LapsOperationsImpl implements LapsOperations {
 	private void setTotalDistanceLap(Lap lap) {
 		getLastTrackPoint(lap)
 				.map(TrackPoint::getDistanceMeters)
-				.map(BigDecimal::doubleValue)
 				.flatMap(distanceMetersLast -> getFirstTrackPoint(lap)
 								.map(TrackPoint::getDistanceMeters)
-								.map(BigDecimal::doubleValue)
-								.map(distanceMetersFirst -> distanceMetersLast - distanceMetersFirst))
-				.ifPresent(lap::setDistanceMeters);
+								.map(distanceMetersLast::subtract))
+				.ifPresent(totalDistance -> ofNullable(totalDistance)
+						.map(BigDecimal::doubleValue)
+						.ifPresent(lap::setDistanceMeters));
 	}
 
 	private void setTotalTimeSecondsLap(Lap lap) {
 		getLastTrackPoint(lap)
 				.map(TrackPoint::getDate)
-				.flatMap(DateUtils::toTimeMillis)
 				.flatMap(timeMillisLastTrack -> getFirstTrackPoint(lap)
 								.map(TrackPoint::getDate)
-								.flatMap(DateUtils::toTimeMillis)
-								.map(timeMillisFirstTrack -> timeMillisLastTrack - timeMillisFirstTrack))
-				.map(DateUtils::millisToSeconds)
-				.ifPresent(lap::setTotalTimeSeconds);
+								.map(timeMillisFirstTrack -> Duration.between(timeMillisFirstTrack, timeMillisLastTrack))
+								.map(Duration::getNano)
+								.map(nanoseconds -> ((double) nanoseconds)/ 1E9)
+				)
+				.ifPresent(totalTimeSeconds -> ofNullable(totalTimeSeconds)
+						.ifPresent(lap::setTotalTimeSeconds));
 	}
 
 	/**

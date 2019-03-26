@@ -3,6 +3,7 @@ package com.routeanalyzer.api.logic.impl;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.model.Lap;
@@ -25,10 +26,13 @@ import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.DateUtils.toLocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class LapsOperationsImpTest {
@@ -85,11 +89,11 @@ public class LapsOperationsImpTest {
 
         trackPointLeft1 = toTrackPoint(timeMillisLeft1, 3, "43.3602900", "-5.8447600", "120"
                 , "25.0", "12.0", new Integer(76));
-        trackPointLeft2 = toTrackPoint(timeMillisLeft1, 4, "43.352478", "-5.8501170", "120"
+        trackPointLeft2 = toTrackPoint(timeMillisLeft2, 4, "43.352478", "-5.8501170", "120"
                 , "25.0", "12.0", new Integer(86));
-        trackPointLeft3 = toTrackPoint(timeMillisLeft1, 5, "44.3602900", "-6.8447600", "120"
+        trackPointLeft3 = toTrackPoint(timeMillisLeft3, 5, "44.3602900", "-6.8447600", "120"
                 , "25.0", "35.0", new Integer(90));
-        trackPointLeft4 = toTrackPoint(timeMillisLeft1, 6, "46.352478", "-4.8501170", "120"
+        trackPointLeft4 = toTrackPoint(timeMillisLeft4, 6, "46.352478", "-4.8501170", "120"
                 , "25.0", "12.0", new Integer(95));
     }
 
@@ -309,6 +313,9 @@ public class LapsOperationsImpTest {
         assertThat(lapLeft.getTracks().get(1).getAltitudeMeters()).isEqualTo(ele2);
         assertThat(lapLeft.getTracks().get(2).getAltitudeMeters()).isEqualTo(ele3);
         assertThat(lapLeft.getTracks().get(3).getAltitudeMeters()).isEqualTo(ele4);
+        verify(googleMapsService).createPositionsRequest(anyList());
+        verify(googleMapsService).getAltitude(positions);
+        verify(googleMapsService, times(4)).getCoordinatesCode(any());
     }
 
     @Test
@@ -451,10 +458,14 @@ public class LapsOperationsImpTest {
                 toBigDecimal(previousDistance + dist1 + dist2 + dist3));
         assertThat(lapRight.getTracks().get(3).getDistanceMeters()).isEqualTo(
                 toBigDecimal(previousDistance + dist1 + dist2 + dist3 + dist4));
+        verify(trackPointOperations, times(1)).calculateDistance(trackPointLeft4, trackPointRight1);
+        verify(trackPointOperations, times(1)).calculateDistance(trackPointRight1, trackPointRight2);
+        verify(trackPointOperations, times(1)).calculateDistance(trackPointRight2, trackPointRight3);
+        verify(trackPointOperations, times(1)).calculateDistance(trackPointRight3, trackPointRight4);
     }
 
     @Test
-    public void calculateDistanceLapLocatedFirst() {
+    public void calculateDistanceLapLocatedFirstTest() {
         // Given
         Consumer<TrackPoint> resetDistValues = trackPoint -> trackPoint.setDistanceMeters(null);
         trackPointsLeft.stream().forEach(resetDistValues);
@@ -467,7 +478,6 @@ public class LapsOperationsImpTest {
         double dist3 = 11.0;
         double dist4 = 45.0;
         // When
-        doReturn(dist1).when(trackPointOperations).calculateDistance(eq(trackPointLeft1), eq(trackPointLeft1));
         doReturn(dist2).when(trackPointOperations).calculateDistance(eq(trackPointLeft1), eq(trackPointLeft2));
         doReturn(dist3).when(trackPointOperations).calculateDistance(eq(trackPointLeft2), eq(trackPointLeft3));
         doReturn(dist4).when(trackPointOperations).calculateDistance(eq(trackPointLeft3), eq(trackPointLeft4));
@@ -482,6 +492,113 @@ public class LapsOperationsImpTest {
                 toBigDecimal(dist1 + dist2 + dist3));
         assertThat(lapLeft.getTracks().get(3).getDistanceMeters()).isEqualTo(
                 toBigDecimal(dist1 + dist2 + dist3 + dist4));
+        verify(trackPointOperations, times(0)).calculateDistance(null, trackPointLeft1);
+        verify(trackPointOperations, times(1)).calculateDistance(trackPointLeft1, trackPointLeft2);
+        verify(trackPointOperations, times(1)).calculateDistance(trackPointLeft2, trackPointLeft3);
+        verify(trackPointOperations, times(1)).calculateDistance(trackPointLeft3, trackPointLeft4);
+    }
+
+    private Consumer<TrackPoint> resetSpeedValue = trackPoint -> trackPoint.setSpeed(null);
+
+    @Test
+    public void calculateSpeedLapInTheMiddleTest() {
+        // Given
+        trackPointsRight.stream().forEach(resetSpeedValue);
+        lapRight = Lap.builder().tracks(trackPointsRight)
+                .startTime(toLocalDateTime(timeMillisRight1).orElse(null))
+                .index(0)
+                .build();
+        double speed1 = 5.0;
+        double speed2 = 10.0;
+        double speed3 = 15.0;
+        double speed4 = 23.0;
+        // When
+        doReturn(speed1).when(trackPointOperations).calculateSpeed(eq(trackPointLeft4), eq(trackPointRight1));
+        doReturn(speed2).when(trackPointOperations).calculateSpeed(eq(trackPointRight1), eq(trackPointRight2));
+        doReturn(speed3).when(trackPointOperations).calculateSpeed(eq(trackPointRight2), eq(trackPointRight3));
+        doReturn(speed4).when(trackPointOperations).calculateSpeed(eq(trackPointRight3), eq(trackPointRight4));
+        lapsOperations.calculateSpeedLap(lapRight, trackPointLeft4);
+        // Then
+        assertThat(lapRight).isNotNull();
+        assertThat(lapRight.getTracks().get(0).getSpeed()).isEqualTo(
+                toBigDecimal(speed1));
+        assertThat(lapRight.getTracks().get(1).getSpeed()).isEqualTo(
+                toBigDecimal(speed2));
+        assertThat(lapRight.getTracks().get(2).getSpeed()).isEqualTo(
+                toBigDecimal(speed3));
+        assertThat(lapRight.getTracks().get(3).getSpeed()).isEqualTo(
+                toBigDecimal(speed4));
+        assertThat(lapRight.getTotalTimeSeconds())
+                .isEqualTo(DateUtils.millisToSeconds(Double.valueOf(timeMillisRight4)
+                        - Double.valueOf(timeMillisRight1)));
+        assertThat(lapRight.getDistanceMeters())
+                .isEqualTo(
+                        trackPointRight4.getDistanceMeters().subtract(trackPointRight1.getDistanceMeters()).doubleValue());
+        verify(trackPointOperations, times(1)).calculateSpeed(trackPointLeft4, trackPointRight1);
+        verify(trackPointOperations, times(1)).calculateSpeed(trackPointRight1, trackPointRight2);
+        verify(trackPointOperations, times(1)).calculateSpeed(trackPointRight2, trackPointRight3);
+        verify(trackPointOperations, times(1)).calculateSpeed(trackPointRight3, trackPointRight4);
+    }
+
+    @Test
+    public void calculateSpeedLapLocatedFirstTest() {
+        // Given
+        trackPointsLeft.stream().forEach(resetSpeedValue);
+        lapLeft = Lap.builder().tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+        double speed1 = 0.0;
+        double speed2 = 9.0;
+        double speed3 = 11.0;
+        double speed4 = 45.0;
+        // When
+        doReturn(speed2).when(trackPointOperations).calculateSpeed(eq(trackPointLeft1), eq(trackPointLeft2));
+        doReturn(speed3).when(trackPointOperations).calculateSpeed(eq(trackPointLeft2), eq(trackPointLeft3));
+        doReturn(speed4).when(trackPointOperations).calculateSpeed(eq(trackPointLeft3), eq(trackPointLeft4));
+        lapsOperations.calculateSpeedLap(lapLeft, null);
+        // Then
+        assertThat(lapLeft).isNotNull();
+        assertThat(lapLeft.getTracks().get(0).getSpeed()).isEqualTo(
+                toBigDecimal(speed1));
+        assertThat(lapLeft.getTracks().get(1).getSpeed()).isEqualTo(
+                toBigDecimal(speed2));
+        assertThat(lapLeft.getTracks().get(2).getSpeed()).isEqualTo(
+                toBigDecimal(speed3));
+        assertThat(lapLeft.getTracks().get(3).getSpeed()).isEqualTo(
+                toBigDecimal(speed4));
+        assertThat(lapLeft.getAverageSpeed()).isEqualTo(16.25);
+        assertThat(lapLeft.getMaximumSpeed()).isEqualTo(45.00);
+        assertThat(lapLeft.getTotalTimeSeconds())
+                .isEqualTo(DateUtils.millisToSeconds(Double.valueOf(timeMillisLeft4)
+                        - Double.valueOf(timeMillisLeft1)));
+        assertThat(lapLeft.getDistanceMeters())
+                .isEqualTo(
+                        trackPointLeft4.getDistanceMeters().subtract(trackPointLeft1.getDistanceMeters()).doubleValue());
+        verify(trackPointOperations, times(0)).calculateSpeed(null, trackPointLeft2);
+        verify(trackPointOperations, times(1)).calculateSpeed(trackPointLeft1, trackPointLeft2);
+        verify(trackPointOperations, times(1)).calculateSpeed(trackPointLeft2, trackPointLeft3);
+        verify(trackPointOperations, times(1)).calculateSpeed(trackPointLeft3, trackPointLeft4);
+    }
+
+    @Test
+    public void calculateSpeedLapEmptyTracks() {
+        // Given
+        trackPointsLeft.stream().forEach(resetSpeedValue);
+        lapLeft = Lap.builder()
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+        // When
+        lapsOperations.calculateSpeedLap(lapLeft, null);
+        // Then
+        assertThat(lapLeft).isNotNull();
+        assertThat(lapLeft.getTracks().isEmpty()).isTrue();
+        assertThat(lapLeft.getAverageSpeed()).isNull();
+        assertThat(lapLeft.getMaximumSpeed()).isNull();
+        assertThat(lapLeft.getTotalTimeSeconds()).isNull();
+        assertThat(lapLeft.getDistanceMeters()).isNull();
+        verify(trackPointOperations, times(0)).calculateSpeed(any(), any());
     }
 
 }
