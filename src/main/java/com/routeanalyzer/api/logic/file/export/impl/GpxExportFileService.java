@@ -1,6 +1,6 @@
 package com.routeanalyzer.api.logic.file.export.impl;
 
-import com.routeanalyzer.api.common.CommonUtils;
+import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.logic.file.export.ExportFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
@@ -49,9 +49,9 @@ public class GpxExportFileService implements ExportFileService {
             return metadata;
         };
         optAct.map(Activity::getDate)
-                .flatMap(CommonUtils::toDate)
-                .map(CommonUtils::createGregorianCalendar)
-                .map(CommonUtils::createXmlGregorianCalendar)
+                .flatMap(DateUtils::toDate)
+                .map(DateUtils::createGregorianCalendar)
+                .map(DateUtils::createXmlGregorianCalendar)
                 .map(generateMetadata)
                 .ifPresent(gpx::setMetadata);
         // Device
@@ -83,9 +83,9 @@ public class GpxExportFileService implements ExportFileService {
                         Optional<TrackPoint> optTrackPoint = ofNullable(trackPoint);
                         // Date time
                         optTrackPoint.map(TrackPoint::getDate)
-                                .flatMap(CommonUtils::toDate)
-                                .map(CommonUtils::createGregorianCalendar)
-                                .map(CommonUtils::createXmlGregorianCalendar)
+                                .flatMap(DateUtils::toDate)
+                                .map(DateUtils::createGregorianCalendar)
+                                .map(DateUtils::createXmlGregorianCalendar)
                                 .ifPresent(wpt::setTime);
                         // Latitude
                         optTrackPoint.map(TrackPoint::getPosition)

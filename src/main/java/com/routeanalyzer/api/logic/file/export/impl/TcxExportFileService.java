@@ -1,6 +1,7 @@
 package com.routeanalyzer.api.logic.file.export.impl;
 
-import com.routeanalyzer.api.common.CommonUtils;
+import com.routeanalyzer.api.common.DateUtils;
+import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.file.export.ExportFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
@@ -58,9 +59,9 @@ public class TcxExportFileService implements ExportFileService {
 
         // Set xml gregorian calendar date
         optAct.map(Activity::getDate)
-                .flatMap(CommonUtils::toDate)
-                .map(CommonUtils::createGregorianCalendar)
-                .map(CommonUtils::createXmlGregorianCalendar)
+                .flatMap(DateUtils::toDate)
+                .map(DateUtils::createGregorianCalendar)
+                .map(DateUtils::createXmlGregorianCalendar)
                 .ifPresent(activityT::setId);
         // Laps
         tcxLapsMapping(activityT, optAct.map(Activity::getLaps));
@@ -81,21 +82,21 @@ public class TcxExportFileService implements ExportFileService {
                         Optional<Lap> optLap = ofNullable(lap);
                         // Start time in xml gregorian calendar
                         optLap.map(Lap::getStartTime)
-                                .flatMap(CommonUtils::toDate)
-                                .map(CommonUtils::createGregorianCalendar)
-                                .map(CommonUtils::createXmlGregorianCalendar)
+                                .flatMap(DateUtils::toDate)
+                                .map(DateUtils::createGregorianCalendar)
+                                .map(DateUtils::createXmlGregorianCalendar)
                                 .ifPresent(lapT::setStartTime);
                         // heart rate average in beats per minute
                         optLap.map(Lap::getAverageHearRate)
                                 .map(Double::shortValue)
                                 .map(setTcxValueHeartRate)
-                                .filter(CommonUtils::isPositiveHeartRate)
+                                .filter(MathUtils::isPositiveHeartRate)
                                 .ifPresent(lapT::setAverageHeartRateBpm);
                         // Max heart rate in beats per minute
                         optLap.map(Lap::getMaximumHeartRate)
                                 .map(Integer::shortValue)
                                 .map(setTcxValueHeartRate)
-                                .filter(CommonUtils::isPositiveHeartRate)
+                                .filter(MathUtils::isPositiveHeartRate)
                                 .ifPresent(lapT::setMaximumHeartRateBpm);
                         // Calories
                         optLap.map(Lap::getCalories)
@@ -108,7 +109,7 @@ public class TcxExportFileService implements ExportFileService {
                                 .ifPresent(lapT::setMaximumSpeed);
                         // total time in seconds
                         optLap.map(Lap::getTotalTimeSeconds)
-                                .filter(CommonUtils::isPositiveNonZero)
+                                .filter(MathUtils::isPositiveNonZero)
                                 .ifPresent(lapT::setTotalTimeSeconds);
                         // Intensity
                         optLap.map(Lap::getIntensity)
@@ -143,9 +144,9 @@ public class TcxExportFileService implements ExportFileService {
                     Optional<TrackPoint> optTrack = ofNullable(trackPoint);
                     // Start time
                     optTrack.map(TrackPoint::getDate)
-                            .flatMap(CommonUtils::toDate)
-                            .map(CommonUtils::createGregorianCalendar)
-                            .map(CommonUtils::createXmlGregorianCalendar)
+                            .flatMap(DateUtils::toDate)
+                            .map(DateUtils::createGregorianCalendar)
+                            .map(DateUtils::createXmlGregorianCalendar)
                             .ifPresent(trackPointT::setTime);
                     // Position: latitude and longitude
                     Function<Position, PositionT> mapPosition = position -> {

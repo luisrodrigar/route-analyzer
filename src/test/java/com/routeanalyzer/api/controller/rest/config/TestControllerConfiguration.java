@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.TestPropertySource;
 
-import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 
 @Configuration
@@ -15,7 +15,7 @@ import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 public class TestControllerConfiguration{
 	
 	@SpyBean
-	public ActivityUtils activityUtils;
+	public ActivityOperations activityOperations;
 
 	@MockBean
 	public OriginalRouteAS3Service aS3Service;

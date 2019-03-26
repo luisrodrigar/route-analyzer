@@ -5,7 +5,7 @@ import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 
-public interface LapsUtils {
+public interface LapsOperations {
 	
 	Lap joinLaps(Lap lapLeft, Lap lapRight);
 
@@ -54,8 +54,8 @@ public interface LapsUtils {
 	 *            index of the position in the array
 	 * @return index of a track point
 	 */
-	int indexOfTrackpoint(Activity activity, Integer indexLap, Position position, Long time,
-			Integer index);
+	int indexOfTrackPoint(Activity activity, Integer indexLap, Position position, Long time,
+                          Integer index);
 
 	void calculateAggregateValuesLap(Lap lap);
 
@@ -66,6 +66,6 @@ public interface LapsUtils {
 	 * @param endIndex
 	 *            track point not included
 	 */
-	void createSplittLap(Lap lap, Lap newLap, int initIndex, int endIndex);
+	void createSplitLap(Lap lap, Lap newLap, int initIndex, int endIndex);
 
 }

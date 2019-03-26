@@ -28,7 +28,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.common.TestUtils;
 
@@ -44,7 +44,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 	@Autowired
 	private TcxExportFileService tcxService;
 	@Autowired
-	private ActivityUtils activityUtils;
+	private ActivityOperations activityOperations;
 
 	private Activity gpxActivity, tcxActivity;
 
@@ -201,7 +201,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void splitLapErrorTryingToSplitTest() throws Exception {
 		String errorDescription = "Error trying split the lap.";
-		doReturn(null).when(activityUtils).splitLap(any(), any(), any(), any(), any());
+		doReturn(null).when(activityOperations).splitLap(any(), any(), any(), any(), any());
 		isGenerateErrorHTTP(
 				put(SPLIT_LAP, TestUtils.FAKE_ID_TCX).param("lat", "42.6132170").param("lng", "-6.5739970")
 						.param("timeInMillis", "1519737395000").param("index", "3"),

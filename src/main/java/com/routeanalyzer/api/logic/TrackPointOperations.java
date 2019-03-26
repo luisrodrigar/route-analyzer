@@ -3,7 +3,7 @@ package com.routeanalyzer.api.logic;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 
-public interface TrackPointUtils {
+public interface TrackPointOperations {
 
 	/**
 	 * Check if the track point corresponds with the values of the params
@@ -21,16 +21,15 @@ public interface TrackPointUtils {
 	boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index);
 
 	/**
-	 * Distance between two positions. Degrees to radians and then, radians to
-	 * meters.
-	 * 
+	 * Distance between two track points.
+	 *
 	 * @param origin
 	 *            position
 	 * @param end
 	 *            position
 	 * @return distance in meters
 	 */
-	double calculateDistance(Position origin, Position end);
+	Double calculateDistance(TrackPoint origin, TrackPoint end);
 
 	/**
 	 * Speed calculated with the distance information of both track points.
@@ -38,8 +37,8 @@ public interface TrackPointUtils {
 	 * 
 	 * @param origin
 	 * @param end
-	 * @return speed
+	 * @return speed meters per second
 	 */
-	double calculateSpeed(TrackPoint origin, TrackPoint end);
+	Double calculateSpeed(TrackPoint origin, TrackPoint end);
 	
 }

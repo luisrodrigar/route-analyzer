@@ -7,20 +7,11 @@ import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.api.xml.tcx.PositionT;
-import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
-import org.apache.commons.lang3.StringUtils;
 
-import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
 
@@ -31,61 +22,6 @@ public class CommonUtils {
 	public static final double EARTHS_RADIUS_METERS = 6371000.0;
 
 	/**
-	 * Date Time operations
-	 */
-	public static Optional<Date> toDate(LocalDateTime localDateTime) {
-		return getInstant(localDateTime)
-				.map(Date::from);
-	}
-	
-	public static Optional<Long> toTimeMillis(LocalDateTime localDateTime) {
-		return getInstant(localDateTime)
-				.map(Instant::toEpochMilli);
-	}
-
-	private static Optional<Instant> getInstant(LocalDateTime localDateTime) {
-		return ofNullable(localDateTime)
-				.map(dateTime -> dateTime.atZone(ZoneId.systemDefault()))
-				.map(ZonedDateTime::toInstant);
-	}
-	
-	public static Optional<LocalDateTime> toLocalDateTime(XMLGregorianCalendar xmlGregorianCalendar) {
-		return ofNullable(xmlGregorianCalendar)
-				.map(XMLGregorianCalendar::toGregorianCalendar)
-				.flatMap(CommonUtils::toLocalDateTime);
-	}
-
-	public static Optional<LocalDateTime> toLocalDateTime(GregorianCalendar xmlGregorianCalendar) {
-		return ofNullable(xmlGregorianCalendar)
-				.map(GregorianCalendar::getTime)
-				.map(Date::toInstant)
-				.flatMap(CommonUtils::toLocalDateTime);
-	}
-	
-	public static Optional<LocalDateTime> toLocalDateTime(long timeMillis) {
-		return ofNullable(timeMillis)
-				.map(Instant::ofEpochMilli)
-				.flatMap(CommonUtils::toLocalDateTime);
-	}
-
-	public static Optional<LocalDateTime> toLocalDateTime(Instant instant) {
-		return ofNullable(instant)
-				.map(inst -> inst.atZone(ZoneId.systemDefault()))
-				.map(ZonedDateTime::toLocalDateTime);
-	}
-
-	public static GregorianCalendar createGregorianCalendar(Date date) {
-		GregorianCalendar gregorianCalendar = new GregorianCalendar();
-		gregorianCalendar.setTime(date);
-		return gregorianCalendar;
-	};
-
-	public static XMLGregorianCalendar createXmlGregorianCalendar(GregorianCalendar gregorianCalendar) {
-		return Try.of(() -> DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar))
-				.getOrElse(() -> null);
-	}
-	
-	/**
 	 * Json Parser
 	 */
 	
@@ -93,33 +29,8 @@ public class CommonUtils {
 		return new GsonBuilder().setPrettyPrinting().serializeNulls()
 				.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeJsonConverter()).create();
 	}
-	
-	/**
-	 * Mathematic operations
-	 */
-	
-	public static Optional<BigDecimal> toBigDecimal(String number) {
-		return ofNullable(number).filter(StringUtils::isNotEmpty).map(BigDecimal::new);
-	}
 
-	public static BigDecimal toBigDecimal(Double number) {
-		return ofNullable(number).map(BigDecimal::new).orElse(null);
-	}
-	
-	public static double round(double number, int round) {
-		double roundNumber = Math.pow(10, round);
-		return Math.round(number * roundNumber) / roundNumber;
-	}
-
-	public static double millisToSeconds(double milliSeconds){
-		return milliSeconds / 1000;
-	}
-
-	public static double degrees2Radians(BigDecimal degrees) {
-		return degrees.doubleValue() * Math.PI / 180.0;
-	}
-
-	public static double meteersBetweenCoordinates(double latP1, double lngP1, double latP2, double lngP2) {
+	public static double metersBetweenCoordinates(double latP1, double lngP1, double latP2, double lngP2) {
 		// Point P
 		double rho1 = EARTHS_RADIUS_METERS * Math.cos(latP1);
 		double z1 = EARTHS_RADIUS_METERS * Math.sin(latP1);
@@ -142,18 +53,6 @@ public class CommonUtils {
 	}
 
 	/**
-	 * Logical operations
-	 */
-
-	public static boolean isPositiveNonZero(Double value) {
-		return value > 0;
-	}
-
-	public static boolean isPositiveHeartRate(HeartRateInBeatsPerMinuteT heartRate) {
-		return heartRate.getValue() > 0;
-	}
-
-	/**
 	 * Model operations
 	 */
 
@@ -169,9 +68,9 @@ public class CommonUtils {
 				.date(dateTime)
 				.index(index)
 				.position(position)
-				.altitudeMeters(toBigDecimal(alt).orElse(null))
-				.distanceMeters(toBigDecimal(dist).orElse(null))
-				.speed(toBigDecimal(speed).orElse(null))
+				.altitudeMeters(MathUtils.toBigDecimal(alt).orElse(null))
+				.distanceMeters(MathUtils.toBigDecimal(dist).orElse(null))
+				.speed(MathUtils.toBigDecimal(speed).orElse(null))
 				.heartRateBpm(heartRate)
 				.build();
 	}
@@ -188,13 +87,13 @@ public class CommonUtils {
 
 	public static TrackPoint toTrackPoint(XMLGregorianCalendar gregorianCalendar, int index, Position position,
 										  String alt, String dist, String speed, Integer heartRate) {
-		return toTrackPoint(toLocalDateTime(gregorianCalendar).orElse(null),
+		return toTrackPoint(DateUtils.toLocalDateTime(gregorianCalendar).orElse(null),
 				index, position, alt, dist, speed, heartRate);
 	}
 
 	public static TrackPoint toTrackPoint(long timeMillis, int index, Position position, String alt, String dist,
 										  String speed, Integer heartRate) {
-		return toTrackPoint(toLocalDateTime(timeMillis).orElse(null),
+		return toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null),
 				index, position, alt, dist, speed, heartRate);
 	}
 
@@ -205,7 +104,7 @@ public class CommonUtils {
 	
 	public static TrackPoint toTrackPoint(long timeMillis, int index, String lat, String lng, String alt, String dist,
 											   String speed, Integer heartRate) {
-		return toTrackPoint(toLocalDateTime(timeMillis).orElse(null),
+		return toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null),
 				index, lat, lng, alt, dist, speed, heartRate);
 	}
 
@@ -213,9 +112,9 @@ public class CommonUtils {
 											   String speed, HeartRateInBeatsPerMinuteT heartRate) {
 		return ofNullable(heartRate)
 				.map(heartRateXml ->
-						toTrackPoint(toLocalDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
+						toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
 								new Integer(heartRateXml.getValue())))
-				.orElse(toTrackPoint(toLocalDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
+				.orElse(toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
 						null));
 	}
 
@@ -224,7 +123,7 @@ public class CommonUtils {
 		return ofNullable(position)
 				.map(positionXml ->
 						ofNullable(xmlGregorianCalendar)
-								.flatMap(CommonUtils::toLocalDateTime)
+								.flatMap(DateUtils::toLocalDateTime)
 								.map(localDateTime ->
 										ofNullable(heartRate).map(heartRateXml -> toTrackPoint(localDateTime, index,
 												toPosition(positionXml.getLatitudeDegrees(),
@@ -245,7 +144,7 @@ public class CommonUtils {
 	 */
 
 	public static Position toPosition(String latParam, String lngParam) {
-		return toPosition(toBigDecimal(latParam).orElse(null), toBigDecimal(lngParam).orElse(null));
+		return toPosition(MathUtils.toBigDecimal(latParam).orElse(null), MathUtils.toBigDecimal(lngParam).orElse(null));
 	}
 
 	public static Position toPosition(Double lat, Double lng) {

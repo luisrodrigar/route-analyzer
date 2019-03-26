@@ -35,7 +35,7 @@ import com.amazonaws.AmazonClientException;
 import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 import com.routeanalyzer.api.common.TestUtils;
@@ -56,7 +56,7 @@ public class FileRestControllerTest extends MockMvcTestController {
 	@Autowired
 	protected ApplicationContext applicationContext;
 	@Autowired
-	private ActivityUtils activityUtilsService;
+	private ActivityOperations activityOperationsService;
 	@Autowired
 	private OriginalRouteAS3Service aS3Service;
 	@Autowired
