@@ -74,6 +74,6 @@ public class DateUtils {
     }
 
     public static double millisToSeconds(double milliSeconds){
-        return milliSeconds / 1000;
+        return milliSeconds / 1000.0;
     }
 }
