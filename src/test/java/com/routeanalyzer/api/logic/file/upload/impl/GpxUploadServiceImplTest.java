@@ -2,9 +2,8 @@ package com.routeanalyzer.api.logic.file.upload.impl;
 
 import com.google.gson.Gson;
 import com.routeanalyzer.api.common.CommonUtils;
-import com.routeanalyzer.api.logic.ActivityUtils;
-import com.routeanalyzer.api.logic.LapsUtils;
-import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
+import com.routeanalyzer.api.logic.ActivityOperations;
+import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.GPXService;
 import com.routeanalyzer.api.common.TestUtils;
@@ -41,10 +40,10 @@ public class GpxUploadServiceImplTest {
     private GPXService gpxService;
 
     @Mock
-    private LapsUtils lapsUtils;
+    private LapsOperations lapsOperations;
 
     @Mock
-    private ActivityUtils activityUtils;
+    private ActivityOperations activityOperations;
 
     @InjectMocks
     private GpxUploadFileService gpxUploadService;

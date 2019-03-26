@@ -2,7 +2,7 @@ package com.routeanalyzer.api.logic;
 
 import com.routeanalyzer.api.model.Activity;
 
-public interface ActivityUtils {
+public interface ActivityOperations {
 
 	/**
 	 * Remove point: - Remove lap if it is the last point of the lap - Split lap

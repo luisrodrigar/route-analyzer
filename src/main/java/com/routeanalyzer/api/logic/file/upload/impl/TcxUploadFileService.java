@@ -2,9 +2,9 @@ package com.routeanalyzer.api.logic.file.upload.impl;
 
 import com.amazonaws.AmazonClientException;
 import com.google.common.collect.Lists;
-import com.routeanalyzer.api.common.CommonUtils;
-import com.routeanalyzer.api.logic.ActivityUtils;
-import com.routeanalyzer.api.logic.LapsUtils;
+import com.routeanalyzer.api.common.MathUtils;
+import com.routeanalyzer.api.logic.ActivityOperations;
+import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
@@ -29,8 +29,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-import static com.routeanalyzer.api.common.CommonUtils.toBigDecimal;
-import static com.routeanalyzer.api.common.CommonUtils.toLocalDateTime;
+import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
+import static com.routeanalyzer.api.common.DateUtils.toLocalDateTime;
 import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static java.util.Optional.ofNullable;
@@ -39,13 +39,13 @@ import static java.util.Optional.ofNullable;
 public class TcxUploadFileService implements UploadFileService {
 
     private TCXService tcxService;
-    private ActivityUtils activityUtils;
-    private LapsUtils lapsUtils;
+    private ActivityOperations activityOperations;
+    private LapsOperations lapsOperations;
 
-    public TcxUploadFileService(TCXService tcxService, ActivityUtils activityUtils, LapsUtils lapsUtils) {
+    public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperations, LapsOperations lapsOperations) {
         this.tcxService = tcxService;
-        this.activityUtils = activityUtils;
-        this.lapsUtils = lapsUtils;
+        this.activityOperations = activityOperations;
+        this.lapsOperations = lapsOperations;
     }
 
     @Override
@@ -127,10 +127,10 @@ public class TcxUploadFileService implements UploadFileService {
                         });
                     });
                     // Calculate values not informed of a lap.
-                    lapsUtils.calculateLapValues(lap);
+                    lapsOperations.calculateLapValues(lap);
                     activity.addLap(lap);
                 });
-                activityUtils.calculateDistanceSpeedValues(activity);
+                activityOperations.calculateDistanceSpeedValues(activity);
                 activities.add(activity);
             });
         } else if (!Objects.isNull(tcx.getCourses())) {
@@ -178,10 +178,10 @@ public class TcxUploadFileService implements UploadFileService {
                         lap.addTrack(trackpoint);
                     });
                     // Calculate values not informed of a lap.
-                    lapsUtils.calculateLapValues(lap);
+                    lapsOperations.calculateLapValues(lap);
                     activity.addLap(lap);
                 });
-                activityUtils.calculateDistanceSpeedValues(activity);
+                activityOperations.calculateDistanceSpeedValues(activity);
                 activities.add(activity);
             });
         }
@@ -201,7 +201,7 @@ public class TcxUploadFileService implements UploadFileService {
                                 .filter(ActivityTrackpointExtensionT.class::isInstance)
                                 .map(ActivityTrackpointExtensionT.class::cast)
                                 .map(ActivityTrackpointExtensionT::getSpeed)
-                                .map(CommonUtils::toBigDecimal)
+                                .map(MathUtils::toBigDecimal)
                                 .findFirst()
                                 .ifPresent(speed -> modeltrackpoint.setSpeed(speed))
                 );

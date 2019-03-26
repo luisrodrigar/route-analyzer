@@ -2,8 +2,8 @@ package com.routeanalyzer.api.logic.file.upload.impl;
 
 import com.amazonaws.AmazonClientException;
 import com.google.common.collect.Lists;
-import com.routeanalyzer.api.logic.ActivityUtils;
-import com.routeanalyzer.api.logic.LapsUtils;
+import com.routeanalyzer.api.logic.ActivityOperations;
+import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.routeanalyzer.api.common.CommonUtils.toLocalDateTime;
+import static com.routeanalyzer.api.common.DateUtils.toLocalDateTime;
 import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 
@@ -32,13 +32,13 @@ import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 public class GpxUploadFileService implements UploadFileService {
 
     private GPXService gpxService;
-    private ActivityUtils activityUtils;
-    private LapsUtils lapsUtils;
+    private ActivityOperations activityOperations;
+    private LapsOperations lapsOperations;
 
-    public GpxUploadFileService(GPXService gpxService, ActivityUtils activityUtils, LapsUtils lapsUtils) {
+    public GpxUploadFileService(GPXService gpxService, ActivityOperations activityOperations, LapsOperations lapsOperations) {
         this.gpxService = gpxService;
-        this.activityUtils = activityUtils;
-        this.lapsUtils = lapsUtils;
+        this.activityOperations = activityOperations;
+        this.lapsOperations = lapsOperations;
     }
 
     @Override
@@ -104,11 +104,11 @@ public class GpxUploadFileService implements UploadFileService {
                         lap.addTrack(tkp);
                     }
                 });
-                lapsUtils.calculateLapValues(lap);
+                lapsOperations.calculateLapValues(lap);
                 activity.addLap(lap);
             });
             // Check if no speed nor distance values
-            activityUtils.calculateDistanceSpeedValues(activity);
+            activityOperations.calculateDistanceSpeedValues(activity);
 
             activities.add(activity);
         });

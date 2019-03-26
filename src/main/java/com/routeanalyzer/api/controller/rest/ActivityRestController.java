@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.routeanalyzer.api.database.ActivityMongoRepository;
-import com.routeanalyzer.api.logic.ActivityUtils;
+import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.model.Activity;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -41,7 +41,7 @@ public class ActivityRestController {
 	@Autowired
 	private ActivityMongoRepository mongoRepository;
 	@Autowired
-	private ActivityUtils activityUtilsService;
+	private ActivityOperations activityOperationsService;
 	@Autowired
 	private TcxExportFileService tcxExportService;
 	@Autowired
@@ -109,7 +109,7 @@ public class ActivityRestController {
 			return ResponseEntity.badRequest().body(error);
 		} else {
 			try{
-				activityUtilsService.removePoint(activity, lat, lng, timeInMillis, index);
+				activityOperationsService.removePoint(activity, lat, lng, timeInMillis, index);
 				mongoRepository.save(activity);
 				return ResponseEntity.ok().body(activity);
 			} catch(IndexOutOfBoundsException e){
@@ -124,7 +124,7 @@ public class ActivityRestController {
 			@RequestParam(name = "index1") String indexLap1, @RequestParam(name = "index2") String indexLap2) {
 		Activity act = mongoRepository.findById(id).orElse(null);
 		if (!Objects.isNull(indexLap1) && !Objects.isNull(indexLap2) && !indexLap1.isEmpty() && !indexLap2.isEmpty()) {
-			act = activityUtilsService.joinLap(act, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2));
+			act = activityOperationsService.joinLap(act, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2));
 			if (Objects.isNull(act)) {
 				String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\""
 						+ "}";
@@ -148,7 +148,7 @@ public class ActivityRestController {
 			return ResponseEntity.badRequest().body("{" + "\"error\":true,"
 					+ "\"description\":\"Given activity id not found in database.\"" + "}");
 		else {
-			act = activityUtilsService.splitLap(act, lat, lng, timeInMillis, index);
+			act = activityOperationsService.splitLap(act, lat, lng, timeInMillis, index);
 			if(Objects.isNull(act)){
 				return ResponseEntity.badRequest().body("{" + "\"error\":true,"
 						+ "\"description\":\"Error trying split the lap.\"" + "}");
@@ -174,7 +174,7 @@ public class ActivityRestController {
 				IntStream.range(0, index.size()).forEach(indexArrays -> {
 					Integer indexLap = Integer.parseInt(index.get(indexArrays));
 					Long date = isDates ? Long.parseLong(dates.get(indexArrays)) : null;
-					activityUtilsService.removeLap(act, date, indexLap);
+					activityOperationsService.removeLap(act, date, indexLap);
 				});
 			}
 			mongoRepository.save(act);

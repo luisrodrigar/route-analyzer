@@ -1,7 +1,7 @@
 package com.routeanalyzer.api.logic.impl;
 
-import com.routeanalyzer.api.logic.ActivityUtils;
-import com.routeanalyzer.api.logic.LapsUtils;
+import com.routeanalyzer.api.logic.ActivityOperations;
+import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
@@ -9,6 +9,7 @@ import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.reader.GPXService;
 import com.routeanalyzer.api.services.reader.TCXService;
 import org.apache.commons.lang3.SerializationUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,12 +23,13 @@ import java.util.stream.IntStream;
 import static java.util.Optional.ofNullable;
 
 @Service
-public class ActivityUtilsImpl implements ActivityUtils {
+public class ActivityOperationsImpl implements ActivityOperations {
 
-	private LapsUtils lapsUtilsService;
+	private LapsOperations lapsOperationsService;
 
-	public ActivityUtilsImpl(GPXService gpxService, TCXService tcxService, LapsUtils lapsUtils) {
-		this.lapsUtilsService = lapsUtils;
+	@Autowired
+	public ActivityOperationsImpl(LapsOperations lapsOperations) {
+		this.lapsOperationsService = lapsOperations;
 	}
 
 	@Override
@@ -47,7 +49,7 @@ public class ActivityUtilsImpl implements ActivityUtils {
 //																.map(indexModel -> indexOfALap(activity, position, time, indexModel))
 //																.flatMap(indexLap -> ofNullable(indexLap)
 //																		.map(indexLapParam ->
-//																				lapsUtilsService.indexOfTrackpoint(activity, indexLap, position, time, index))
+//																				lapsOperationsService.indexOfTrackPoint(activity, indexLap, position, time, index))
 //																		.flatMap(indexTrack -> ofNullable(indexTrack)
 //																				.map(indexTrackParam -> activity.getLaps().get(indexLap).getTracks().size())
 //																				.filter(size -> indexTrack > 0 && size > 1))
@@ -72,7 +74,7 @@ public class ActivityUtilsImpl implements ActivityUtils {
 		// the lap splits into two new ones.
 		Integer indexLap = indexOfALap(act, position, time, index);
 		if (indexLap > -1) {
-			Integer indexPosition = lapsUtilsService.indexOfTrackpoint(act, indexLap, position, time, index);
+			Integer indexPosition = lapsOperationsService.indexOfTrackPoint(act, indexLap, position, time, index);
 			int sizeOfTrackPoints = act.getLaps().get(indexLap).getTracks().size();
 
 			// The lap is only one track point.
@@ -95,11 +97,11 @@ public class ActivityUtilsImpl implements ActivityUtils {
 				newLap.getTracks().remove(indexPosition.intValue());
 				act.getLaps().remove(indexLap.intValue());
 				act.getLaps().add(indexLap.intValue(), newLap);
-				lapsUtilsService.resetAggregateValues(newLap);
-				lapsUtilsService.resetTotals(newLap);
+				lapsOperationsService.resetAggregateValues(newLap);
+				lapsOperationsService.resetTotals(newLap);
 				calculateDistanceSpeedValues(act);
-				lapsUtilsService.setTotalValuesLap(newLap);
-				lapsUtilsService.calculateAggregateValuesLap(newLap);
+				lapsOperationsService.setTotalValuesLap(newLap);
+				lapsOperationsService.calculateAggregateValuesLap(newLap);
 			}
 			return act;
 		} else
@@ -116,7 +118,7 @@ public class ActivityUtilsImpl implements ActivityUtils {
 
 		Integer indexLap = indexOfALap(act, position, time, index);
 		if (indexLap > -1) {
-			Integer indexPosition = lapsUtilsService.indexOfTrackpoint(act, indexLap, position, time, index);
+			Integer indexPosition = lapsOperationsService.indexOfTrackPoint(act, indexLap, position, time, index);
 			Lap lap = act.getLaps().get(indexLap);
 			int sizeOfTrackPoints = lap.getTracks().size();
 
@@ -124,14 +126,14 @@ public class ActivityUtilsImpl implements ActivityUtils {
 			if (indexPosition > 0 && indexPosition < sizeOfTrackPoints - 1) {
 
 				Lap lapSplitLeft = SerializationUtils.clone(act.getLaps().get(indexLap));
-				lapsUtilsService.createSplittLap(lap, lapSplitLeft, 0, indexPosition);
+				lapsOperationsService.createSplitLap(lap, lapSplitLeft, 0, indexPosition);
 				// Index the same original lap
 				lapSplitLeft.setIndex(lap.getIndex());
 
 				Lap lapSplitRight = SerializationUtils.clone(act.getLaps().get(indexLap));
 				// lap right: add right elements and the current track point
 				// which has index = index position
-				lapsUtilsService.createSplittLap(lap, lapSplitRight, indexPosition, sizeOfTrackPoints);
+				lapsOperationsService.createSplitLap(lap, lapSplitRight, indexPosition, sizeOfTrackPoints);
 				// Index
 				lapSplitRight.setIndex(lap.getIndex() + 1);
 
@@ -167,7 +169,7 @@ public class ActivityUtilsImpl implements ActivityUtils {
 		Lap lapLeft = act.getLaps().get(indexLapLeft);
 		Lap lapRight = act.getLaps().get(indexLapRight);
 
-		Lap newLap = lapsUtilsService.joinLaps(lapLeft, lapRight);
+		Lap newLap = lapsOperationsService.joinLaps(lapLeft, lapRight);
 
 		act.getLaps().remove(lapLeft);
 		act.getLaps().remove(lapRight);
@@ -222,11 +224,11 @@ public class ActivityUtilsImpl implements ActivityUtils {
 			int indexLap = laps.indexOf(lap);
 			switch (indexLap) {
 			case 0:
-				lapsUtilsService.calculateDistanceLap(lap, null);
+				lapsOperationsService.calculateDistanceLap(lap, null);
 				break;
 			default:
 				Lap previousLap = laps.get(indexLap - 1);
-				lapsUtilsService.calculateDistanceLap(lap,
+				lapsOperationsService.calculateDistanceLap(lap,
 						previousLap.getTracks().get(previousLap.getTracks().size() - 1));
 				break;
 			}
@@ -239,11 +241,11 @@ public class ActivityUtilsImpl implements ActivityUtils {
 			int indexLap = laps.indexOf(lap);
 			switch (indexLap) {
 			case 0:
-				lapsUtilsService.calculateSpeedLap(lap, null);
+				lapsOperationsService.calculateSpeedLap(lap, null);
 				break;
 			default:
 				Lap previousLap = laps.get(indexLap - 1);
-				lapsUtilsService.calculateSpeedLap(lap,
+				lapsOperationsService.calculateSpeedLap(lap,
 						previousLap.getTracks().get(previousLap.getTracks().size() - 1));
 				break;
 			}
@@ -274,7 +276,7 @@ public class ActivityUtilsImpl implements ActivityUtils {
 	 */
 	private int indexOfALap(Activity activity, Position position, Long timeInMillis, Integer index) {
 		Predicate<Lap> isThisLap = lap ->
-				lapsUtilsService.fulfillCriteriaPositionTime(lap, position, timeInMillis, index);
+				lapsOperationsService.fulfillCriteriaPositionTime(lap, position, timeInMillis, index);
 		return ofNullable(activity)
 				.map(Activity::getLaps)
 				.flatMap(laps -> laps.stream().filter(isThisLap).findFirst().map(laps::indexOf))
