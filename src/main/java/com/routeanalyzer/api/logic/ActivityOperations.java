@@ -1,6 +1,7 @@
 package com.routeanalyzer.api.logic;
 
 import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.model.Position;
 
 public interface ActivityOperations {
 
@@ -66,5 +67,23 @@ public interface ActivityOperations {
 	 */
 	void calculateDistanceSpeedValues(Activity activity);
 
+	/**
+	 * Method which returns an index corresponding to the track point with the
+	 * latitude, longitude and ( time or index) contained in the parameters.
+	 *
+	 * @param activity:
+	 *            activity
+	 * @param indexLap:
+	 *            index of the lap
+	 * @param position:
+	 *            latitude position
+	 *            longitude position
+	 * @param time:
+	 *            time in milliseconds
+	 * @param index:
+	 *            index of the position in the array
+	 * @return index of a track point
+	 */
+	int indexOfTrackPoint(Activity activity, Integer indexLap, Position position, Long time, Integer index);
 
 }
