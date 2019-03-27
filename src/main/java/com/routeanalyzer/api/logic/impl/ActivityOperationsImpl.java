@@ -1,5 +1,7 @@
 package com.routeanalyzer.api.logic.impl;
 
+import com.google.common.base.Predicates;
+import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.model.Activity;
@@ -11,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -184,15 +185,24 @@ public class ActivityOperationsImpl implements ActivityOperations {
 
 	@Override
 	public Activity removeLap(Activity act, Long startTime, Integer indexLap) {
-		if (Objects.isNull(act))
-			return null;
-		Lap lapToDelete = act.getLaps().stream().filter((lap) -> {
-			return lap.getIndex() == indexLap && (!Objects.isNull(startTime)
-					? startTime == lap.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() : true);
-		}).findFirst().orElse(null);
-
-		act.getLaps().remove(lapToDelete);
-
+		Predicate<Object> isEqualIndex = ofNullable(indexLap).map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysFalse());
+		Predicate<Object> isEqualTimeMillis = ofNullable(startTime).map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysFalse());
+		ofNullable(act)
+				.map(Activity::getLaps)
+				.ifPresent(laps -> ofNullable(laps)
+						.map(lapsStream -> lapsStream.stream()
+								.filter(lapParam -> ofNullable(lapParam)
+										.map(Lap::getIndex)
+										.filter(isEqualIndex)
+										.isPresent())
+								.filter(lapParam -> ofNullable(lapParam)
+										.map(Lap::getStartTime)
+										.map(DateUtils::toTimeMillis)
+										.filter(isEqualTimeMillis)
+										.isPresent())
+								.findFirst()
+								.orElse(null))
+						.ifPresent(laps::remove));
 		return act;
 	}
 
