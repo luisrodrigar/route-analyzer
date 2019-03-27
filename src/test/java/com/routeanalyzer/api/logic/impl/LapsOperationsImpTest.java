@@ -10,6 +10,7 @@ import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.googlemaps.GoogleMapsServiceImpl;
+import io.vavr.control.Try;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -599,6 +600,345 @@ public class LapsOperationsImpTest {
         assertThat(lapLeft.getTotalTimeSeconds()).isNull();
         assertThat(lapLeft.getDistanceMeters()).isNull();
         verify(trackPointOperations, times(0)).calculateSpeed(any(), any());
+    }
+
+    @Test
+    public void fulfillCriteriaPositionTimeTest() {
+        // Given
+        lapLeft = Lap.builder()
+                .tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+        // When
+        doReturn(true).when(trackPointOperations).isThisTrack(eq(trackPointLeft1),
+                eq(trackPointLeft1.getPosition()), eq(timeMillisLeft1), eq(trackPointLeft1.getIndex()));
+        boolean isInTheLap =
+                lapsOperations
+                        .fulfillCriteriaPositionTime(lapLeft, trackPointLeft1.getPosition(), timeMillisLeft1,
+                                trackPointLeft1.getIndex());
+        // Then
+        assertThat(isInTheLap).isTrue();
+        verify(trackPointOperations, times(1)).isThisTrack(any(), any(), any(), any());
+    }
+
+    @Test
+    public void fulfillCriteriaPositionTimeLastTrackPointTest() {
+        // Given
+        lapLeft = Lap.builder()
+                .tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+        // When
+        doReturn(true).when(trackPointOperations).isThisTrack(eq(trackPointLeft4),
+                eq(trackPointLeft4.getPosition()), eq(timeMillisLeft4), eq(trackPointLeft4.getIndex()));
+        boolean isInTheLap =
+                lapsOperations
+                        .fulfillCriteriaPositionTime(lapLeft, trackPointLeft4.getPosition(), timeMillisLeft4,
+                                trackPointLeft4.getIndex());
+        // Then
+        assertThat(isInTheLap).isTrue();
+        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+    }
+
+    @Test
+    public void fulfillCriteriaPositionNotExistTrackPointTest() {
+        // Given
+        lapLeft = Lap.builder()
+                .tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+        // When
+        boolean isInTheLap =
+                lapsOperations
+                        .fulfillCriteriaPositionTime(lapLeft, trackPointRight1.getPosition(), timeMillisRight1,
+                                trackPointRight1.getIndex());
+        // Then
+        assertThat(isInTheLap).isFalse();
+        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+    }
+
+    @Test
+    public void getTrackPointTest() {
+        // Given
+        lapLeft = Lap.builder()
+                .tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+
+        // When
+        doReturn(true).when(trackPointOperations)
+                .isThisTrack(trackPointLeft1, trackPointLeft1.getPosition(), timeMillisLeft1, trackPointLeft1.getIndex());
+        TrackPoint result = lapsOperations
+                .getTrackPoint(lapLeft, trackPointLeft1.getPosition(), timeMillisLeft1, trackPointLeft1.getIndex());
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(trackPointLeft1);
+        verify(trackPointOperations).isThisTrack(any(), any(), any(), any());
+    }
+
+    @Test
+    public void getTrackPointNotExistsTest() {
+        // Given
+        lapLeft = Lap.builder()
+                .tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+
+        // When
+        TrackPoint result = lapsOperations
+                .getTrackPoint(lapLeft, trackPointRight1.getPosition(), timeMillisRight1, trackPointRight1.getIndex());
+        // Then
+        assertThat(result).isNull();
+        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+    }
+
+    @Test
+    public void getTrackPointNullLapParamTest() {
+        // Given
+        Lap lapNull = null;
+        // When
+        TrackPoint result = lapsOperations
+                .getTrackPoint(lapNull, trackPointLeft1.getPosition(), timeMillisRight1, trackPointLeft1.getIndex());
+        // Then
+        assertThat(result).isNull();
+        verify(trackPointOperations, times(0)).isThisTrack(any(), any(), any(), any());
+    }
+
+    @Test
+    public void getTrackPointNullPositionParamTest() {
+        // Given
+        lapLeft = Lap.builder()
+                .tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+        // When
+        TrackPoint result = lapsOperations
+                .getTrackPoint(lapLeft, null, timeMillisLeft1, trackPointLeft1.getIndex());
+        // Then
+        assertThat(result).isNull();
+        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+    }
+
+    @Test
+    public void getTrackPointNullTimeMillisParamTest() {
+        // Given
+        lapLeft = Lap.builder()
+                .tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+        // When
+        TrackPoint result = lapsOperations
+                .getTrackPoint(lapLeft, trackPointLeft1.getPosition(), null, trackPointLeft1.getIndex());
+        // Then
+        assertThat(result).isNull();
+        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+    }
+
+    @Test
+    public void getTrackPointNullIndexParamTest() {
+        // Given
+        lapLeft = Lap.builder()
+                .tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+        // When
+        TrackPoint result = lapsOperations
+                .getTrackPoint(lapLeft, trackPointLeft1.getPosition(), timeMillisLeft1, null);
+        // Then
+        assertThat(result).isNull();
+        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+    }
+
+    @Test
+    public void splitLapTest() {
+        // Given
+        trackPointsLeft.addAll(trackPointsRight);
+        Lap lap = Lap.builder().tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisRight1).orElse(null))
+                .index(0)
+                .totalTimeSeconds(50.0)
+                .intensity("HIGH")
+                .build();
+        Lap newLapLeft = Lap.builder().build();
+        Lap newLapRight = Lap.builder().build();
+
+        // When
+        lapsOperations.createSplitLap(lap, newLapLeft, 0, 4);
+        lapsOperations.createSplitLap(lap, newLapRight, 4, 8);
+
+        // Then
+        assertThat(newLapLeft).isNotNull();
+        assertThat(newLapLeft.getTracks()).isNotEmpty();
+        assertThat(newLapLeft.getTracks().size()).isEqualTo(4);
+        assertThat(newLapLeft.getTracks().get(0)).isEqualTo(trackPointLeft1);
+        assertThat(newLapRight).isNotNull();
+        assertThat(newLapRight.getTracks()).isNotEmpty();
+        assertThat(newLapRight.getTracks().size()).isEqualTo(4);
+        assertThat(newLapRight.getTracks().get(0)).isEqualTo(trackPointRight1);
+        assertThat(newLapRight.getMaximumHeartRate()).isEqualTo(123);
+        assertThat(newLapRight.getAverageHearRate()).isEqualTo(110.5);
+        assertThat(newLapRight.getAverageSpeed()).isEqualTo(14.50);
+        assertThat(newLapRight.getMaximumSpeed()).isEqualTo(22.00);
+        assertThat(newLapRight.getTotalTimeSeconds())
+                .isEqualTo(DateUtils.millisToSeconds(Double.valueOf(timeMillisRight4)
+                        - Double.valueOf(timeMillisRight1)));
+        assertThat(newLapRight.getDistanceMeters())
+                .isEqualTo(
+                        trackPointRight4.getDistanceMeters().subtract(trackPointRight1.getDistanceMeters()).doubleValue());
+    }
+
+    @Test
+    public void splitLapNullNewLapParamTest() {
+        // Given
+        Lap lap = Lap.builder().tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisRight1).orElse(null))
+                .index(0)
+                .totalTimeSeconds(50.0)
+                .intensity("HIGH")
+                .build();
+        Lap newLap = null;
+
+        // When
+        lapsOperations.createSplitLap(lap, newLap, 0, 1);
+        // Then
+        assertThat(newLap).isNull();
+    }
+
+    @Test
+    public void splitLapNullLapParamTest() {
+        // Given
+        Lap lap = null;
+        Lap newLap = Lap.builder().build();
+
+        // When
+        lapsOperations.createSplitLap(lap, newLap, 0, 1);
+        // Then
+        assertThat(newLap).isEqualTo(Lap.builder().build());
+    }
+
+    @Test
+    public void resetAggregateValuesTest() {
+        // Given
+        lapRight = Lap.builder()
+                .averageSpeed(4.55)
+                .averageHearRate(76.00)
+                .maximumSpeed(14.6)
+                .maximumHeartRate(167)
+                .build();
+        // When
+        lapsOperations.resetAggregateValues(lapRight);
+        // Then
+        assertThat(lapRight).isNotNull();
+        assertThat(lapRight.getAverageSpeed()).isNull();
+        assertThat(lapRight.getAverageHearRate()).isNull();
+        assertThat(lapRight.getMaximumSpeed()).isNull();
+        assertThat(lapRight.getMaximumHeartRate()).isNull();
+    }
+
+    @Test
+    public void resetAggregateValuesLapNullTest() {
+        // Given
+        lapRight = null;
+        // When
+        Try.run(() -> lapsOperations.resetAggregateValues(lapRight))
+                // Then
+                .onFailure(exc -> assertThat(true).isFalse());
+    }
+
+    @Test
+    public void resetTotalValuesTest() {
+        // Given
+        lapRight = Lap.builder()
+                .totalTimeSeconds(40.55)
+                .distanceMeters(760.00)
+                .build();
+        // When
+        lapsOperations.resetTotals(lapRight);
+        // Then
+        assertThat(lapRight).isNotNull();
+        assertThat(lapRight.getTotalTimeSeconds()).isNull();
+        assertThat(lapRight.getDistanceMeters()).isNull();
+    }
+
+    @Test
+    public void resetTotalValuesLapNullTest() {
+        // Given
+        lapRight = null;
+
+        // When
+        Try.run(() -> lapsOperations.resetTotals(lapRight))
+                // Then
+                .onFailure(exc -> assertThat(true).isFalse());
+    }
+
+    @Test
+    public void setTotalValuesTest() {
+        // Given
+        lapLeft = Lap.builder().tracks(trackPointsLeft)
+                .distanceMeters(100.0)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(2)
+                .totalTimeSeconds(50.0)
+                .intensity("LOW")
+                .build();
+        // When
+        lapsOperations.setTotalValuesLap(lapLeft);
+        // Then
+        assertThat(lapLeft.getTotalTimeSeconds())
+                .isEqualTo(DateUtils.millisToSeconds(Double.valueOf(timeMillisLeft4)
+                        - Double.valueOf(timeMillisLeft1)));
+        assertThat(lapLeft.getDistanceMeters())
+                .isEqualTo(
+                        trackPointLeft4.getDistanceMeters().subtract(trackPointLeft1.getDistanceMeters()).doubleValue());
+    }
+
+    @Test
+    public void setTotalValuesNullLapTest() {
+        // Given
+        lapLeft = null;
+        // When
+        Try.run(() -> lapsOperations.setTotalValuesLap(lapLeft))
+            // Then
+            .onFailure(exc -> assertThat(true).isFalse());
+
+    }
+
+    @Test
+    public void calculateAggregateValuesTest() {
+        // Given
+        lapLeft = Lap.builder().tracks(trackPointsLeft)
+                .distanceMeters(100.0)
+                .startTime(toLocalDateTime(timeMillisLeft1).orElse(null))
+                .index(2)
+                .totalTimeSeconds(50.0)
+                .intensity("LOW")
+                .build();
+        // When
+        lapsOperations.calculateAggregateValuesLap(lapLeft);
+        // Then
+        assertThat(lapLeft.getMaximumHeartRate()).isEqualTo(95);
+        assertThat(lapLeft.getAverageHearRate()).isEqualTo(86.75);
+        assertThat(lapLeft.getAverageSpeed()).isEqualTo(17.75);
+        assertThat(lapLeft.getMaximumSpeed()).isEqualTo(35.00);
+    }
+
+    @Test
+    public void calculateAggregateValuesNullLapTest() {
+        // Given
+        lapLeft = null;
+        // When
+        Try.run(() -> lapsOperations.calculateAggregateValuesLap(lapLeft))
+                // Then
+                .onFailure(exc -> assertThat(true).isFalse());
+
     }
 
 }

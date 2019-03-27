@@ -6,8 +6,6 @@ import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
-import com.routeanalyzer.api.services.reader.GPXService;
-import com.routeanalyzer.api.services.reader.TCXService;
 import org.apache.commons.lang3.SerializationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
@@ -74,7 +73,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 		// the lap splits into two new ones.
 		Integer indexLap = indexOfALap(act, position, time, index);
 		if (indexLap > -1) {
-			Integer indexPosition = lapsOperationsService.indexOfTrackPoint(act, indexLap, position, time, index);
+			Integer indexPosition = indexOfTrackPoint(act, indexLap, position, time, index);
 			int sizeOfTrackPoints = act.getLaps().get(indexLap).getTracks().size();
 
 			// The lap is only one track point.
@@ -118,7 +117,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 
 		Integer indexLap = indexOfALap(act, position, time, index);
 		if (indexLap > -1) {
-			Integer indexPosition = lapsOperationsService.indexOfTrackPoint(act, indexLap, position, time, index);
+			Integer indexPosition = indexOfTrackPoint(act, indexLap, position, time, index);
 			Lap lap = act.getLaps().get(indexLap);
 			int sizeOfTrackPoints = lap.getTracks().size();
 
@@ -195,6 +194,24 @@ public class ActivityOperationsImpl implements ActivityOperations {
 		act.getLaps().remove(lapToDelete);
 
 		return act;
+	}
+
+	@Override
+	public int indexOfTrackPoint(Activity activity, Integer indexLap, Position position, Long time, Integer index) {
+		Function<TrackPoint, Optional<Integer>> indexOfTrackPoint = trackPoint -> ofNullable(activity)
+				.map(Activity::getLaps)
+				.flatMap(laps -> ofNullable(indexLap)
+						.map(laps::get)
+						.map(Lap::getTracks)
+						.flatMap(tracks -> ofNullable(trackPoint)
+								.map(tracks::indexOf)));
+		return ofNullable(activity)
+				.map(Activity::getLaps)
+				.flatMap(laps -> ofNullable(indexLap)
+						.map(laps::get)
+						.map(lap -> lapsOperationsService.getTrackPoint(lap, position, time, index)))
+				.flatMap(indexOfTrackPoint)
+				.orElse(-1);
 	}
 
 

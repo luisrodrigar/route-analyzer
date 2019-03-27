@@ -1,10 +1,8 @@
 package com.routeanalyzer.api.logic.impl;
 
-import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.logic.TrackPointOperations;
-import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
@@ -157,8 +155,7 @@ public class LapsOperationsImpl implements LapsOperations {
 
 	@Override
 	public boolean fulfillCriteriaPositionTime(Lap lap, Position positionParam, Long timeInMillis, Integer index) {
-		return ofNullable(lap)
-				.map(Lap::getTracks)
+		return getLapField(lap, Lap::getTracks)
 				.flatMap(tracks ->
 						ofNullable(positionParam)
 								.map(position ->
@@ -169,38 +166,37 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public int indexOfTrackPoint(Activity activity, Integer indexLap, Position position, Long time, Integer index) {
-		Function<TrackPoint, Integer> indexOfTrackPoint = trackPoint ->
-				activity.getLaps().get(indexLap).getTracks().indexOf(trackPoint);
-		return ofNullable(indexLap)
-				.flatMap(indexParam -> ofNullable(position)
-					.flatMap(positionParam -> ofNullable(activity)
-							.map(Activity::getLaps)
-							.map(laps -> laps.get(indexLap))
-							.map(Lap::getTracks)
-							.map(List::stream)
-							.flatMap(tracks -> tracks
-									.filter(track -> trackPointOperationsService.isThisTrack(track, position, time, index))
-									.findFirst())
-					))
-				.map(indexOfTrackPoint)
-				.orElse(-1);
+	public TrackPoint getTrackPoint(Lap lap, Position position, Long time, Integer index) {
+		return ofNullable(lap)
+				.map(Lap::getTracks)
+				.map(List::stream)
+				.flatMap(trackPointList ->  trackPointList
+						.filter(track -> trackPointOperationsService.isThisTrack(track, position, time, index))
+						.findFirst())
+				.orElse(null);
 	}
 
 	@Override
 	public void createSplitLap(Lap lap, Lap newLap, int initIndex, int endIndex) {
 		Function<List<TrackPoint>, Lap> setTrackPoints = trackPoints -> {
-			newLap.setTracks(trackPoints); return newLap;
+			ofNullable(newLap)
+					.ifPresent(newLapParam -> ofNullable(trackPoints)
+							.ifPresent(newLapParam::setTracks));
+			return newLap;
 		};
 		Function<Integer, Lap> setCalories = calories -> {
-			newLap.setCalories(calories); return newLap;
+			ofNullable(newLap)
+					.ifPresent(newLapParam -> ofNullable(calories)
+							.ifPresent(newLapParam::setCalories));
+			return newLap;
 		};
 		Function<Lap, Lap> setStartTime = lapParam -> {
-			lapParam.setStartTime(lapParam.getTracks().get(0).getDate());
+			getFirstTrackPoint(lapParam)
+					.map(TrackPoint::getDate)
+					.ifPresent(lap::setStartTime);
 			return lapParam;
 		};
-		ofNullable(lap)
-				.map(Lap::getTracks)
+		getLapField(lap, Lap::getTracks)
 				.ifPresent(trackPoints ->
 						ofNullable(
 								IntStream
@@ -210,9 +206,12 @@ public class LapsOperationsImpl implements LapsOperations {
 										.collect(Collectors.toList()))
 								.map(setTrackPoints)
 								.map(this::resetValues)
-								.flatMap(newLapParam -> ofNullable(trackPoints)
+								.map(newLapParam -> ofNullable(trackPoints)
 										.map(List::size)
-										.map(sizeOfTrackPoints -> sizeOfTrackPoints * lap.getCalories())
+										.filter(MathUtils::isPositiveNonZero)
+										.flatMap(sizeOfTrackPoints -> ofNullable(lap)
+												.map(Lap::getCalories)
+												.map(calories -> calories * sizeOfTrackPoints))
 										.flatMap(sizeOfTrackPointsCalories -> ofNullable(newLapParam)
 												.map(Lap::getTracks)
 												.map(List::size)
@@ -220,10 +219,10 @@ public class LapsOperationsImpl implements LapsOperations {
 														sizeNewLapTrackPoints / sizeOfTrackPointsCalories )
 												.map(Math::round)
 												.map(Long::new)
-												.map(Long::intValue)
-										)
+												.map(Long::intValue))
+										.map(setCalories)
+										.orElse(newLap)
 								)
-								.map(setCalories)
 								.map(setStartTime)
 								.ifPresent(this::calculateSplitLapValues)
 				);
@@ -231,16 +230,22 @@ public class LapsOperationsImpl implements LapsOperations {
 
 	@Override
 	public void resetTotals(Lap lap) {
-		lap.setTotalTimeSeconds(null);
-		lap.setDistanceMeters(null);
+		ofNullable(lap)
+				.ifPresent(lapParam -> {
+					lapParam.setTotalTimeSeconds(null);
+					lapParam.setDistanceMeters(null);
+				});
 	}
 
 	@Override
 	public void resetAggregateValues(Lap lap) {
-		lap.setAverageHearRate(null);
-		lap.setMaximumHeartRate(null);
-		lap.setAverageSpeed(null);
-		lap.setMaximumSpeed(null);
+		ofNullable(lap)
+				.ifPresent(lapParam -> {
+					lapParam.setAverageHearRate(null);
+					lapParam.setMaximumHeartRate(null);
+					lapParam.setAverageSpeed(null);
+					lapParam.setMaximumSpeed(null);
+				});
 	}
 
 	@Override
@@ -420,13 +425,6 @@ public class LapsOperationsImpl implements LapsOperations {
 				});
 	}
 
-	private Predicate<Lap> lapNonHasSpecificValue(Function<Lap, Number> getterMethod) {
-		return lapParam -> ofNullable(lapParam)
-				.map(getterMethod)
-				.map(Objects::nonNull)
-				.orElse(true);
-	}
-
 	/**
 	 *
 	 * @param lap
@@ -436,17 +434,6 @@ public class LapsOperationsImpl implements LapsOperations {
 	 */
 	private <T> Optional<T> getLapField(Lap lap, Function<Lap, T> methodGetter) {
 		return ofNullable(lap).map(methodGetter);
-	}
-
-	/**
-	 * 
-	 * @param lap
-	 * @param predicate
-	 * @return
-	 */
-	private Optional<TrackPoint> existsValue(Lap lap, Predicate<TrackPoint> predicate) {
-		return getLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
-					.stream().filter(predicate).findAny();
 	}
 
 	/**
