@@ -2,6 +2,7 @@ package com.routeanalyzer.api.logic.impl;
 
 import com.google.common.base.Predicates;
 import com.routeanalyzer.api.common.DateUtils;
+import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.model.Activity;
@@ -13,9 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
@@ -70,7 +73,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 
 		Position position = new Position(new BigDecimal(lat), new BigDecimal(lng));
 		// Remove element from the laps stored in state
-		// If it is not at the begining or in the end of a lap
+		// If it is not at the beginning or in the end of a lap
 		// the lap splits into two new ones.
 		Integer indexLap = indexOfALap(act, position, time, index);
 		if (indexLap > -1) {
@@ -83,7 +86,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 				act.getLaps().get(indexLap.intValue()).getTracks().remove(indexPosition.intValue());
 				act.getLaps().remove(indexLap.intValue());
 			}
-			// Delete the trackpoint and calculate lap values.
+			// Delete the track point and calculate lap values.
 			else {
 				Lap newLap = SerializationUtils.clone(act.getLaps().get(indexLap));
 				// Reset speed and distance of the next track point of the
@@ -109,28 +112,28 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	}
 
 	@Override
-	public Activity splitLap(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint) {
+	public Activity splitLap(Activity activity, String lat, String lng, String timeInMillis, String indexTrackPoint) {
 		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
 		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
 				? Integer.parseInt(indexTrackPoint) : null;
 
 		Position position = new Position(new BigDecimal(lat), new BigDecimal(lng));
 
-		Integer indexLap = indexOfALap(act, position, time, index);
+		Integer indexLap = indexOfALap(activity, position, time, index);
 		if (indexLap > -1) {
-			Integer indexPosition = indexOfTrackPoint(act, indexLap, position, time, index);
-			Lap lap = act.getLaps().get(indexLap);
+			Integer indexPosition = indexOfTrackPoint(activity, indexLap, position, time, index);
+			Lap lap = activity.getLaps().get(indexLap);
 			int sizeOfTrackPoints = lap.getTracks().size();
 
 			// Track point not start nor end. Thus, it split into two laps
 			if (indexPosition > 0 && indexPosition < sizeOfTrackPoints - 1) {
 
-				Lap lapSplitLeft = SerializationUtils.clone(act.getLaps().get(indexLap));
+				Lap lapSplitLeft = SerializationUtils.clone(activity.getLaps().get(indexLap));
 				lapsOperationsService.createSplitLap(lap, lapSplitLeft, 0, indexPosition);
 				// Index the same original lap
 				lapSplitLeft.setIndex(lap.getIndex());
 
-				Lap lapSplitRight = SerializationUtils.clone(act.getLaps().get(indexLap));
+				Lap lapSplitRight = SerializationUtils.clone(activity.getLaps().get(indexLap));
 				// lap right: add right elements and the current track point
 				// which has index = index position
 				lapsOperationsService.createSplitLap(lap, lapSplitRight, indexPosition, sizeOfTrackPoints);
@@ -139,54 +142,73 @@ public class ActivityOperationsImpl implements ActivityOperations {
 
 				// Increment a point the index field of the next elements of the
 				// element to delete
-				IntStream.range(indexLap + 1, act.getLaps().size()).forEach(indexEachLap -> {
-					act.getLaps().get(indexEachLap).setIndex(act.getLaps().get(indexEachLap).getIndex() + 1);
+				IntStream.range(indexLap + 1, activity.getLaps().size()).forEach(indexEachLap -> {
+					activity.getLaps().get(indexEachLap).setIndex(activity.getLaps().get(indexEachLap).getIndex() + 1);
 				});
 
 				// Delete lap before splitting
-				act.getLaps().remove(indexLap.intValue());
+				activity.getLaps().remove(indexLap.intValue());
 				// Adding two new laps
-				act.getLaps().add(indexLap.intValue(), lapSplitLeft);
-				act.getLaps().add((indexLap.intValue() + 1), lapSplitRight);
+				activity.getLaps().add(indexLap.intValue(), lapSplitLeft);
+				activity.getLaps().add((indexLap.intValue() + 1), lapSplitRight);
 
-				return act;
+				return activity;
 			} else
 				return null;
 		} else
 			return null;
 	}
 
+	/**
+	 * The method follow the next steps (in every step it makes sure the objects are not null):
+	 * 1st: check left and right index, if the one is located first than the second, if not swapping values.
+	 * 2nd: Get the laps with the indexes.
+	 * 3rd: Remove from the laps the two laps
+	 * 4th: Join the two laps
+	 * 5th: decrease the index of the laps in the index right and from now on
+	 *
+	 * @param activity activity which contains all the data
+	 * @param indexLeft index lap located in the left side (just before the right lap)
+	 * @param indexRight index lap located in the right side (just after the right lap)
+	 * @return activity with the joined laps
+	 */
 	@Override
-	public Activity joinLap(Activity act, Integer indexLap1, Integer indexLap2) {
-		if (Objects.isNull(indexLap1) || Objects.isNull(indexLap2) || Objects.isNull(act))
-			return null;
-		int indexLapLeft = indexLap1, indexLapRight = indexLap2;
-		if (indexLap1.compareTo(indexLap2) > 0) {
-			indexLapLeft = indexLap2;
-			indexLapRight = indexLap1;
-		}
-
-		Lap lapLeft = act.getLaps().get(indexLapLeft);
-		Lap lapRight = act.getLaps().get(indexLapRight);
-
-		Lap newLap = lapsOperationsService.joinLaps(lapLeft, lapRight);
-
-		act.getLaps().remove(lapLeft);
-		act.getLaps().remove(lapRight);
-
-		act.getLaps().add(indexLapLeft, newLap);
-
-		IntStream.range(indexLapRight, act.getLaps().size()).forEach(indexEachLap -> {
-			act.getLaps().get(indexEachLap).setIndex(act.getLaps().get(indexEachLap).getIndex() - 1);
-		});
-
-		return act;
+	public Activity joinLaps(Activity activity, Integer indexLeft, Integer indexRight) {
+		return ofNullable(indexLeft)
+				.flatMap(indexLeftParam -> ofNullable(indexRight)
+						.map((indexRightParam) -> swapValues(indexLeftParam, indexRightParam))
+						.flatMap(indexRightParam -> ofNullable(activity)
+								.map(Activity::getLaps)
+								.flatMap(laps -> ofNullable(indexLeftParam)
+										.map(laps::get)
+										.flatMap(lapLeftParam -> ofNullable(indexRightParam)
+												.map(laps::get)
+												.map(lapRightParam -> {
+													laps.remove(lapLeftParam);
+													laps.remove(lapRightParam);
+													return lapRightParam;
+												})
+												.flatMap(lapRightParam -> ofNullable(
+														lapsOperationsService.joinLaps(lapLeftParam, lapRightParam))
+														.map(newLap -> {
+															laps.add(indexLeftParam, newLap);
+															return newLap;
+														})
+														.map(newLap ->  {
+															decreaseIndexFollowingLaps(indexRightParam, laps);
+															return activity;
+														})
+												)
+										)
+								)
+						)
+				).orElse(activity);
 	}
 
 	@Override
 	public Activity removeLap(Activity act, Long startTime, Integer indexLap) {
 		Predicate<Object> isEqualIndex = ofNullable(indexLap).map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysFalse());
-		Predicate<Object> isEqualTimeMillis = ofNullable(startTime).map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysFalse());
+		Predicate<Object> isEqualTimeMillis = ofNullable(startTime).map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysTrue());
 		ofNullable(act)
 				.map(Activity::getLaps)
 				.ifPresent(laps -> ofNullable(laps)
@@ -197,7 +219,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 										.isPresent())
 								.filter(lapParam -> ofNullable(lapParam)
 										.map(Lap::getStartTime)
-										.map(DateUtils::toTimeMillis)
+										.flatMap(DateUtils::toTimeMillis)
 										.filter(isEqualTimeMillis)
 										.isPresent())
 								.findFirst()
@@ -225,8 +247,28 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	}
 
 
+	private void decreaseIndexFollowingLaps(int fromIndex, List<Lap> laps) {
+		int lastIndexExcluded = laps.size();
+		IntStream.range(fromIndex, lastIndexExcluded).forEach(indexEachLap -> decreaseIndex(indexEachLap, laps));
+	}
 
+	private void decreaseIndex(int indexLap, List<Lap> laps){
+		ofNullable(indexLap)
+				.map(laps::get)
+				.ifPresent(lapToSetIndex ->
+						ofNullable(lapToSetIndex)
+								.map(Lap::getIndex)
+								.map(MathUtils::decreaseUnit)
+								.ifPresent(lapToSetIndex::setIndex));
+	}
 
+	private Integer swapValues(Integer indexLeft, Integer indexRight) {
+		ofNullable(indexLeft)
+				.ifPresent(indexLeftParam -> ofNullable(indexRight)
+						.filter(indexRightParam -> indexLeft.compareTo(indexRight) > 0)
+						.ifPresent(indexRightParam -> MathUtils.swappingValues(indexLeft, indexRight)));
+		return indexRight;
+	}
 
 	public void calculateDistanceSpeedValues(Activity activity) {
 		boolean hasActivityDateTrackPointValues = hasActivityTrackPointsValue(activity,
