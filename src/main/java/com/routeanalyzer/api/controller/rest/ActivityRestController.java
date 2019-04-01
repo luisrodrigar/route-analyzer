@@ -124,7 +124,7 @@ public class ActivityRestController {
 			@RequestParam(name = "index1") String indexLap1, @RequestParam(name = "index2") String indexLap2) {
 		Activity act = mongoRepository.findById(id).orElse(null);
 		if (!Objects.isNull(indexLap1) && !Objects.isNull(indexLap2) && !indexLap1.isEmpty() && !indexLap2.isEmpty()) {
-			act = activityOperationsService.joinLap(act, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2));
+			act = activityOperationsService.joinLaps(act, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2));
 			if (Objects.isNull(act)) {
 				String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\""
 						+ "}";

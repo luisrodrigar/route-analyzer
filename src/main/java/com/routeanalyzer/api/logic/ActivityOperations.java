@@ -28,7 +28,7 @@ public interface ActivityOperations {
 	/**
 	 * Split a lap into two laps with one track point as the divider.
 	 * 
-	 * @param act
+	 * @param activity
 	 *            of the activity
 	 * @param lat
 	 *            of the position
@@ -41,21 +41,21 @@ public interface ActivityOperations {
 	 *            of the track point which will be the divider
 	 * @return activity with the new laps.
 	 */
-	Activity splitLap(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint);
+	Activity splitLap(Activity activity, String lat, String lng, String timeInMillis, String indexTrackPoint);
 
 	/**
 	 * Join two laps, the result is one lap with the mixed values
-	 * @param act
-	 * @param indexLap1
-	 * @param indexLap2
+	 * @param activity
+	 * @param indexLeft
+	 * @param indexRight
 	 * @return
 	 */
-	Activity joinLap(Activity act, Integer indexLap1, Integer indexLap2);
+	Activity joinLaps(Activity activity, Integer indexLeft, Integer indexRight);
 
 	/**
 	 * Delete a lap from an activity
 	 * @param act
-	 * @param startTime
+	 * @param startTime optional (if it is not informed, just pay attention to the index lap)
 	 * @param indexLap
 	 * @return
 	 */

@@ -8,9 +8,11 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import com.google.common.collect.Lists;
 import org.springframework.core.io.Resource;
 import com.mongodb.Function;
 import com.routeanalyzer.api.model.Activity;
@@ -20,6 +22,8 @@ import com.routeanalyzer.api.model.TrackPoint;
 
 import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
+
+import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 
 @UtilityClass
 public class TestUtils {

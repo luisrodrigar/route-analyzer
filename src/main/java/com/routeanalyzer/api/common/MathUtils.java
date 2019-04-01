@@ -63,4 +63,10 @@ public class MathUtils {
     public static boolean isPositiveHeartRate(HeartRateInBeatsPerMinuteT heartRate) {
         return heartRate.getValue() > 0;
     }
+
+    public static void swappingValues(Integer num1, Integer num2) {
+        num1 = num1 * num2;
+        num2 = num1 / num2;
+        num1 = num1 / num2;
+    }
 }
