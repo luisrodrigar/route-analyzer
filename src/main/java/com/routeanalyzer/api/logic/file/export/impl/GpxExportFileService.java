@@ -15,6 +15,8 @@ import com.routeanalyzer.api.xml.gpx11.TrkType;
 import com.routeanalyzer.api.xml.gpx11.TrksegType;
 import com.routeanalyzer.api.xml.gpx11.WptType;
 import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
+import io.vavr.control.Try;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.xml.bind.JAXBElement;
@@ -30,6 +32,7 @@ public class GpxExportFileService implements ExportFileService {
 
     private GPXService gpxService;
 
+    @Autowired
     public GpxExportFileService(GPXService gpxService) {
         this.gpxService = gpxService;
     }

@@ -15,11 +15,13 @@
 # Directories #
 target/
 build/
+bin/
 .settings/
 .settings/*
 
 # Files #
 .project
 .classpath
-
+.idea
+route-analyzer.iml
 

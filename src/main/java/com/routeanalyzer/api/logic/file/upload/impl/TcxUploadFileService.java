@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.logic.file.upload.impl;
 
-import com.amazonaws.AmazonClientException;
 import com.google.common.collect.Lists;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
@@ -16,62 +15,55 @@ import com.routeanalyzer.api.xml.tcx.TrackpointT;
 import com.routeanalyzer.api.xml.tcx.TrainingCenterDatabaseT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityLapExtensionT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityTrackpointExtensionT;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import org.xml.sax.SAXParseException;
 
 import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
-import static com.routeanalyzer.api.common.DateUtils.toLocalDateTime;
 import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
+import static com.routeanalyzer.api.common.DateUtils.toLocalDateTime;
+import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static java.util.Optional.ofNullable;
 
 @Service
-public class TcxUploadFileService implements UploadFileService {
+public class TcxUploadFileService extends UploadFileService<TrainingCenterDatabaseT> {
 
-    private TCXService tcxService;
     private ActivityOperations activityOperations;
     private LapsOperations lapsOperations;
 
-    public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperations, LapsOperations lapsOperations) {
-        this.tcxService = tcxService;
+    private static final String SOURCE_XML_TYPE = "tcx";
+
+    @Autowired
+    public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperations,
+                                LapsOperations lapsOperations) {
+        super(tcxService);
         this.activityOperations = activityOperations;
         this.lapsOperations = lapsOperations;
     }
 
-    @Override
-    public List<Activity> upload(MultipartFile multiPart)
-            throws IOException, AmazonClientException, JAXBException, SAXParseException {
-        InputStream inputFileTCX = multiPart.getInputStream();
-        // Get the object from xml file (type TCX)
-        TrainingCenterDatabaseT tcx = tcxService.readXML(inputFileTCX);
-        // Create each activity of the file
-        return getListActivitiesFromTCX(tcx);
-    }
-
     /**
      *
-     * @param tcx
+     * @param optXmlType
      * @return
      */
-    private List<Activity> getListActivitiesFromTCX(TrainingCenterDatabaseT tcx) {
+    @Override
+    protected List<Activity> toListActivities(Optional<TrainingCenterDatabaseT> optXmlType) {
 
         List<Activity> activities = Lists.newArrayList();
+
+        TrainingCenterDatabaseT tcx = optXmlType.orElse(null);
 
         AtomicInteger indexLap = new AtomicInteger(), indexTrackPoint = new AtomicInteger();
         if (!Objects.isNull(tcx.getActivities())) {
             tcx.getActivities().getActivity().forEach(eachActivity -> {
                 Activity activity = new Activity();
-                activity.setSourceXmlType("tcx");
+                activity.setSourceXmlType(SOURCE_XML_TYPE);
                 if (!Objects.isNull(eachActivity.getCreator()))
                     activity.setDevice(eachActivity.getCreator().getName());
                 if (!Objects.isNull(eachActivity.getId()))
@@ -136,7 +128,7 @@ public class TcxUploadFileService implements UploadFileService {
         } else if (!Objects.isNull(tcx.getCourses())) {
             tcx.getCourses().getCourse().forEach(course -> {
                 Activity activity = new Activity();
-                activity.setSourceXmlType("tcx");
+                activity.setSourceXmlType(SOURCE_XML_TYPE);
                 activity.setName(course.getName());
                 course.getLap().forEach(eachLap -> {
                     Lap lap = new Lap();
@@ -188,7 +180,7 @@ public class TcxUploadFileService implements UploadFileService {
         return activities;
     }
 
-    private void setExtensions(TrackpointT xmlTrackPoint, TrackPoint modeltrackpoint) {
+    private void setExtensions(TrackpointT xmlTrackPoint, TrackPoint modelTrackPoint) {
         ofNullable(xmlTrackPoint)
                 .map(TrackpointT::getExtensions)
                 .map(ExtensionsT::getAny)
@@ -203,7 +195,7 @@ public class TcxUploadFileService implements UploadFileService {
                                 .map(ActivityTrackpointExtensionT::getSpeed)
                                 .map(MathUtils::toBigDecimal)
                                 .findFirst()
-                                .ifPresent(speed -> modeltrackpoint.setSpeed(speed))
+                                .ifPresent(speed -> modelTrackPoint.setSpeed(speed))
                 );
         if (!Objects.isNull(xmlTrackPoint.getExtensions()) && !Objects.isNull(xmlTrackPoint.getExtensions().getAny())) {
             xmlTrackPoint.getExtensions().getAny().stream()
@@ -217,7 +209,7 @@ public class TcxUploadFileService implements UploadFileService {
                                 .cast((JAXBElement.class.cast(extension)).getValue());
                         if (!Objects.isNull(actTrackpointExtension.getSpeed())
                                 && actTrackpointExtension.getSpeed() >= 0)
-                            modeltrackpoint.setSpeed(toBigDecimal(actTrackpointExtension.getSpeed()));
+                            modelTrackPoint.setSpeed(toBigDecimal(actTrackpointExtension.getSpeed()));
                     });
         }
     }
