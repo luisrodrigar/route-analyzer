@@ -22,6 +22,7 @@ import com.routeanalyzer.api.xml.tcx.TrackpointT;
 import com.routeanalyzer.api.xml.tcx.TrainingCenterDatabaseT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityLapExtensionT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityTrackpointExtensionT;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.xml.bind.JAXBElement;
@@ -38,6 +39,7 @@ public class TcxExportFileService implements ExportFileService {
 
     private TCXService tcxService;
 
+    @Autowired
     public TcxExportFileService(TCXService tcxService) {
         this.tcxService = tcxService;
     }
