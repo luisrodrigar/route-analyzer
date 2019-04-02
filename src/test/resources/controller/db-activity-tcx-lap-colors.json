@@ -28,7 +28,7 @@
 					"distanceMeters": {
 						"$numberDouble": "43.34577092311236"
 					},
-					"maximunSpeed": {
+					"maximumSpeed": {
 						"$numberDouble": "6.143949288527114"
 					},
 					"averageSpeed": {
@@ -37,7 +37,7 @@
 					"averageHearRate": {
 						"$numberDouble": "98.6231732776618"
 					},
-					"maximunHeartRate": {
+					"maximumHeartRate": {
 						"$numberInt": "103"
 					},
 					"color":"#primero",
@@ -220,7 +220,7 @@
 					"distanceMeters": {
 						"$numberDouble": "28.934607828341"
 					},
-					"maximunSpeed": {
+					"maximumSpeed": {
 						"$numberDouble": "7.053560612105727"
 					},
 					"averageSpeed": {
@@ -229,7 +229,7 @@
 					"averageHearRate": {
 						"$numberDouble": "112.2"
 					},
-					"maximunHeartRate": {
+					"maximumHeartRate": {
 						"$numberInt": "116"
 					},
 					"color":"#segundo",
@@ -352,7 +352,7 @@
 					"distanceMeters": {
 						"$numberDouble": "0.0"
 					},
-					"maximunSpeed": {
+					"maximumSpeed": {
 						"$numberDouble": "6.717731656189975"
 					},
 					"averageSpeed": {
@@ -361,7 +361,7 @@
 					"averageHearRate": {
 						"$numberDouble": "120.0"
 					},
-					"maximunHeartRate": {
+					"maximumHeartRate": {
 						"$numberInt": "120"
 					},
 					"color":"#tercero",

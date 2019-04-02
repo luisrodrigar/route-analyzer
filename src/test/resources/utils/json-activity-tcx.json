@@ -10,10 +10,10 @@
 			"index": "1",
 			"totalTimeSeconds": "16.0",
 			"distanceMeters": "43.313081753899034",
-			"maximunSpeed": "6.143949288527114",
+			"maximumSpeed": "6.143949288527114",
 			"averageSpeed": "2.6801723874025747",
 			"averageHearRate": "97.42857142857143",
-			"maximunHeartRate":  "103",
+			"maximumHeartRate":  "103",
 			"tracks": [
 				{
 					"date": "2018-02-27T14:16:13+01:00",
@@ -106,10 +106,10 @@
 			"index":  "2",
 			"totalTimeSeconds": "8.0",
 			"distanceMeters": "28.934607828341",
-			"maximunSpeed": "7.053560612105727",
+			"maximumSpeed": "7.053560612105727",
 			"averageSpeed": "4.112047870706494",
 			"averageHearRate": "112.2",
-			"maximunHeartRate":  "116",
+			"maximumHeartRate":  "116",
 			"tracks": [
 				{
 					"date": "2018-02-27T14:16:30+01:00",
@@ -178,10 +178,10 @@
 			"index":  "3",
 			"totalTimeSeconds": "1.0",
 			"distanceMeters": "0.0",
-			"maximunSpeed": "6.717731656189975",
+			"maximumSpeed": "6.717731656189975",
 			"averageSpeed": "6.717731656189975",
 			"averageHearRate": "120.0",
-			"maximunHeartRate":  "120",
+			"maximumHeartRate":  "120",
 			"tracks": [
 				{
 					"date": "2018-02-27T14:17:30+01:00",

@@ -28,7 +28,7 @@
 					"distanceMeters": {
 						"$numberDouble": "43.34577092311236"
 					},
-					"maximunSpeed": {
+					"maximumSpeed": {
 						"$numberDouble": "6.143949288527114"
 					},
 					"averageSpeed": {
@@ -37,7 +37,7 @@
 					"averageHearRate": {
 						"$numberDouble": "98.6231732776618"
 					},
-					"maximunHeartRate": {
+					"maximumHeartRate": {
 						"$numberInt": "103"
 					},
 					"tracks": [
