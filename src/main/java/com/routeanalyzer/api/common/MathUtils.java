@@ -11,6 +11,9 @@ import static java.util.Optional.ofNullable;
 
 @UtilityClass
 public class MathUtils {
+    // Radius of earth in meters
+    public static final double EARTHS_RADIUS_METERS = 6371000.0;
+
     /**
      * Mathematic operations
      */
@@ -64,9 +67,35 @@ public class MathUtils {
         return heartRate.getValue() > 0;
     }
 
-    public static void swappingValues(Integer num1, Integer num2) {
+    public static Integer[] swappingValues(Integer num1, Integer num2) {
         num1 = num1 * num2;
         num2 = num1 / num2;
         num1 = num1 / num2;
+        return new Integer[]{num1, num2};
+    }
+
+    /**
+     *
+     */
+    public static double metersBetweenCoordinates(double latP1, double lngP1, double latP2, double lngP2) {
+        // Point P
+        double rho1 = EARTHS_RADIUS_METERS * Math.cos(latP1);
+        double z1 = EARTHS_RADIUS_METERS * Math.sin(latP1);
+        double x1 = rho1 * Math.cos(lngP1);
+        double y1 = rho1 * Math.sin(lngP1);
+
+        // Point Q
+        double rho2 = EARTHS_RADIUS_METERS * Math.cos(latP2);
+        double z2 = EARTHS_RADIUS_METERS * Math.sin(latP2);
+        double x2 = rho2 * Math.cos(lngP2);
+        double y2 = rho2 * Math.sin(lngP2);
+
+        // Dot product
+        double dot = (x1 * x2 + y1 * y2 + z1 * z2);
+        double cosTheta = dot / (Math.pow(EARTHS_RADIUS_METERS, 2));
+
+        double theta = Math.acos(cosTheta);
+
+        return EARTHS_RADIUS_METERS * theta;
     }
 }

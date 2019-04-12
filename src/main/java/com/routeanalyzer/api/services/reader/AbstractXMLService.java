@@ -1,17 +1,19 @@
 package com.routeanalyzer.api.services.reader;
 
-import java.io.InputStream;
-import java.io.StringWriter;
+import com.routeanalyzer.api.common.ThrowingFunction;
+import com.routeanalyzer.api.services.XMLService;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.util.function.Function;
 
-import com.routeanalyzer.api.services.XMLService;
-import org.xml.sax.SAXParseException;
+import static java.util.Optional.ofNullable;
 
 public abstract class AbstractXMLService<T> implements XMLService<T> {
 	
@@ -21,24 +23,39 @@ public abstract class AbstractXMLService<T> implements XMLService<T> {
 		this.type = type;
 	}
 
-	@Override
-	public T readXML(InputStream inputFileXML) throws JAXBException, SAXParseException {
-		JAXBContext ctx = getJAXBContext();
-		Unmarshaller u = ctx.createUnmarshaller();
+	private Function<Marshaller, Marshaller> setPropertyJAXBFormatted =
+			ThrowingFunction.unchecked(marshaller -> {
+				marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+				return marshaller;
+			});
 
-		return type.cast(u.unmarshal(new StreamSource(inputFileXML), type).getValue());
+	@Override
+	public T readXML(InputStream inputFileXML) throws JAXBException {
+		return ofNullable(getJAXBContext())
+				.map(ThrowingFunction.unchecked(JAXBContext::createUnmarshaller))
+				.flatMap(unmarshaller -> ofNullable(inputFileXML)
+					.map(StreamSource::new)
+					.map(ThrowingFunction.unchecked(streamSource -> unmarshaller.unmarshal(streamSource, type)))
+					.map(JAXBElement::getValue)
+					.map(type::cast))
+				.orElse(null);
 
 	}
 
 	@Override
 	public String createXML(JAXBElement<T> object) throws JAXBException {
-		JAXBContext jaxbContext = getJAXBContext();
-		Marshaller marshaller = jaxbContext.createMarshaller();
-		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-		StringWriter builderXml = new StringWriter();
-		marshaller.marshal(object, builderXml);
-
-		return builderXml.toString();
+		Function<Marshaller, StringWriter> getMarshalStringWriter=
+				ThrowingFunction.unchecked(marshaller -> {
+					StringWriter builderXml = new StringWriter();
+					marshaller.marshal(object, builderXml);
+					return builderXml;
+				});
+		return ofNullable(getJAXBContext())
+				.map(ThrowingFunction.unchecked(JAXBContext::createMarshaller))
+				.map(setPropertyJAXBFormatted)
+				.map(getMarshalStringWriter)
+				.map(StringWriter::toString)
+				.orElse(StringUtils.EMPTY);
 	}
 	
 	protected abstract JAXBContext getJAXBContext() throws JAXBException;

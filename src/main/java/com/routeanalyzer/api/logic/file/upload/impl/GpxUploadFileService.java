@@ -35,7 +35,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
     private ActivityOperations activityOperations;
     private LapsOperations lapsOperations;
 
-    private static final String SOURCE_XML_TYPE = "gpx";
+    public static final String SOURCE_XML_TYPE = "gpx";
 
     private final Function<List<TrksegType>, TrksegType> getFirstTrkSegType = trkSegTypes -> trkSegTypes.get(0);
     private final Function<List<WptType>, WptType> getFirstWptType = wptTypeList -> wptTypeList.get(0);

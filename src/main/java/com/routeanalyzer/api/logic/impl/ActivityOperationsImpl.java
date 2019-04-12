@@ -1,6 +1,7 @@
 package com.routeanalyzer.api.logic.impl;
 
 import com.google.common.base.Predicates;
+import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
@@ -10,20 +11,21 @@ import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static com.routeanalyzer.api.common.CommonUtils.toValueOrNull;
 
 @Service
 public class ActivityOperationsImpl implements ActivityOperations {
@@ -37,78 +39,30 @@ public class ActivityOperationsImpl implements ActivityOperations {
 
 	@Override
 	public Activity removePoint(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint) {
-//		Predicate<Integer> nonNegative = num -> num >= 0;
-//		ofNullable(toPosition(lat, lng))
-//				.flatMap(position ->
-//						ofNullable(act)
-//								.flatMap(activity ->
-//										ofNullable(timeInMillis)
-//												.filter(StringUtils::isNotEmpty)
-//												.map(Long::parseLong)
-//												.flatMap(time -> ofNullable(indexTrackPoint)
-//														.filter(StringUtils::isNotEmpty)
-//														.map(Integer::parseInt)
-//														.flatMap(index -> ofNullable(index)
-//																.map(indexModel -> indexOfALap(activity, position, time, indexModel))
-//																.flatMap(indexLap -> ofNullable(indexLap)
-//																		.map(indexLapParam ->
-//																				lapsOperationsService.indexOfTrackPoint(activity, indexLap, position, time, index))
-//																		.flatMap(indexTrack -> ofNullable(indexTrack)
-//																				.map(indexTrackParam -> activity.getLaps().get(indexLap).getTracks().size())
-//																				.filter(size -> indexTrack > 0 && size > 1))
-//																				.map(size -> SerializationUtils.clone(activity.getLaps().get(indexLap)))
-//																				.filter(newLap -> )
-//
-//																)
-//																.map(indexLap ->
-//																		)
-//																.flatMap(indexPosition -> ofNullable()))
-//												)
-//								)
-//				)
-//				.orElse(null);
-		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
-		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
-				? Integer.parseInt(indexTrackPoint) : null;
-
-		Position position = new Position(new BigDecimal(lat), new BigDecimal(lng));
-		// Remove element from the laps stored in state
-		// If it is not at the beginning or in the end of a lap
-		// the lap splits into two new ones.
-		Integer indexLap = indexOfALap(act, position, time, index);
-		if (indexLap > -1) {
-			Integer indexPosition = indexOfTrackPoint(act, indexLap, position, time, index);
-			int sizeOfTrackPoints = act.getLaps().get(indexLap).getTracks().size();
-
-			// The lap is only one track point.
-			// Delete both lap and track point. No recalculations.
-			if (indexPosition == 0 && sizeOfTrackPoints == 1) {
-				act.getLaps().get(indexLap.intValue()).getTracks().remove(indexPosition.intValue());
-				act.getLaps().remove(indexLap.intValue());
-			}
-			// Delete the track point and calculate lap values.
-			else {
-				Lap newLap = SerializationUtils.clone(act.getLaps().get(indexLap));
-				// Reset speed and distance of the next track point of the
-				// removed track point
-				// calculateDistanceSpeedValues calculate this params.
-				if (indexPosition.intValue() < newLap.getTracks().size() - 1) {
-					newLap.getTracks().get(indexPosition.intValue() + 1).setSpeed(null);
-					newLap.getTracks().get(indexPosition.intValue() + 1).setDistanceMeters(null);
-				}
-				// Remove track point
-				newLap.getTracks().remove(indexPosition.intValue());
-				act.getLaps().remove(indexLap.intValue());
-				act.getLaps().add(indexLap.intValue(), newLap);
-				lapsOperationsService.resetAggregateValues(newLap);
-				lapsOperationsService.resetTotals(newLap);
-				calculateDistanceSpeedValues(act);
-				lapsOperationsService.setTotalValuesLap(newLap);
-				lapsOperationsService.calculateAggregateValuesLap(newLap);
-			}
-			return act;
-		} else
-			return null;
+	    Function<Position, Integer> getLapIndex = position ->
+                indexOfALap(act, position, toValueOrNull(timeInMillis, Long::parseLong),
+                        toValueOrNull(indexTrackPoint, Integer::parseInt));
+		return CommonUtils.toOptPosition(lat, lng)
+				.flatMap(position -> of(position)
+						.map(getLapIndex)
+                        .filter(MathUtils::isPositiveOrZero)
+                        .flatMap(indexLap -> of(indexLap)
+                                .map(indexLapParam ->
+                                        indexOfTrackPoint(act, indexLapParam, position,
+                                                toValueOrNull(timeInMillis, Long::parseLong),
+                                                toValueOrNull(indexTrackPoint, Integer::parseInt)))
+                                .map(indexTrack -> of(indexTrack)
+                                        .flatMap(indexTrackParam -> of(indexLap)
+												.map(act.getLaps()::get)
+												.map(Lap::getTracks)
+												.map(List::size))
+                                        .filter(sizeTrackPoints -> sizeTrackPoints > 1)
+										.filter(sizeTrackPoints -> ofNullable(indexTrack)
+                                                .filter(MathUtils::isPositiveOrZero)
+                                                .isPresent())
+                                        .map(size -> this.removeGeneralPoint(act, indexLap, indexTrack))
+                                        .orElseGet(() -> this.removeLap(act, indexLap)))))
+                .orElse(null);
 	}
 
 	@Override
@@ -173,15 +127,17 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	 * @return activity with the joined laps
 	 */
 	@Override
-	public Activity joinLaps(Activity activity, Integer indexLeft, Integer indexRight) {
-		return ofNullable(indexLeft)
-				.flatMap(indexLeftParam -> ofNullable(indexRight)
-						.map((indexRightParam) -> swapValues(indexLeftParam, indexRightParam))
-						.flatMap(indexRightParam -> ofNullable(activity)
-								.map(Activity::getLaps)
-								.flatMap(laps -> ofNullable(indexLeftParam)
+	public Activity joinLaps(Activity activity, String indexLeft, String indexRight) {
+		Function<Integer[], Integer> toLeftIndex = indexes -> indexes[0];
+		Function<Integer[], Integer> toRightIndex = indexes -> indexes[1];
+		return getResultIndexLaps(indexLeft, indexRight)
+				.flatMap(resultIndexes -> ofNullable(activity)
+						.map(Activity::getLaps)
+						.flatMap(laps -> ofNullable(resultIndexes)
+										.map(toLeftIndex)
 										.map(laps::get)
-										.flatMap(lapLeftParam -> ofNullable(indexRightParam)
+										.flatMap(lapLeftParam -> ofNullable(resultIndexes)
+												.map(toRightIndex)
 												.map(laps::get)
 												.map(lapRightParam -> {
 													laps.remove(lapLeftParam);
@@ -191,24 +147,30 @@ public class ActivityOperationsImpl implements ActivityOperations {
 												.flatMap(lapRightParam -> ofNullable(
 														lapsOperationsService.joinLaps(lapLeftParam, lapRightParam))
 														.map(newLap -> {
-															laps.add(indexLeftParam, newLap);
+															ofNullable(resultIndexes)
+																.map(toLeftIndex)
+																.ifPresent(leftIndex -> laps.add(leftIndex, newLap));
 															return newLap;
 														})
 														.map(newLap ->  {
-															decreaseIndexFollowingLaps(indexRightParam, laps);
+															ofNullable(resultIndexes)
+																.map(toRightIndex)
+																.ifPresent(rightIndex ->
+																		decreaseIndexFollowingLaps(rightIndex, laps));
 															return activity;
 														})
 												)
 										)
 								)
-						)
 				).orElse(activity);
 	}
 
 	@Override
 	public Activity removeLap(Activity act, Long startTime, Integer indexLap) {
-		Predicate<Object> isEqualIndex = ofNullable(indexLap).map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysFalse());
-		Predicate<Object> isEqualTimeMillis = ofNullable(startTime).map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysTrue());
+		Predicate<Object> isEqualIndex = ofNullable(indexLap)
+				.map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysFalse());
+		Predicate<Object> isEqualTimeMillis = ofNullable(startTime)
+				.map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysTrue());
 		ofNullable(act)
 				.map(Activity::getLaps)
 				.ifPresent(laps -> ofNullable(laps)
@@ -246,6 +208,61 @@ public class ActivityOperationsImpl implements ActivityOperations {
 				.orElse(-1);
 	}
 
+	private Activity removeLap(Activity activity, Integer indexLap) {
+		Function<Lap, Activity> removeLap = lap -> {
+			activity.getLaps().remove(lap);
+			return activity;
+		};
+		return ofNullable(indexLap)
+				.map(activity.getLaps()::get)
+				.map(removeLap)
+				.orElse(activity);
+	}
+
+	private Activity removeGeneralPoint(Activity activity, Integer indexLap, Integer indexCurrentTrackPoint) {
+		Predicate<List<TrackPoint>> isNotLastTrackPoint = trackList -> of(trackList)
+				.map(List::size)
+				.map(MathUtils::decreaseUnit)
+				.filter(lastIndexTrackPoint -> indexCurrentTrackPoint < lastIndexTrackPoint)
+				.isPresent();
+		return ofNullable(activity)
+				.map(Activity::getLaps)
+				.flatMap(laps -> ofNullable(indexLap)
+						.map(laps::get)
+						.map(SerializationUtils::clone)
+						.flatMap(newLap -> of(newLap)
+								.map(Lap::getTracks)
+								.map(tracks -> of(tracks)
+										.filter(isNotLastTrackPoint)
+										.flatMap(tracksParam -> of(indexCurrentTrackPoint)
+												.map(MathUtils::increaseUnit)
+												.map(indexPosition -> {
+													tracksParam.get(indexPosition.intValue()).setSpeed(null);
+													tracksParam.get(indexPosition.intValue()).setDistanceMeters(null);
+													return tracksParam;
+												}))
+										.orElse(tracks))
+								.map(tracks -> {
+									tracks.remove(indexCurrentTrackPoint.intValue());
+									laps.remove(indexLap.intValue());
+									laps.add(indexLap.intValue(), newLap);
+									lapsOperationsService.resetAggregateValues(newLap);
+									lapsOperationsService.resetTotals(newLap);
+									calculateDistanceSpeedValues(activity);
+									lapsOperationsService.setTotalValuesLap(newLap);
+									lapsOperationsService.calculateAggregateValuesLap(newLap);
+									return activity;
+								})))
+				.orElse(activity);
+	}
+
+	private Optional<Integer[]> getResultIndexLaps(String index1, String index2) {
+		return ofNullable(index1)
+				.map(Integer::parseInt)
+				.flatMap(indexLeftParam -> ofNullable(index2)
+						.map(Integer::parseInt)
+						.map((indexRightParam) -> swapValues(indexLeftParam, indexRightParam)));
+	}
 
 	private void decreaseIndexFollowingLaps(int fromIndex, List<Lap> laps) {
 		int lastIndexExcluded = laps.size();
@@ -262,12 +279,12 @@ public class ActivityOperationsImpl implements ActivityOperations {
 								.ifPresent(lapToSetIndex::setIndex));
 	}
 
-	private Integer swapValues(Integer indexLeft, Integer indexRight) {
-		ofNullable(indexLeft)
-				.ifPresent(indexLeftParam -> ofNullable(indexRight)
+	private Integer[] swapValues(Integer indexLeft, Integer indexRight) {
+		return ofNullable(indexLeft)
+				.flatMap(indexLeftParam -> ofNullable(indexRight)
 						.filter(indexRightParam -> indexLeft.compareTo(indexRight) > 0)
-						.ifPresent(indexRightParam -> MathUtils.swappingValues(indexLeft, indexRight)));
-		return indexRight;
+						.map(indexRightParam -> MathUtils.swappingValues(indexLeft, indexRight)))
+				.orElseGet(() -> new Integer[]{indexLeft, indexRight});
 	}
 
 	public void calculateDistanceSpeedValues(Activity activity) {
@@ -341,7 +358,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	 *            time in milliseconds
 	 * @param index:
 	 *            index of the lap in the array
-	 * @return index of the lapº
+	 * @return index of the lap
 	 */
 	private int indexOfALap(Activity activity, Position position, Long timeInMillis, Integer index) {
 		Predicate<Lap> isThisLap = lap ->

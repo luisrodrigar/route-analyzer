@@ -200,7 +200,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 	@Test
 	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void splitLapErrorTryingToSplitTest() throws Exception {
-		String errorDescription = "Error trying split the lap.";
+		String errorDescription = "Response trying split the lap.";
 		doReturn(null).when(activityOperations).splitLap(any(), any(), any(), any(), any());
 		isGenerateErrorHTTP(
 				put(SPLIT_LAP, TestUtils.FAKE_ID_TCX).param("lat", "42.6132170").param("lng", "-6.5739970")

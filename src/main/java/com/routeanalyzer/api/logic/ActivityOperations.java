@@ -50,7 +50,7 @@ public interface ActivityOperations {
 	 * @param indexRight
 	 * @return
 	 */
-	Activity joinLaps(Activity activity, Integer indexLeft, Integer indexRight);
+	Activity joinLaps(Activity activity, String indexLeft, String indexRight);
 
 	/**
 	 * Delete a lap from an activity
