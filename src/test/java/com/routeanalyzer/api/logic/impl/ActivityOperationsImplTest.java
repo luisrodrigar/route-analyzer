@@ -20,14 +20,10 @@ import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.DateUtils.toLocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -44,9 +40,11 @@ public class ActivityOperationsImplTest {
 	private Lap lap2;
 	private Lap lap3;
 	private Lap lap4;
+	private Lap lap3OneTrackPoint;
 	private List<Lap> laps;
 	private long timeMillisLap11, timeMillisLap12, timeMillisLap21, timeMillisLap22, timeMillisLap31, timeMillisLap32,
 			timeMillisLap41, timeMillisLap42;
+	private int index11, index12, index21, index22, index31, index32, index41, index42;
 
 	@Before
 	public void setUp() {
@@ -58,6 +56,14 @@ public class ActivityOperationsImplTest {
 		timeMillisLap32 = 123526L;
 		timeMillisLap41 = 123546L;
 		timeMillisLap42 = 123606L;
+        index11 = 0;
+        index12 = 1;
+        index21 = 2;
+        index22 = 3;
+        index31 = 4;
+        index32 = 5;
+        index41 = 6;
+        index42 = 7;
 		laps = Lists.newArrayList();
 		initLaps();
 		addTracksToLaps();
@@ -91,25 +97,37 @@ public class ActivityOperationsImplTest {
 				.totalTimeSeconds(50.0)
 				.intensity("HIGH")
 				.build();
+        lap3OneTrackPoint = Lap.builder()
+                .distanceMeters(100.0)
+                .startTime(toLocalDateTime(timeMillisLap31).orElse(null))
+                .index(2)
+                .totalTimeSeconds(50.0)
+                .intensity("HIGH")
+                .build();
 	}
 
 	private void addTracksToLaps(){
-		createAddTrack(lap1, 123456L, 123466L, 0, 1,
+		createAddTrack(lap1, timeMillisLap11, timeMillisLap12, index11, index12,
 				"43.3602900","43.352478",  "-5.8447600", "-5.8501170", "120",
 				"123", "25.0", "25.0", "12.0", "12.0", 76, 86);
 		lap1.setStartTime(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null));
-		createAddTrack(lap2, 123476L, 123486L, 2, 3,
+		createAddTrack(lap2, timeMillisLap21, timeMillisLap22, index21, index22,
 				"44.3602900","46.352478",  "-6.8447600", "-4.8501170", "119",
 				"125", "15.0", "15.0", "16.0", "13.0", 90, 95);
 		lap2.setStartTime(DateUtils.toLocalDateTime(timeMillisLap21).orElse(null));
-		createAddTrack(lap3, 123506L, 123526L, 4, 5,
+		createAddTrack(lap3, timeMillisLap31, timeMillisLap32, index31, index32,
 				"42.3602900","46.452478",  "-3.8447600", "-6.9501170", "130",
 				"131", "46.0", "65.0", "21.0", "10.0", 100, 107);
 		lap3.setStartTime(DateUtils.toLocalDateTime(timeMillisLap31).orElse(null));
-		createAddTrack(lap4, 123546L, 123606L, 6, 7,
+		createAddTrack(lap4, timeMillisLap41, timeMillisLap42, index41, index42,
 				"40.3602900","40.352478",  "-8.8447600", "-9.8501170", "116",
 				"121", "80.0", "120.0", "13.0", "15.0", 112, 123);
 		lap4.setStartTime(DateUtils.toLocalDateTime(timeMillisLap41).orElse(null));
+		lap3OneTrackPoint.setStartTime(DateUtils.toLocalDateTime(timeMillisLap31).orElse(null));
+        createAddTrack(lap3OneTrackPoint, timeMillisLap31, timeMillisLap32, index31, index32,
+                "42.3602900","46.452478",  "-3.8447600", "-6.9501170", "130",
+                "131", "46.0", "65.0", "21.0", "10.0", 100, 107);
+        lap3OneTrackPoint.getTracks().remove(1);
 	}
 
 	private void createAddTrack(Lap lap, long timeMillisLap1,
@@ -301,7 +319,36 @@ public class ActivityOperationsImplTest {
 				.build();
 		// When
 		doReturn(joinedLap).when(lapsOperations).joinLaps(eq(lap2), eq(lap3));
-		Activity result = activityOperations.joinLaps(activity, 1, 2);
+		Activity result = activityOperations.joinLaps(activity, "1", "2");
+		// Then
+		verify(lapsOperations).joinLaps(eq(lap2), eq(lap3));
+		assertThat(result).isNotNull();
+		assertThat(result.getLaps()).isNotNull();
+		List<Lap> laps = result.getLaps();
+		assertThat(laps.size()).isEqualTo(3);
+		assertThat(laps.get(1)).isEqualTo(joinedLap);
+		assertThat(laps.get(2)).isEqualTo(lap4);
+		assertThat(laps.get(2).getIndex()).isEqualTo(2);
+	}
+
+	@Test
+	public void joinLapsSwapIndexesTest() {
+		// Given
+		laps.add(lap1);
+		laps.add(lap2);
+		laps.add(lap3);
+		laps.add(lap4);
+		Lap joinedLap = Lap.builder().build();
+		activity = Activity.builder()
+				.laps(laps)
+				.idUser("foo")
+				.name("boo")
+				.sport("sport")
+				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
+				.build();
+		// When
+		doReturn(joinedLap).when(lapsOperations).joinLaps(eq(lap2), eq(lap3));
+		Activity result = activityOperations.joinLaps(activity, "2", "1");
 		// Then
 		verify(lapsOperations).joinLaps(eq(lap2), eq(lap3));
 		assertThat(result).isNotNull();
@@ -315,15 +362,15 @@ public class ActivityOperationsImplTest {
 
 	@Test
 	public void joinLapsNullIndexLeftTest() {
-		joinLaps(null, 2);
+		joinLaps(null, "2");
 	}
 
 	@Test
 	public void joinLapsNullIndexRightTest() {
-		joinLaps(1, null);
+		joinLaps("1", null);
 	}
 
-	private void joinLaps(Integer indexLeft, Integer indexRight) {
+	private void joinLaps(String indexLeft, String indexRight) {
 		// Given
 		laps.add(lap1);
 		laps.add(lap2);
@@ -351,7 +398,7 @@ public class ActivityOperationsImplTest {
 		// Given
 		activity = null;
 		// When
-		Activity result = activityOperations.joinLaps(activity, 1, 2);
+		Activity result = activityOperations.joinLaps(activity, "1", "2");
 		// Then
 		verify(lapsOperations, times(0)).joinLaps(any(), any());
 		assertThat(result).isNull();
@@ -468,6 +515,194 @@ public class ActivityOperationsImplTest {
 		assertThat(index).isNegative();
 		assertThat(index).isEqualTo(-1);
 	}
+
+	@Test
+    public void removePointTest() {
+	    // Given
+        laps.add(lap1);
+        laps.add(lap2);
+        laps.add(lap3);
+        laps.add(lap4);
+        activity = Activity.builder()
+                .laps(laps)
+                .idUser("foo")
+                .name("boo")
+                .sport("sport")
+                .date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
+                .build();
+        Position position = toPosition("46.452478", "-6.9501170");
+        // When
+        doReturn(true).when(lapsOperations)
+                .fulfillCriteriaPositionTime(eq(lap3), eq(position), eq(timeMillisLap32), eq(index32));
+        doReturn(lap3.getTracks().get(1)).when(lapsOperations)
+                .getTrackPoint(eq(lap3), eq(position), eq(timeMillisLap32), eq(index32));
+        Activity act = activityOperations.removePoint(activity, "46.452478", "-6.9501170",
+                String.valueOf(timeMillisLap32), String.valueOf(index32));
+
+        // Then
+		verify(lapsOperations).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(3)).fulfillCriteriaPositionTime(any(), any(), any(), any());
+        assertThat(act).isNotNull();
+        assertThat(act.getLaps()).isNotEmpty();
+        assertThat(act.getLaps().get(2)).isNotNull();
+        Lap lap = act.getLaps().get(2);
+        assertThat(lap.getTracks()).isNotEmpty();
+        assertThat(lap.getTracks().size()).isEqualTo(1);
+    }
+
+    @Test
+    public void removePointOneTrackInLapTest() {
+        // Given
+        laps.add(lap1);
+        laps.add(lap2);
+        laps.add(lap3OneTrackPoint);
+        laps.add(lap4);
+        activity = Activity.builder()
+                .laps(laps)
+                .idUser("foo")
+                .name("boo")
+                .sport("sport")
+                .date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
+                .build();
+        Position position = toPosition("40.3602900", "-8.8447600");
+        // When
+        doReturn(true).when(lapsOperations)
+                .fulfillCriteriaPositionTime(eq(lap3OneTrackPoint), eq(position), eq(timeMillisLap31), eq(index31));
+        doReturn(lap3OneTrackPoint.getTracks().get(0)).when(lapsOperations)
+                .getTrackPoint(eq(lap3OneTrackPoint), eq(position), eq(timeMillisLap31), eq(index31));
+        Activity act = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
+                String.valueOf(timeMillisLap31), String.valueOf(index31));
+
+        // Then
+		verify(lapsOperations).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(3)).fulfillCriteriaPositionTime(any(), any(), any(), any());
+        assertThat(act).isNotNull();
+        assertThat(act.getLaps()).isNotEmpty();
+        assertThat(act.getLaps().get(2)).isNotNull();
+        assertThat(act.getLaps().size()).isEqualTo(3);
+        Lap lap = act.getLaps().get(2);
+        assertThat(lap).isEqualTo(lap4);
+        assertThat(lap.getTracks().size()).isEqualTo(2);
+    }
+
+    @Test
+    public void removePointEmptyLapsInLapTest() {
+        // Given
+        activity = Activity.builder()
+                .idUser("foo")
+                .name("boo")
+                .sport("sport")
+                .date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
+                .build();
+        // When
+        Activity act = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
+                String.valueOf(timeMillisLap31), String.valueOf(index31));
+
+        // Then
+		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
+        verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
+        verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+        assertThat(act).isNull();
+    }
+
+    @Test
+    public void removePointNullTimeMillisTest() {
+        // Given
+        laps.add(lap1);
+        laps.add(lap2);
+        laps.add(lap3OneTrackPoint);
+        laps.add(lap4);
+        activity = Activity.builder()
+                .laps(laps)
+                .idUser("foo")
+                .name("boo")
+                .sport("sport")
+                .date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
+                .build();
+        Position position = toPosition("40.3602900", "-8.8447600");
+        // When
+        doReturn(true).when(lapsOperations)
+                .fulfillCriteriaPositionTime(eq(lap3OneTrackPoint), eq(position), isNull(), eq(index31));
+        doReturn(lap3OneTrackPoint.getTracks().get(0)).when(lapsOperations)
+                .getTrackPoint(eq(lap3OneTrackPoint), eq(position), isNull(), eq(index31));
+        Activity act = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
+                null, String.valueOf(index31));
+
+        // Then
+		verify(lapsOperations).getTrackPoint(any(), any(), isNull(), any());
+		verify(lapsOperations, times(3))
+				.fulfillCriteriaPositionTime(any(), any(), isNull(), any());
+        assertThat(act).isNotNull();
+        assertThat(act.getLaps()).isNotEmpty();
+        assertThat(act.getLaps().get(2)).isNotNull();
+        assertThat(act.getLaps().size()).isEqualTo(3);
+        Lap lap = act.getLaps().get(2);
+        assertThat(lap).isEqualTo(lap4);
+        assertThat(lap.getTracks().size()).isEqualTo(2);
+    }
+
+    @Test
+    public void removePointNullIndexTest() {
+        // Given
+        laps.add(lap1);
+        laps.add(lap2);
+        laps.add(lap3);
+        laps.add(lap4);
+        activity = Activity.builder()
+                .laps(laps)
+                .idUser("foo")
+                .name("boo")
+                .sport("sport")
+                .date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
+                .build();
+        Position position = toPosition("44.3602900",  "-6.8447600");
+        // When
+        // When
+        doReturn(true).when(lapsOperations)
+                .fulfillCriteriaPositionTime(eq(lap2), eq(position), eq(timeMillisLap21), isNull());
+        doReturn(lap2.getTracks().get(0)).when(lapsOperations)
+                .getTrackPoint(eq(lap2), eq(position), eq(timeMillisLap21), isNull());
+        Activity act = activityOperations.removePoint(activity, "44.3602900",  "-6.8447600",
+                String.valueOf(timeMillisLap21), null);
+
+        // Then
+		verify(lapsOperations).getTrackPoint(any(), any(), any(), isNull());
+		verify(lapsOperations, times(2))
+				.fulfillCriteriaPositionTime(any(), any(), any(), isNull());
+        assertThat(act).isNotNull();
+        assertThat(act.getLaps()).isNotEmpty();
+        assertThat(act.getLaps().get(1)).isNotNull();
+        Lap lap = act.getLaps().get(1);
+        assertThat(lap.getTracks()).isNotEmpty();
+        assertThat(lap.getTracks().get(0)).isEqualTo(lap2.getTracks().get(1));
+        assertThat(lap.getTracks().size()).isEqualTo(1);
+    }
+
+    @Test
+    public void removePointNullIndexAndTimeMillisTest() {
+        // Given
+        laps.add(lap1);
+        laps.add(lap2);
+        laps.add(lap3);
+        laps.add(lap4);
+        activity = Activity.builder()
+                .laps(laps)
+                .idUser("foo")
+                .name("boo")
+                .sport("sport")
+                .date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
+                .build();
+        // When
+        // When
+        Activity act = activityOperations.removePoint(activity, "46.452478", "-6.9501170",
+               null, null);
+
+        // Then
+		verify(lapsOperations, times(4)).fulfillCriteriaPositionTime(any(), any(), isNull(), isNull());
+		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+        assertThat(act).isNull();
+    }
 
 
 }

@@ -1,55 +1,37 @@
 package com.routeanalyzer.api.common;
 
-import com.google.common.base.Function;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.api.xml.tcx.PositionT;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
+import static org.springframework.http.ResponseEntity.badRequest;
+import static org.springframework.http.ResponseEntity.ok;
 
 @UtilityClass
 public class CommonUtils {
 
-	// Radius of earth in meters
-	public static final double EARTHS_RADIUS_METERS = 6371000.0;
-
-	/**
-	 * Json Parser
-	 */
-	
-	public static Gson getGsonLocalDateTime() {
-		return new GsonBuilder().setPrettyPrinting().serializeNulls()
-				.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeJsonConverter()).create();
-	}
-
-	public static double metersBetweenCoordinates(double latP1, double lngP1, double latP2, double lngP2) {
-		// Point P
-		double rho1 = EARTHS_RADIUS_METERS * Math.cos(latP1);
-		double z1 = EARTHS_RADIUS_METERS * Math.sin(latP1);
-		double x1 = rho1 * Math.cos(lngP1);
-		double y1 = rho1 * Math.sin(lngP1);
-
-		// Point Q
-		double rho2 = EARTHS_RADIUS_METERS * Math.cos(latP2);
-		double z2 = EARTHS_RADIUS_METERS * Math.sin(latP2);
-		double x2 = rho2 * Math.cos(lngP2);
-		double y2 = rho2 * Math.sin(lngP2);
-
-		// Dot product
-		double dot = (x1 * x2 + y1 * y2 + z1 * z2);
-		double cosTheta = dot / (Math.pow(EARTHS_RADIUS_METERS, 2));
-
-		double theta = Math.acos(cosTheta);
-
-		return EARTHS_RADIUS_METERS * theta;
+	public static <T> T toValueOrNull(String object, Function<String, T> convertTo) {
+		return ofNullable(object)
+				.map(convertTo)
+				.orElse(null);
 	}
 
 	/**
@@ -73,10 +55,6 @@ public class CommonUtils {
 				.speed(MathUtils.toBigDecimal(speed).orElse(null))
 				.heartRateBpm(heartRate)
 				.build();
-	}
-
-	public static String toStringValue(Object value) {
-		return ofNullable(value).map(String::valueOf).orElse(null);
 	}
 
 	public static TrackPoint toTrackPoint(LocalDateTime dateTime, int index, Position position, Double alt, Double dist,
@@ -144,7 +122,12 @@ public class CommonUtils {
 	 */
 
 	public static Position toPosition(String latParam, String lngParam) {
-		return toPosition(MathUtils.toBigDecimal(latParam).orElse(null), MathUtils.toBigDecimal(lngParam).orElse(null));
+		return toPosition(MathUtils.toBigDecimal(latParam).orElse(null),
+				MathUtils.toBigDecimal(lngParam).orElse(null));
+	}
+
+	public static Optional<Position> toOptPosition(String latParam, String lngParam) {
+		return toOptPosition(MathUtils.toBigDecimal(latParam), MathUtils.toBigDecimal(lngParam));
 	}
 
 	public static Position toPosition(Double lat, Double lng) {
@@ -158,12 +141,65 @@ public class CommonUtils {
 				.orElse(null);
 	}
 
-	public static String toCoordinates(Position position, Function<Position, BigDecimal> getSpecificCoordinate) {
-		return ofNullable(position)
-				.map(getSpecificCoordinate)
-				.map(BigDecimal::doubleValue)
-				.map(String::valueOf)
-				.orElse(null);
+	public static Optional<Position> toOptPosition(Optional<BigDecimal> latParam, Optional<BigDecimal> lngParam) {
+		return latParam.flatMap(latitude -> lngParam.map(longitude -> new Position(latitude, longitude)));
 	}
+
+	/**
+	 * Response utils
+	 */
+
+	// Headers
+
+	public static HttpHeaders toJsonHeaders(){
+		MultiValueMap<String, String> values = new LinkedMultiValueMap<>();
+		values.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
+		return toHeaders(values);
+	}
+
+	private HttpHeaders toApplicationFileHeaders(String id, String fileType){
+		MultiValueMap<String, String> values = new LinkedMultiValueMap<>();
+		values.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
+		values.add("Content-Disposition", "attachment;filename=" + id + "_" + fileType + ".xml");
+		return toHeaders(values);
+	}
+
+	private HttpHeaders toHeaders(MultiValueMap values) {
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.addAll(values);
+		return responseHeaders;
+	}
+
+	// Response
+
+	public static ResponseEntity<String> getFileExportResponse(String file, String id, String fileType) {
+		return ResponseEntity.ok().headers(toApplicationFileHeaders(id, fileType)).body(file);
+	}
+
+	public static  ResponseEntity<String> toBadRequestParams() {
+		String description = "Activity was not found or other params are not valid.";
+		Response errorValue = new Response(true, description, null);
+		return badRequest().headers(toJsonHeaders()).body(JsonUtils.toJson(errorValue));
+	}
+
+	public static  ResponseEntity<String> toBadRequestResponse(Object response) {
+		return badRequest().headers(toJsonHeaders()).body(JsonUtils.toJson(response));
+	}
+
+	public static  ResponseEntity<String> toOKMessageResponse(Object response) {
+		return ok().headers(toJsonHeaders()).body(JsonUtils.toJson(response));
+	}
+
+	/**
+	 * String utils
+	 */
+	public static List<String> splitStringByDelimiter(String str, String delimiter) {
+		return Stream.of(str.split(delimiter)).filter(StringUtils::isNotEmpty).collect(Collectors.toList());
+	}
+
+	public static String toStringValue(Object value) {
+		return ofNullable(value).map(String::valueOf).orElse(null);
+	}
+
 
 }

@@ -41,6 +41,15 @@ public class LapsOperationsImpl implements LapsOperations {
 	@Autowired
 	private TrackPointOperations trackPointOperationsService;
 
+	// Index lap splitter
+    public static String COMMA_DELIMITER = ",";
+	// Lap splitter: @
+	public static String LAP_DELIMITER = "@";
+	// Color splitter: -
+	public static String COLOR_DELIMITER = "-";
+	// First char in hexadecimal number: #
+	public static String STARTED_HEX_CHAR = "#";
+
 	@Override
 	public Lap joinLaps(Lap lapLeft, Lap lapRight) {
 		// Join the track points of the two laps

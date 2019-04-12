@@ -2,6 +2,7 @@ package com.routeanalyzer.api.logic.file.export.impl;
 
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
+import com.routeanalyzer.api.common.ThrowingFunction;
 import com.routeanalyzer.api.logic.file.export.ExportFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
@@ -22,6 +23,7 @@ import com.routeanalyzer.api.xml.tcx.TrackpointT;
 import com.routeanalyzer.api.xml.tcx.TrainingCenterDatabaseT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityLapExtensionT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityTrackpointExtensionT;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,8 +46,25 @@ public class TcxExportFileService implements ExportFileService {
         this.tcxService = tcxService;
     }
 
+    /**
+     *
+     * Functions
+     *
+     */
+    private Function<JAXBElement, ExtensionsT> setTcxExtension = jaxbElement -> {
+        ExtensionsT extT = new ExtensionsT();
+        extT.addAny(jaxbElement);
+        return extT;
+    };
+
+    private Function<Short, HeartRateInBeatsPerMinuteT> setTcxValueHeartRate = bpm -> {
+        HeartRateInBeatsPerMinuteT heartRate = new HeartRateInBeatsPerMinuteT();
+        heartRate.setValue(bpm);
+        return heartRate;
+    };
+
     @Override
-    public String export(Activity act) throws JAXBException {
+    public String export(Activity act) throws RuntimeException {
         com.routeanalyzer.api.xml.tcx.ObjectFactory oFactory =
                 new com.routeanalyzer.api.xml.tcx.ObjectFactory();
 
@@ -71,7 +90,10 @@ public class TcxExportFileService implements ExportFileService {
         actListT.addActivity(activityT);
         trainingCenterDatabaseT.setActivities(actListT);
 
-        return tcxService.createXML(oFactory.createTrainingCenterDatabase(trainingCenterDatabaseT));
+        return ofNullable(trainingCenterDatabaseT)
+                .map(oFactory::createTrainingCenterDatabase)
+                .map(ThrowingFunction.unchecked(tcxService::createXML))
+                .orElse(StringUtils.EMPTY);
     }
 
     private void tcxLapsMapping(ActivityT activityT, Optional<List<Lap>> optLapList) {
@@ -194,15 +216,4 @@ public class TcxExportFileService implements ExportFileService {
         return trackT;
     }
 
-    private Function<JAXBElement, ExtensionsT> setTcxExtension = jaxbElement -> {
-        ExtensionsT extT = new ExtensionsT();
-        extT.addAny(jaxbElement);
-        return extT;
-    };
-
-    private Function<Short, HeartRateInBeatsPerMinuteT> setTcxValueHeartRate = bpm -> {
-        HeartRateInBeatsPerMinuteT heartRate = new HeartRateInBeatsPerMinuteT();
-        heartRate.setValue(bpm);
-        return heartRate;
-    };
 }

@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.routeanalyzer.api.common.CommonUtils.metersBetweenCoordinates;
+import static com.routeanalyzer.api.common.MathUtils.metersBetweenCoordinates;
 import static java.util.Optional.ofNullable;
 
 @Service

@@ -37,7 +37,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
     private ActivityOperations activityOperations;
     private LapsOperations lapsOperations;
 
-    private static final String SOURCE_XML_TYPE = "tcx";
+    public static final String SOURCE_XML_TYPE = "tcx";
 
     @Autowired
     public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperations,

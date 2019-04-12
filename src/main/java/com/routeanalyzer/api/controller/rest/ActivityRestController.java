@@ -1,22 +1,31 @@
 package com.routeanalyzer.api.controller.rest;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.xml.bind.JAXBException;
 
+import com.amazonaws.AmazonClientException;
+import com.routeanalyzer.api.common.CommonUtils;
+import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
 import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
+import com.routeanalyzer.api.common.Response;
+import com.routeanalyzer.api.model.Lap;
+import io.vavr.control.Try;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +39,19 @@ import org.springframework.web.bind.annotation.RestController;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.model.Activity;
+import org.xml.sax.SAXParseException;
+
+import static com.routeanalyzer.api.common.CommonUtils.toJsonHeaders;
+import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.COMMA_DELIMITER;
+import static org.springframework.http.ResponseEntity.ok;
+import static org.springframework.http.ResponseEntity.badRequest;
+import static org.springframework.http.ResponseEntity.notFound;
+import static org.springframework.http.ResponseEntity.status;
+import static com.routeanalyzer.api.common.JsonUtils.toJson;
+import static java.util.Optional.ofNullable;
+import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.COLOR_DELIMITER;
+import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.LAP_DELIMITER;
+import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.STARTED_HEX_CHAR;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -48,174 +70,225 @@ public class ActivityRestController {
 	private GpxExportFileService gpxExportService;
 
 	@GetMapping(value = "/{id}", produces = "application/json;")
-	public @ResponseBody ResponseEntity<Object> getActivityById(@PathVariable String id) {
-		Activity act = mongoRepository.findById(id).orElse(null);
-		if (Objects.isNull(act)) {
-			log.debug("Given activity id not found in database.");
-			String error = "{\"error\":true, \"description\":\"Given activity id not found in database.\"}";
-			return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON_UTF8).body(error);
-		} else
-			return ResponseEntity.ok().body(act);
+	public @ResponseBody ResponseEntity<String> getActivityById(@PathVariable String id) {
+		return getOptionalActivityById(id)
+				.map(JsonUtils::toJson)
+				.map(ok().headers(CommonUtils.toJsonHeaders())::body)
+				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
 	@GetMapping(value = "/{id}/export/{type}")
 	public ResponseEntity<String> exportAs(@PathVariable final String id, @PathVariable final String type) {
-		Activity activity = mongoRepository.findById(id).orElse(null);
-		switch (type.toLowerCase()) {
-		case "tcx":
-			try {
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
-				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_tcx.xml");
-				return ResponseEntity.ok().headers(responseHeaders).body(tcxExportService.export(activity));
-			} catch (JAXBException e1) {
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
-				String errorValue = "{\"error\":true,\"description\":\"Problem with the file format uploaded.\"," 
-						+ "\"exception\":\"" + e1.getMessage() + "\"}";
-				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders)
-						.body(errorValue);
-			}
-		case "gpx":
-			try {
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
-				responseHeaders.add("Content-Disposition", "attachment;filename=" + id + "_gpx.xml");
-				return ResponseEntity.ok().headers(responseHeaders).body(gpxExportService.export(activity));
-			} catch (JAXBException e) {
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
-				String errorValue = "{" + "\"error\":true,"
-						+ "\"description\":\"Problem with the file format uploaded.\"," + "\"exception\":\""
-						+ e.getMessage() + "\"" + "}";
-				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders)
-						.body(errorValue);
-			}
-		default:
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
-			String errorValue = "{" + "\"error\":true," + "\"description\":\"Select a correct type for export it.\""
-					+ "}";
-			return ResponseEntity.badRequest().headers(responseHeaders).body(errorValue);
-		}
+		return getOptionalActivityById(id)
+				.flatMap(activity -> ofNullable(type)
+						.filter(StringUtils::isNotEmpty)
+						.map(String::toLowerCase)
+						.map(typeLowerCase -> getResponseByType(typeLowerCase, activity)))
+				.orElseGet(CommonUtils::toBadRequestParams);
+
 	}
 
-	@PutMapping(value = "/{id}/remove/point", produces = "application/json;")
-	public @ResponseBody ResponseEntity<Object> removePoint(@PathVariable String id, @RequestParam String lat,
+	@PutMapping(value = "/{id}/remove/point")
+	public @ResponseBody ResponseEntity<String> removePoint(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
-		Activity activity = mongoRepository.findById(id).orElse(null);
-		if (Objects.isNull(activity)) {
-			String error = "{" + "\"error\":true," + "\"description\":\"Given activity not found in database.\"" + "}";
-			return ResponseEntity.badRequest().body(error);
-		} else {
-			try{
-				activityOperationsService.removePoint(activity, lat, lng, timeInMillis, index);
-				mongoRepository.save(activity);
-				return ResponseEntity.ok().body(activity);
-			} catch(IndexOutOfBoundsException e){
-				String error = "{" + "\"error\":true," + "\"description\":\"Check if the index is correct.\"" + "}";
-				return ResponseEntity.badRequest().body(error);
-			}
-		}
+		return getOptionalActivityById(id)
+				.flatMap(activity -> ofNullable(lat)
+						.filter(StringUtils::isNotEmpty)
+						.flatMap(latitude -> ofNullable(lng)
+								.filter(StringUtils::isNotEmpty)
+								.map(longitude -> activityOperationsService
+										.removePoint(activity, latitude, longitude, timeInMillis, index))
+								.map(mongoRepository::save)
+								.map(JsonUtils::toJson)
+								.map(ok().headers(CommonUtils.toJsonHeaders())::body)))
+				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
-	@PutMapping(value = "/{id}/join/laps", produces = "application/json;")
-	public @ResponseBody ResponseEntity<Object> joinLaps(@PathVariable String id,
-			@RequestParam(name = "index1") String indexLap1, @RequestParam(name = "index2") String indexLap2) {
-		Activity act = mongoRepository.findById(id).orElse(null);
-		if (!Objects.isNull(indexLap1) && !Objects.isNull(indexLap2) && !indexLap1.isEmpty() && !indexLap2.isEmpty()) {
-			act = activityOperationsService.joinLaps(act, Integer.parseInt(indexLap1), Integer.parseInt(indexLap2));
-			if (Objects.isNull(act)) {
-				String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\""
-						+ "}";
-				return ResponseEntity.badRequest().body(error);
-			} else {
-				mongoRepository.save(act);
-				return ResponseEntity.ok().body(act);
-			}
-		} else {
-			String error = "{" + "\"error\":true," + "\"description\":\"Please check the laps indexes params.\"" + "}";
-			return ResponseEntity.badRequest().body(error);
-		}
-
+	@PutMapping(value = "/{id}/join/laps")
+	public @ResponseBody ResponseEntity<String> joinLaps(@PathVariable String id,
+			@RequestParam(name = "index1") String indexLeft, @RequestParam(name = "index2") String indexRight) {
+		return ofNullable(id)
+				.filter(StringUtils::isNotEmpty)
+				.flatMap(mongoRepository::findById)
+				.map(activity -> activityOperationsService.joinLaps(activity, indexLeft, indexRight))
+				.map(mongoRepository::save)
+				.map(JsonUtils::toJson)
+				.map(badRequest().headers(CommonUtils.toJsonHeaders())::body)
+				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
 	@PutMapping(value = "/{id}/split/lap", produces = "application/json;")
-	public @ResponseBody ResponseEntity<Object> splitLap(@PathVariable String id, @RequestParam String lat,
+	public @ResponseBody ResponseEntity<String> splitLap(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
-		Activity act = mongoRepository.findById(id).orElse(null);
-		if (Objects.isNull(act))
-			return ResponseEntity.badRequest().body("{" + "\"error\":true,"
-					+ "\"description\":\"Given activity id not found in database.\"" + "}");
-		else {
-			act = activityOperationsService.splitLap(act, lat, lng, timeInMillis, index);
-			if(Objects.isNull(act)){
-				return ResponseEntity.badRequest().body("{" + "\"error\":true,"
-						+ "\"description\":\"Error trying split the lap.\"" + "}");
-			}
-			mongoRepository.save(act);
-			return ResponseEntity.ok().body(act);
-		}
+		return getOptionalActivityById(id)
+				.map(activity -> activityOperationsService.splitLap(activity, lat, lng, timeInMillis, index))
+				.map(mongoRepository::save)
+				.map(JsonUtils::toJson)
+				.map(ok().headers(toJsonHeaders())::body)
+				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
 	@PutMapping(value = "/{id}/remove/laps", produces = "application/json;")
-	public @ResponseBody ResponseEntity<Object> removeLaps(@PathVariable String id,
+	public @ResponseBody ResponseEntity<String> removeLaps(@PathVariable String id,
 			@RequestParam(name = "date") String startTimeLaps, @RequestParam(name = "index") String indexLaps) {
-		Activity act = mongoRepository.findById(id).orElse(null);
-
-		if (!Objects.isNull(act)) {
-			List<String> dates = Arrays.asList(startTimeLaps.split(",")).stream()
-					.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
-			List<String> index = Arrays.asList(indexLaps.split(",")).stream()
-					.filter(element -> element != null && !element.isEmpty()).collect(Collectors.toList());
-
-			if (index != null && !index.isEmpty()) {
-				boolean isDates = dates != null && !dates.isEmpty();
-				IntStream.range(0, index.size()).forEach(indexArrays -> {
-					Integer indexLap = Integer.parseInt(index.get(indexArrays));
-					Long date = isDates ? Long.parseLong(dates.get(indexArrays)) : null;
-					activityOperationsService.removeLap(act, date, indexLap);
-				});
-			}
-			mongoRepository.save(act);
-			return ResponseEntity.ok().body(act);
-		} else {
-			String error = "{" + "\"error\":true," + "\"description\":\"Given activity id not found in database.\""
-					+ "}";
-			return ResponseEntity.badRequest().body(error);
-		}
+	    Function<String, List<String>> splitStringByComma = string -> ofNullable(string).map(stringParam ->
+                CommonUtils.splitStringByDelimiter(stringParam, COMMA_DELIMITER)).orElseGet(Collections::emptyList);
+	    Supplier<Response> errorResponse = () -> new Response(true,
+                "Given activity id not found in database.", null);
+	    return getOptionalActivityById(id)
+				.flatMap(activity -> ofNullable(indexLaps)
+						.map(splitStringByComma)
+						.flatMap(index -> ofNullable(startTimeLaps)
+								.map(splitStringByComma)
+								.map(this::toListDates)
+								.flatMap(datesList -> ofNullable(index)
+										.map(List::size)
+										.map(maxSizeIndex -> IntStream.range(0, maxSizeIndex))
+										.map(intStream -> intStream.mapToObj(Integer::new))
+										.map(indexes -> indexes.map(indexParam ->
+												ofNullable(indexParam)
+														.map(index::get)
+														.map(Integer::parseInt)
+														.map(indexLap -> ofNullable(datesList)
+																.filter(List::isEmpty)
+																.map(datesListParam -> activityOperationsService
+																		.removeLap(activity, null, indexLap))
+																.orElseGet(() -> activityOperationsService
+																		.removeLap(activity, datesList.get(indexParam), indexLap)))
+														.orElseGet(null))
+												.collect(Collectors.toList())))
+										.map(mongoRepository::saveAll)))
+				.map(JsonUtils::toJson)
+				.map(CommonUtils::toOKMessageResponse)
+				.orElseGet(() -> CommonUtils.toBadRequestResponse(errorResponse.get()));
 	}
+
+	private List<Long> toListDates(List<String> dates) {
+	    return ofNullable(dates)
+                .map(List::size)
+                .map(maxSizeDates -> IntStream.range(0, maxSizeDates))
+                .map(intStream -> intStream.mapToObj(Integer::new))
+                .map(indexes -> indexes.map(dates::get)
+                        .map(Long::parseLong).collect(Collectors.toList()))
+                .orElseGet(Collections::emptyList);
+    }
 
 	@PutMapping(value = "/{id}/color/laps")
-	public @ResponseBody ResponseEntity<String> setColorLaps(@PathVariable String id, @RequestParam String data) {
-		Activity act = mongoRepository.findById(id).orElse(null);
-		// Lap splitter: @, color splitter: -, first char in hexadecimal number:
-		// #
-		String lapSplitter = "@", colorSplitter = "-", startedCharHex = "#";
-		// [color(hex)-lightColor(hex)]@[...]... number without #
-		if (!Objects.isNull(data) && !data.isEmpty() && !Objects.isNull(act)) {
-			List<String> laps = null;
-			if (data.contains(lapSplitter))
-				laps = Arrays.asList(data.split(lapSplitter));
-			else
-				laps = Arrays.asList(data);
-			AtomicInteger index = new AtomicInteger();
-			laps.forEach(lap -> {
-				int indexLap = index.getAndIncrement();
-				String color = lap.split(colorSplitter)[0], lightColor = lap.split(colorSplitter)[1];
-				if (!Objects.isNull(color) && !Objects.isNull(lightColor) && !color.isEmpty()
-						&& !lightColor.isEmpty()) {
-					String hexColor = startedCharHex + color, hexLightColor = startedCharHex + lightColor;
-					act.getLaps().get(indexLap).setColor(hexColor);
-					act.getLaps().get(indexLap).setLightColor(hexLightColor);
-				}
-			});
-			mongoRepository.save(act);
-			String info = "{" + "\"error\":false," + "\"description\":\"Lap's colors are updated.\"" + "}";
-			return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON_UTF8).body(info);
-		} else {
-			String error = "{" + "\"error\":true," + "\"description\":\"Not be posible to update lap's colors.\"" + "}";
-			return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON_UTF8).body(error);
+	public @ResponseBody ResponseEntity<String> setColorLap(@PathVariable String id, @RequestParam String data) {
+        Supplier<AtomicInteger> atomicIntegerSupplier = () -> new AtomicInteger();
+        Supplier<Response> okSupplier = () -> new Response(false,
+                "Lap's colors are updated.", null);
+        Supplier<Response> badRequestSupplier = () -> new Response(true,
+                "Not be posible to update lap's colors.", null);
+		return getOptionalActivityById(id)
+				.flatMap(activity -> ofNullable(data)
+						.map(this::toLapList)
+						.flatMap(laps -> ofNullable(atomicIntegerSupplier)
+								.map(Supplier::get)
+								.map(indexLap -> laps
+                                        .stream()
+										.map(lapColor -> this.setColorLap(activity, lapColor, indexLap)))
+                                .map(lapStream -> lapStream.collect(Collectors.toList())))
+                        .map(laps -> activity))
+                .map(mongoRepository::save)
+                .map(activity -> okSupplier)
+                .map(Supplier::get)
+                .map(CommonUtils::toOKMessageResponse)
+                .orElseGet(() -> CommonUtils.toBadRequestResponse(badRequestSupplier.get()));
+	}
+
+    private List<String> toLapList(String lapsStr) {
+        return ofNullable(LAP_DELIMITER)
+                .filter(lapsStr::contains)
+                .map(lapsStr::split)
+                .map(Arrays::asList)
+                .orElseGet(() -> ofNullable(lapsStr)
+                        .map(Arrays::asList)
+                        .orElseGet(Collections::emptyList));
+    }
+
+    private Lap setColorLap(Activity activity, String lapColor, AtomicInteger indexLap) {
+        Function<String, String> addHexPrefix = color -> STARTED_HEX_CHAR + color;
+        // [color(hex)-lightColor(hex)]@[...]... number without #
+        return ofNullable(COLOR_DELIMITER)
+                .map(lapColor::split)
+                .flatMap(colorsArray -> ofNullable(colorsArray[0])
+                        .map(addHexPrefix)
+                        .flatMap(hexColor -> ofNullable(colorsArray[1])
+                                .map(addHexPrefix)
+                                .flatMap(hexLightColor -> ofNullable(activity)
+                                        .map(Activity::getLaps)
+                                        .flatMap(lapsParam -> ofNullable(indexLap)
+                                                .map(AtomicInteger::getAndIncrement)
+                                                .map(lapsParam::get)
+                                                .map(lapParamColor -> {
+                                                    lapParamColor.setColor(hexColor);
+                                                    lapParamColor.setLightColor(hexLightColor);
+                                                    return lapParamColor;
+                                                })
+                                        )
+                                )
+                        )
+                ).orElse(null);
+    }
+
+	private Optional<Activity> getOptionalActivityById(String id) {
+		return ofNullable(id)
+				.filter(StringUtils::isNotEmpty)
+				.flatMap(mongoRepository::findById);
+	}
+
+	private ResponseEntity<String> getResponseByType(String typeLowercase, Activity activity) {
+		final String sourceTcx = "tcx";
+		final String sourceGpx = "gpx";
+		switch (typeLowercase) {
+			case sourceTcx:
+				return Try.of(() -> tcxExportService.export(activity))
+						.map(file -> CommonUtils.getFileExportResponse(file, activity.getId(), sourceTcx))
+						.recover(RuntimeException.class, handleExceptions)
+						.getOrElse(notFound().build());
+			case sourceGpx:
+				return Try.of(() -> gpxExportService.export(activity))
+						.map(file -> CommonUtils.getFileExportResponse(file, activity.getId(), sourceGpx))
+						.recover(RuntimeException.class, handleExceptions)
+						.getOrElse(notFound().build());
+			default:
+				return CommonUtils.toBadRequestParams();
 		}
 	}
+
+	private Function<RuntimeException, ResponseEntity<String>> handleExceptions = error -> {
+		String logMessage = null;
+		String description = null;
+		String errorMessage = null;
+		ResponseEntity.BodyBuilder bodyBuilder = null;
+		if (SAXParseException.class.isInstance(error)) {
+			SAXParseException exception = SAXParseException.class.cast(error);
+			logMessage = "SAXParseException error: " + error.getMessage();
+			description = "Problem trying to parser xml file. Check if its correct.";
+			errorMessage = exception.getMessage();
+			bodyBuilder = badRequest().headers(CommonUtils.toJsonHeaders());
+		} else if (JAXBException.class.isInstance(error)) {
+			JAXBException exception = JAXBException.class.cast(error);
+			logMessage = "JAXBException error: " + error.getMessage();
+			description = "Problem with the file format exported/uploaded.";
+			errorMessage = exception.getMessage();
+			bodyBuilder = status(HttpStatus.INTERNAL_SERVER_ERROR).headers(CommonUtils.toJsonHeaders());
+		} else if(AmazonClientException.class.isInstance(error)){
+			AmazonClientException exception = AmazonClientException.class.cast(error);
+			logMessage = "AmazonClientException error: " + error.getMessage();
+			description = "Problem trying to delete/get the activity/file :: Amazon S3 Problem";
+			errorMessage = exception.getMessage();
+			bodyBuilder = status(HttpStatus.INTERNAL_SERVER_ERROR).headers(CommonUtils.toJsonHeaders());
+		} else if(IOException.class.isInstance(error)) {
+			IOException exception = IOException.class.cast(error);
+			logMessage = "IOException error: " + error.getMessage();
+			description = "Problem trying to get the file :: Input/Output Problem";
+			errorMessage = exception.getMessage();
+			bodyBuilder = status(HttpStatus.INTERNAL_SERVER_ERROR).headers(CommonUtils.toJsonHeaders());
+		}
+		log.error(logMessage);
+		Response errorBody = new Response(true, description, errorMessage);
+		return bodyBuilder.body(toJson(errorBody));
+	};
 }
