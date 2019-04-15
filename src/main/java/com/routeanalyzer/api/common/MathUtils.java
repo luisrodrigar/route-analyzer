@@ -67,11 +67,21 @@ public class MathUtils {
         return heartRate.getValue() > 0;
     }
 
-    public static Integer[] swappingValues(Integer num1, Integer num2) {
-        num1 = num1 * num2;
-        num2 = num1 / num2;
-        num1 = num1 / num2;
-        return new Integer[]{num1, num2};
+    public static Integer[] sortingPositiveValues(Integer indexLeft, Integer indexRight) {
+        return ofNullable(indexLeft)
+                .filter(MathUtils::isPositiveOrZero)
+                .flatMap(indexLeftParam -> ofNullable(indexRight)
+                        .filter(MathUtils::isPositiveOrZero)
+                        .filter(indexRightParam -> indexLeft.compareTo(indexRight) > 0)
+                        .map(indexRightParam -> swappingValues(indexLeft, indexRight)))
+                .orElseGet(() -> new Integer[]{indexLeft, indexRight});
+    }
+
+    private static Integer[] swappingValues(Integer smallerNumber, Integer biggerNumber) {
+        smallerNumber = smallerNumber + biggerNumber;
+        biggerNumber = smallerNumber - biggerNumber;
+        smallerNumber = smallerNumber - biggerNumber;
+        return new Integer[]{smallerNumber, biggerNumber};
     }
 
     /**

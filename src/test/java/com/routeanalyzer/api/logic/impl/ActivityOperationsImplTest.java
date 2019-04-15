@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -658,7 +659,6 @@ public class ActivityOperationsImplTest {
                 .build();
         Position position = toPosition("44.3602900",  "-6.8447600");
         // When
-        // When
         doReturn(true).when(lapsOperations)
                 .fulfillCriteriaPositionTime(eq(lap2), eq(position), eq(timeMillisLap21), isNull());
         doReturn(lap2.getTracks().get(0)).when(lapsOperations)
@@ -694,7 +694,6 @@ public class ActivityOperationsImplTest {
                 .date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
                 .build();
         // When
-        // When
         Activity act = activityOperations.removePoint(activity, "46.452478", "-6.9501170",
                null, null);
 
@@ -703,6 +702,99 @@ public class ActivityOperationsImplTest {
 		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
         assertThat(act).isNull();
     }
+
+    @Test
+	public void splitLapTest() {
+		// Given
+		lap1.getTracks().addAll(lap2.getTracks());
+		laps.add(lap1);
+		lap3.setIndex(1);
+		laps.add(lap3);
+		lap4.setIndex(2);
+		laps.add(lap4);
+		activity = Activity.builder()
+				.laps(laps)
+				.idUser("foo")
+				.name("boo")
+				.sport("sport")
+				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
+				.build();
+		Position position = toPosition("44.3602900", "-6.8447600");
+		// When
+		doReturn(true).when(lapsOperations)
+				.fulfillCriteriaPositionTime(eq(lap1), eq(position), eq(timeMillisLap21), eq(index21));
+		doReturn(lap2.getTracks().get(0)).when(lapsOperations)
+				.getTrackPoint(eq(lap1), eq(position), eq(timeMillisLap21), eq(index21));
+		doReturn(lap3OneTrackPoint).when(lapsOperations).createSplitLap(eq(lap1), eq(0), eq(index21), eq(lap1.getIndex()));
+		doReturn(lap2).when(lapsOperations).createSplitLap(eq(lap1), eq(index21), eq(lap1.getTracks().size()), eq(lap1.getIndex() + 1));
+		Activity act = activityOperations.splitLap(activity, "44.3602900", "-6.8447600",
+				String.valueOf(timeMillisLap21), String.valueOf(index21));
+
+		// Then
+		verify(lapsOperations, times(1)).fulfillCriteriaPositionTime(any(), any(), any(), any());
+		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any());
+		assertThat(act).isNotNull();
+		assertThat(act.getLaps()).isNotEmpty();
+		List<Lap> laps = act.getLaps();
+		assertThat(laps.size()).isEqualTo(4);
+		assertThat(laps.get(0)).isEqualTo(lap3OneTrackPoint);
+		assertThat(laps.get(1)).isEqualTo(lap2);
+		assertThat(laps.get(2).getIndex()).isEqualTo(lap1.getIndex() + 2);
+		assertThat(laps.get(3).getIndex()).isEqualTo(lap1.getIndex() + 3);
+	}
+
+	@Test
+	public void splitLapNullActivityTest() {
+		// Given activity null
+		// When
+		Activity act = activityOperations.splitLap(null, "44.3602900", "-6.8447600",
+				String.valueOf(timeMillisLap21), String.valueOf(index21));
+
+		// Then
+		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
+		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+		assertThat(act).isNull();
+	}
+
+	@Test
+	public void splitLapNullLatParamTest() {
+		// Given
+		activity = Activity.builder()
+				.laps(laps)
+				.idUser("foo")
+				.name("boo")
+				.sport("sport")
+				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
+				.build();
+		// When
+		Activity act = activityOperations.splitLap(activity, null, "-6.8447600",
+				String.valueOf(timeMillisLap21), String.valueOf(index21));
+
+		// Then
+		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
+		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+		assertThat(act).isNull();
+	}
+
+	@Test
+	public void splitLapNullLngParamTest() {
+		// Given
+		activity = Activity.builder()
+				.laps(laps)
+				.idUser("foo")
+				.name("boo")
+				.sport("sport")
+				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
+				.build();
+		// When
+		Activity act = activityOperations.splitLap(activity, "44.3602900", null,
+				String.valueOf(timeMillisLap21), String.valueOf(index21));
+
+		// Then
+		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
+		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+		assertThat(act).isNull();
+	}
 
 
 }

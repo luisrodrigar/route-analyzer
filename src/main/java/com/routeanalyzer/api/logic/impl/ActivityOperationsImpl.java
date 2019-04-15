@@ -11,21 +11,20 @@ import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import org.apache.commons.lang3.SerializationUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
+import static com.routeanalyzer.api.common.CommonUtils.toValueOrNull;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
-import static com.routeanalyzer.api.common.CommonUtils.toValueOrNull;
 
 @Service
 public class ActivityOperationsImpl implements ActivityOperations {
@@ -45,7 +44,6 @@ public class ActivityOperationsImpl implements ActivityOperations {
 		return CommonUtils.toOptPosition(lat, lng)
 				.flatMap(position -> of(position)
 						.map(getLapIndex)
-                        .filter(MathUtils::isPositiveOrZero)
                         .flatMap(indexLap -> of(indexLap)
                                 .map(indexLapParam ->
                                         indexOfTrackPoint(act, indexLapParam, position,
@@ -67,50 +65,56 @@ public class ActivityOperationsImpl implements ActivityOperations {
 
 	@Override
 	public Activity splitLap(Activity activity, String lat, String lng, String timeInMillis, String indexTrackPoint) {
-		Long time = !Objects.isNull(timeInMillis) && !timeInMillis.isEmpty() ? Long.parseLong(timeInMillis) : null;
-		Integer index = !Objects.isNull(indexTrackPoint) && !indexTrackPoint.isEmpty()
-				? Integer.parseInt(indexTrackPoint) : null;
-
-		Position position = new Position(new BigDecimal(lat), new BigDecimal(lng));
-
-		Integer indexLap = indexOfALap(activity, position, time, index);
-		if (indexLap > -1) {
-			Integer indexPosition = indexOfTrackPoint(activity, indexLap, position, time, index);
-			Lap lap = activity.getLaps().get(indexLap);
-			int sizeOfTrackPoints = lap.getTracks().size();
-
-			// Track point not start nor end. Thus, it split into two laps
-			if (indexPosition > 0 && indexPosition < sizeOfTrackPoints - 1) {
-
-				Lap lapSplitLeft = SerializationUtils.clone(activity.getLaps().get(indexLap));
-				lapsOperationsService.createSplitLap(lap, lapSplitLeft, 0, indexPosition);
-				// Index the same original lap
-				lapSplitLeft.setIndex(lap.getIndex());
-
-				Lap lapSplitRight = SerializationUtils.clone(activity.getLaps().get(indexLap));
-				// lap right: add right elements and the current track point
-				// which has index = index position
-				lapsOperationsService.createSplitLap(lap, lapSplitRight, indexPosition, sizeOfTrackPoints);
-				// Index
-				lapSplitRight.setIndex(lap.getIndex() + 1);
-
-				// Increment a point the index field of the next elements of the
-				// element to delete
-				IntStream.range(indexLap + 1, activity.getLaps().size()).forEach(indexEachLap -> {
-					activity.getLaps().get(indexEachLap).setIndex(activity.getLaps().get(indexEachLap).getIndex() + 1);
-				});
-
-				// Delete lap before splitting
-				activity.getLaps().remove(indexLap.intValue());
-				// Adding two new laps
-				activity.getLaps().add(indexLap.intValue(), lapSplitLeft);
-				activity.getLaps().add((indexLap.intValue() + 1), lapSplitRight);
-
-				return activity;
-			} else
-				return null;
-		} else
-			return null;
+		Function<Position, Integer> getLapIndex = position ->
+				indexOfALap(activity, position, toValueOrNull(timeInMillis, Long::parseLong),
+						toValueOrNull(indexTrackPoint, Integer::parseInt));
+		return CommonUtils.toOptPosition(lat, lng)
+				.flatMap(position -> ofNullable(activity)
+						.map(Activity::getLaps)
+						.flatMap(laps -> of(position)
+							.map(getLapIndex)
+							.flatMap(indexLap -> of(indexLap)
+									.map(indexLapParam ->
+											indexOfTrackPoint(activity, indexLapParam, position,
+													toValueOrNull(timeInMillis, Long::parseLong),
+													toValueOrNull(indexTrackPoint, Integer::parseInt)))
+									.flatMap(indexPosition -> of(indexPosition)
+											.filter(MathUtils::isPositiveNonZero)
+											.flatMap(indexTrackParam -> of(indexLap)
+													.map(laps::get)
+													.map(Lap::getTracks)
+													.map(List::size)
+													.map(MathUtils::decreaseUnit))
+											.filter(lastPosition -> indexPosition < lastPosition)
+											.map(lastPosition -> indexPosition))
+									.flatMap(indexPosition ->
+										ofNullable(indexLap)
+												.map(laps::get)
+												.flatMap(lap -> of(lap)
+														.map(SerializationUtils::clone)
+														.map(lapSplitLeft -> lapsOperationsService.createSplitLap(lap,
+																	0, indexPosition, lap.getIndex()))
+														.flatMap(lapSplitLeft -> of(lap)
+																.map(SerializationUtils::clone)
+																.flatMap(lapSplitRight -> of(lap)
+																		.map(Lap::getIndex)
+																		.map(MathUtils::increaseUnit)
+																		.map(indexRightLap -> lapsOperationsService
+																				.createSplitLap(lap, indexPosition,
+																						lap.getTracks().size(), indexRightLap)))
+																.flatMap(lapSplitRight -> of(indexLap)
+																		.map(MathUtils::increaseUnit)
+																		.map(indexLapParam -> {
+																			increaseIndexFollowingLaps(indexLapParam, laps);
+																			return indexLapParam;
+																		})
+																		.map(indexRightLapParam -> {
+																			laps.remove(indexLap.intValue());
+																			laps.add(indexLap.intValue(), lapSplitLeft);
+																			laps.add(indexRightLapParam.intValue(), lapSplitRight);
+																			return activity;
+																		}))))))))
+				.orElse(null);
 	}
 
 	/**
@@ -261,30 +265,36 @@ public class ActivityOperationsImpl implements ActivityOperations {
 				.map(Integer::parseInt)
 				.flatMap(indexLeftParam -> ofNullable(index2)
 						.map(Integer::parseInt)
-						.map((indexRightParam) -> swapValues(indexLeftParam, indexRightParam)));
+						.map((indexRightParam) -> MathUtils.sortingPositiveValues(indexLeftParam, indexRightParam)));
+	}
+
+
+
+	private void consumerElementsFollowingElements(int fromIndex, List<Lap> laps, Function<Integer, Consumer<List<Lap>>> consumerFunction) {
+		int lastIndexExcluded = laps.size();
+		IntStream.range(fromIndex, lastIndexExcluded).forEach(indexEachLap -> consumerFunction.apply(indexEachLap).accept(laps));
+	}
+
+	private void increaseIndexFollowingLaps(int fromIndex, List<Lap> laps) {
+		consumerElementsFollowingElements(fromIndex, laps, increaseIndex);
 	}
 
 	private void decreaseIndexFollowingLaps(int fromIndex, List<Lap> laps) {
-		int lastIndexExcluded = laps.size();
-		IntStream.range(fromIndex, lastIndexExcluded).forEach(indexEachLap -> decreaseIndex(indexEachLap, laps));
+		consumerElementsFollowingElements(fromIndex, laps, decreaseIndex);
 	}
 
-	private void decreaseIndex(int indexLap, List<Lap> laps){
-		ofNullable(indexLap)
+	private Function<Integer, Consumer<List<Lap>>> increaseIndex = genericConsumerEachLap(MathUtils::increaseUnit);
+
+	private Function<Integer, Consumer<List<Lap>>> decreaseIndex = genericConsumerEachLap(MathUtils::decreaseUnit);
+
+	private Function<Integer, Consumer<List<Lap>>> genericConsumerEachLap(Function<Integer, Integer> applyEachElement) {
+		return indexLap -> laps -> ofNullable(indexLap)
 				.map(laps::get)
 				.ifPresent(lapToSetIndex ->
 						ofNullable(lapToSetIndex)
 								.map(Lap::getIndex)
-								.map(MathUtils::decreaseUnit)
+								.map(applyEachElement)
 								.ifPresent(lapToSetIndex::setIndex));
-	}
-
-	private Integer[] swapValues(Integer indexLeft, Integer indexRight) {
-		return ofNullable(indexLeft)
-				.flatMap(indexLeftParam -> ofNullable(indexRight)
-						.filter(indexRightParam -> indexLeft.compareTo(indexRight) > 0)
-						.map(indexRightParam -> MathUtils.swappingValues(indexLeft, indexRight)))
-				.orElseGet(() -> new Integer[]{indexLeft, indexRight});
 	}
 
 	public void calculateDistanceSpeedValues(Activity activity) {
@@ -360,13 +370,16 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	 *            index of the lap in the array
 	 * @return index of the lap
 	 */
-	private int indexOfALap(Activity activity, Position position, Long timeInMillis, Integer index) {
+	private Integer indexOfALap(Activity activity, Position position, Long timeInMillis, Integer index) {
 		Predicate<Lap> isThisLap = lap ->
 				lapsOperationsService.fulfillCriteriaPositionTime(lap, position, timeInMillis, index);
 		return ofNullable(activity)
 				.map(Activity::getLaps)
-				.flatMap(laps -> laps.stream().filter(isThisLap).findFirst().map(laps::indexOf))
-				.orElse(-1);
+				.flatMap(laps -> laps.stream()
+						.filter(isThisLap)
+						.findFirst()
+						.map(laps::indexOf))
+				.orElse(null);
 	}
 
 }

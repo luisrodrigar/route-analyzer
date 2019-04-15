@@ -767,14 +767,34 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity("HIGH")
                 .build();
-        Lap newLapLeft = Lap.builder().build();
-        Lap newLapRight = Lap.builder().build();
 
         // When
-        lapsOperations.createSplitLap(lap, newLapLeft, 0, 4);
-        lapsOperations.createSplitLap(lap, newLapRight, 4, 8);
+        Lap newLapLeft =lapsOperations.createSplitLap(lap, 0, 4, lap.getIndex());
+        Lap newLapRight = lapsOperations.createSplitLap(lap, 4, 8, lap.getIndex() + 1);
 
         // Then
+        assertNewLapLeftRight(newLapLeft, newLapRight);
+    }
+
+    @Test
+    public void splitLapIndexesErrorPlaceSwappingMethodTest() {
+        // Given
+        trackPointsLeft.addAll(trackPointsRight);
+        Lap lap = Lap.builder().tracks(trackPointsLeft)
+                .startTime(toLocalDateTime(timeMillisRight1).orElse(null))
+                .index(0)
+                .totalTimeSeconds(50.0)
+                .intensity("HIGH")
+                .build();
+
+        // When
+        Lap newLapLeft =lapsOperations.createSplitLap(lap, 4, 0, lap.getIndex());
+        Lap newLapRight = lapsOperations.createSplitLap(lap, 8, 4, lap.getIndex() + 1);
+        // Then
+        assertNewLapLeftRight(newLapLeft, newLapRight);
+    }
+
+    private void assertNewLapLeftRight(Lap newLapLeft, Lap newLapRight) {
         assertThat(newLapLeft).isNotNull();
         assertThat(newLapLeft.getTracks()).isNotEmpty();
         assertThat(newLapLeft.getTracks().size()).isEqualTo(4);
@@ -796,32 +816,12 @@ public class LapsOperationsImpTest {
     }
 
     @Test
-    public void splitLapNullNewLapParamTest() {
-        // Given
-        Lap lap = Lap.builder().tracks(trackPointsLeft)
-                .startTime(toLocalDateTime(timeMillisRight1).orElse(null))
-                .index(0)
-                .totalTimeSeconds(50.0)
-                .intensity("HIGH")
-                .build();
-        Lap newLap = null;
-
+    public void splitLapNullLapParamTest() {
+        // Given lap is null
         // When
-        lapsOperations.createSplitLap(lap, newLap, 0, 1);
+        Lap newLap = lapsOperations.createSplitLap(null, 0, 1, 0);
         // Then
         assertThat(newLap).isNull();
-    }
-
-    @Test
-    public void splitLapNullLapParamTest() {
-        // Given
-        Lap lap = null;
-        Lap newLap = Lap.builder().build();
-
-        // When
-        lapsOperations.createSplitLap(lap, newLap, 0, 1);
-        // Then
-        assertThat(newLap).isEqualTo(Lap.builder().build());
     }
 
     @Test

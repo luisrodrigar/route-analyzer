@@ -28,12 +28,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 @Service
@@ -45,6 +48,19 @@ public class TcxExportFileService implements ExportFileService {
     public TcxExportFileService(TCXService tcxService) {
         this.tcxService = tcxService;
     }
+
+    /**
+     * Suppliers
+     */
+    private Supplier<com.routeanalyzer.api.xml.tcx.ObjectFactory> objectFactorySupplier = () ->
+            new com.routeanalyzer.api.xml.tcx.ObjectFactory();
+    private Supplier<ActivityT> activityTSupplier = () -> new ActivityT();
+    private Supplier<ActivityListT> activityListTSupplier = () -> new ActivityListT();
+    private Supplier<TrainingCenterDatabaseT> trainingCenterSupplier = () -> new TrainingCenterDatabaseT();
+    private Supplier<ActivityLapExtensionT> activityLapExtensionTSupplier = () -> new ActivityLapExtensionT();
+    private Supplier<ActivityTrackpointExtensionT> activityTrackPointExtensionTSupplier = () ->
+            new ActivityTrackpointExtensionT();
+    private Supplier<PositionT> positionTSupplier = () -> new PositionT();
 
     /**
      *
@@ -63,45 +79,78 @@ public class TcxExportFileService implements ExportFileService {
         return heartRate;
     };
 
-    @Override
-    public String export(Activity act) throws RuntimeException {
-        com.routeanalyzer.api.xml.tcx.ObjectFactory oFactory =
-                new com.routeanalyzer.api.xml.tcx.ObjectFactory();
+    private Function<ActivityT, Optional<TrainingCenterDatabaseT>> createTrainingCenterDatabase = activityT ->
+            of(activityT)
+                    .map(activityTParam -> {
+                        ActivityListT activityListT = activityListTSupplier.get();
+                        activityListT.addActivity(activityTParam);
+                        return activityListT;
+                    })
+                    .map(activityListT -> {
+                        TrainingCenterDatabaseT trainingCenterDatabaseT = trainingCenterSupplier.get();
+                        trainingCenterDatabaseT.setActivities(activityListT);
+                        return trainingCenterDatabaseT;
+                    });
 
-        TrainingCenterDatabaseT trainingCenterDatabaseT = new TrainingCenterDatabaseT();
-        ActivityListT actListT = new ActivityListT();
-        ActivityT activityT = new ActivityT();
+    private Function<List<ActivityLapT>, ActivityT> addActivityLaps = activityLapTS -> {
+        ActivityT activityT = activityTSupplier.get();
+        activityT.getLap().addAll(activityLapTS);
+        return activityT;
+    };
 
+    private Function<Double, ActivityLapExtensionT> setActivityLapExtension = avgSpeed -> {
+        ActivityLapExtensionT actExtensionT = activityLapExtensionTSupplier.get();
+        actExtensionT.setAvgSpeed(avgSpeed);
+        return actExtensionT;
+    };
+
+    private Function<Double, ActivityTrackpointExtensionT> setActivityTrackExtension = speed -> {
+        ActivityTrackpointExtensionT trackPointExtension = activityTrackPointExtensionTSupplier.get();
+        trackPointExtension.setSpeed(speed);
+        return trackPointExtension;
+    };
+    private Function<Position, PositionT> mapPosition = position -> {
+        PositionT positionT = positionTSupplier.get();
+        positionT.setLatitudeDegrees(position.getLatitudeDegrees().doubleValue());
+        positionT.setLongitudeDegrees(position.getLongitudeDegrees().doubleValue());
+        return positionT;
+    };
+
+    private Function<ActivityT, Function<Activity, ActivityT>> getSetterActivityField = activityT -> activity -> {
         // Sport is an enum
-        Optional<Activity> optAct = ofNullable(act);
-        optAct.map(Activity::getSport)
+        of(activity).map(Activity::getSport)
                 .map(SportT::valueOf)
                 .ifPresent(activityT::setSport);
 
         // Set xml gregorian calendar date
-        optAct.map(Activity::getDate)
+        of(activity).map(Activity::getDate)
                 .flatMap(DateUtils::toDate)
                 .map(DateUtils::createGregorianCalendar)
                 .map(DateUtils::createXmlGregorianCalendar)
                 .ifPresent(activityT::setId);
-        // Laps
-        tcxLapsMapping(activityT, optAct.map(Activity::getLaps));
+        return activityT;
+    };
 
-        actListT.addActivity(activityT);
-        trainingCenterDatabaseT.setActivities(actListT);
-
-        return ofNullable(trainingCenterDatabaseT)
-                .map(oFactory::createTrainingCenterDatabase)
+    @Override
+    public String export(Activity act) throws RuntimeException {
+        return ofNullable(act)
+                .map(Activity::getLaps)
+                .map(this::toTcxLaps)
+                .map(addActivityLaps)
+                .map(getSetterActivityField::apply)
+                .map(setActivityField -> setActivityField.apply(act))
+                .flatMap(createTrainingCenterDatabase)
+                .map(objectFactorySupplier.get()::createTrainingCenterDatabase)
                 .map(ThrowingFunction.unchecked(tcxService::createXML))
                 .orElse(StringUtils.EMPTY);
     }
 
-    private void tcxLapsMapping(ActivityT activityT, Optional<List<Lap>> optLapList) {
+    private List<ActivityLapT> toTcxLaps(List<Lap> optLapList) {
         ObjectFactory extensionFactory =
                 new ObjectFactory();
-        optLapList.map(List::stream)
-                .ifPresent(laps -> {
-                    laps.forEach(lap -> {
+        return of(optLapList).map(List::stream)
+                .map(laps ->
+                    laps.map(lap -> {
                         ActivityLapT lapT = new ActivityLapT();
                         Optional<Lap> optLap = ofNullable(lap);
                         // Start time in xml gregorian calendar
@@ -140,25 +189,20 @@ public class TcxExportFileService implements ExportFileService {
                                 .map(IntensityT::valueOf)
                                 .ifPresent(lapT::setIntensity);
                         // Average speed
-                        Function<Double, ActivityLapExtensionT> setActivityLapExtension = avgSpeed -> {
-                            ActivityLapExtensionT actExtensionT = new ActivityLapExtensionT();
-                            actExtensionT.setAvgSpeed(avgSpeed);
-                            return actExtensionT;
-                        };
                         optLap.map(Lap::getAverageSpeed)
                                 .map(setActivityLapExtension)
                                 .map(extensionFactory::createLX)
                                 .map(setTcxExtension)
                                 .ifPresent(lapT::setExtensions);
                         // Tracks
-                        TrackT trackT = tcxTrackPointsMapping(optLap.map(Lap::getTracks));
+                        TrackT trackT = toTrackT(optLap.map(Lap::getTracks));
                         lapT.addTrack(trackT);
-                        activityT.addLap(lapT);
-                    });
-                });
+                        return lapT;
+                    }).collect(Collectors.toList())
+                ).orElseGet(Collections::emptyList);
     }
 
-    private TrackT tcxTrackPointsMapping(Optional<List<TrackPoint>> optTrackPointList) {
+    private TrackT toTrackT(Optional<List<TrackPoint>> optTrackPointList) {
         ObjectFactory extensionFactory =
                 new ObjectFactory();
         TrackT trackT = new TrackT();
@@ -173,12 +217,6 @@ public class TcxExportFileService implements ExportFileService {
                             .map(DateUtils::createXmlGregorianCalendar)
                             .ifPresent(trackPointT::setTime);
                     // Position: latitude and longitude
-                    Function<Position, PositionT> mapPosition = position -> {
-                        PositionT positionT = new PositionT();
-                        positionT.setLatitudeDegrees(position.getLatitudeDegrees().doubleValue());
-                        positionT.setLongitudeDegrees(position.getLongitudeDegrees().doubleValue());
-                        return positionT;
-                    };
                     optTrack.map(TrackPoint::getPosition)
                             .map(mapPosition)
                             .ifPresent(trackPointT::setPosition);
@@ -197,12 +235,6 @@ public class TcxExportFileService implements ExportFileService {
                             .ifPresent(trackPointT::setHeartRateBpm);
 
                     // Speed
-                    Function<Double, ActivityTrackpointExtensionT> setActivityTrackExtension = speed -> {
-                        ActivityTrackpointExtensionT trackPointExtension =
-                                new ActivityTrackpointExtensionT();
-                        trackPointExtension.setSpeed(speed);
-                        return trackPointExtension;
-                    };
                     optTrack.map(TrackPoint::getSpeed)
                             .map(BigDecimal::doubleValue)
                             .map(setActivityTrackExtension)

@@ -13,10 +13,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.xml.bind.JAXBException;
 import java.nio.charset.StandardCharsets;
 
 import static com.routeanalyzer.api.common.JsonUtils.fromJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class GpxExportServiceImplTest {
@@ -56,5 +59,20 @@ public class GpxExportServiceImplTest {
         Try.of(() -> gpxExportService.export(null))
                 .onSuccess(gpxExportedFile -> assertThat(gpxExportedFile).isEmpty())
                 .onFailure(error -> assertThat(true).isFalse());
+    }
+
+    @Test
+    public void exportThrowJAXBException() throws JAXBException {
+        // When
+        doThrow(new JAXBException("Problems with the xml"))
+                .when(gpxService).createXML(any());
+        Try.of(() -> gpxExportService.export(activityGpxTest))
+                .onSuccess(gpxExportedFile -> assertThat(true).isFalse())
+                .onFailure(error -> {
+                    assertThat(error).isInstanceOf(RuntimeException.class);
+                    assertThat(RuntimeException.class.cast(error).getCause()).isInstanceOf(JAXBException.class);
+                    assertThat(RuntimeException.class.cast(error).getCause().getMessage())
+                            .isEqualTo("Problems with the xml");
+                });
     }
 }
