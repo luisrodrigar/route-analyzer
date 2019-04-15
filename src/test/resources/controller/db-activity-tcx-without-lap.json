@@ -28,7 +28,7 @@
 					"distanceMeters": {
 						"$numberDouble": "43.34577092311236"
 					},
-					"maximunSpeed": {
+					"maximumSpeed": {
 						"$numberDouble": "6.143949288527114"
 					},
 					"averageSpeed": {
@@ -37,7 +37,7 @@
 					"averageHearRate": {
 						"$numberDouble": "98.6231732776618"
 					},
-					"maximunHeartRate": {
+					"maximumHeartRate": {
 						"$numberInt": "103"
 					},
 					"tracks": [
@@ -218,7 +218,7 @@
 					"distanceMeters": {
 						"$numberDouble": "0.0"
 					},
-					"maximunSpeed": {
+					"maximumSpeed": {
 						"$numberDouble": "6.717731656189975"
 					},
 					"averageSpeed": {
@@ -227,7 +227,7 @@
 					"averageHearRate": {
 						"$numberDouble": "120.0"
 					},
-					"maximunHeartRate": {
+					"maximumHeartRate": {
 						"$numberInt": "120"
 					},
 					"tracks": [

@@ -1,0 +1,43 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Route Analyzer API</title>
+    </head>
+    <body>
+        <header>
+            <h2>Route Analyzer API</h2>
+            <p>This is an API which is consumed by Route Analyzer Web application. Its endpoints allow to manipulate data from an activity route.</p>
+            <p>You can access to the website <a href='https://routeanalyzer.herokuapp.com/'>here</a></p>
+        </header>
+        <section>
+            <article>
+                <h2>Endpoints</h2>
+                <p>The different methods of the interface implemented:
+                <li style='list-style:none;'>
+                    <ul><em>File</em>
+                        <li style='list-style:none;'>
+                            <ul><strong>[POST]/upload</strong> : uploading a route (xml: tcx/gpx)</ul>
+                            <ul><strong>[GET]/get/{type}/{id}</strong> : get a file from AWS S3</ul>
+                        </li>
+                    </ul>
+                    <ul><em>Activity</em>
+                        <li style='list-style:none;'>
+                            <ul><strong>[GET]/{id}</strong> : get an activity</ul>
+                            <ul><strong>[GET]/{id}/export/{type}</strong> : export the activity with current modifications</ul>
+                            <ul><strong>[PUT]/{id}/remove/point</strong> : remove an activity's point</ul>
+                            <ul><strong>[PUT]/{id}/join/laps</strong> : join two continuous activity's laps </ul>
+                            <ul><strong>[PUT]/{id}/split/lap</strong> : split one lap into two by the given point </ul>
+                            <ul><strong>[PUT]/{id}/remove/laps</strong> : remove point </ul>
+                            <ul><strong>[PUT]/{id}/color/laps</strong> : set color laps </ul>
+                        </li>
+                    </ul>
+                </li>
+                </p>
+            </article>
+        </section>
+        <footer>
+            <p><em>Copyright 2019 Luis Angel Rodriguez Garcia - <a href="https://github.com/luisrodrigar/route-analyzer">Github</a></em></p>
+        </footer>
+    </body>
+</html>
