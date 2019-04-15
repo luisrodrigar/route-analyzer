@@ -29,6 +29,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 @Service
@@ -53,6 +54,7 @@ public class GpxExportFileService implements ExportFileService {
     private Supplier<WptType> createWptType = () -> new WptType();
     private Supplier<TrackPointExtensionT> createTrackPointExtensionT = () -> new TrackPointExtensionT();
     private Supplier<ExtensionsType> createExtensionsType = () -> new ExtensionsType();
+    private Supplier<MetadataType> createMetadataType = () -> new MetadataType();
 
     /**
      *
@@ -80,21 +82,23 @@ public class GpxExportFileService implements ExportFileService {
         extT.addAny(jaxbElement);
         return extT;
     };
+    private Function<TrkType, GpxType> addTrkType = trkType -> {
+        GpxType gpx = gpxTypeSupplier.get();
+        gpx.addTrk(trkType);
+        return gpx;
+    };
+    private Function<XMLGregorianCalendar, MetadataType> generateMetadata = xmlGregorianCalendar -> {
+        MetadataType metadata = createMetadataType.get();
+        metadata.setTime(xmlGregorianCalendar);
+        return metadata;
+    };
+    private Function<ExtensionsType, Function<WptType, WptType>> getAdderExtensions = extensionsType -> wpt -> {
+        wpt.setExtensions(extensionsType);
+        return wpt;
+    };
 
     @Override
     public String export(Activity act) throws RuntimeException {
-        // Date time function
-        Function<XMLGregorianCalendar, MetadataType> generateMetadata = xmlGregorianCalendar -> {
-            MetadataType metadata = new MetadataType();
-            metadata.setTime(xmlGregorianCalendar);
-            return metadata;
-        };
-        Function<TrkType, GpxType> addTrkType = trkType -> {
-            GpxType gpx = gpxTypeSupplier.get();
-            gpx.addTrk(trkType);
-            return gpx;
-        };
-
         return ofNullable(act).map(Activity::getLaps)
                 .flatMap(this::toOptionalTrkType)
                 .map(addTrkType)
@@ -119,7 +123,7 @@ public class GpxExportFileService implements ExportFileService {
     }
 
     private Optional<TrkType> toOptionalTrkType(List<Lap> laps) {
-        return ofNullable(laps.stream()
+        return of(laps.stream()
                 .map(this::toTrkSegTypes)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()))
@@ -132,10 +136,6 @@ public class GpxExportFileService implements ExportFileService {
                 .map(trackPoints ->
                     trackPoints.stream().map(trackPoint -> {
                         WptType wpt = createWptType.get();
-                        Function<ExtensionsType, WptType> addExtensions = extensionsType -> {
-                            wpt.setExtensions(extensionsType);
-                            return wpt;
-                        };
                         Optional<TrackPoint> optTrackPoint = ofNullable(trackPoint);
                         // Date time
                         optTrackPoint.map(TrackPoint::getDate)
@@ -160,7 +160,8 @@ public class GpxExportFileService implements ExportFileService {
                                 .map(setActivityLapExtension)
                                 .map(creationExtensionFactory.get()::createTrackPointExtension)
                                 .map(setExtension)
-                                .map(addExtensions)
+                                .map(getAdderExtensions::apply)
+                                .map(setAddExtension -> setAddExtension.apply(wpt))
                                 .orElse(null);
                     })
                 )

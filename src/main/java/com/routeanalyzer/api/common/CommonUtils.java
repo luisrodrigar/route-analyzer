@@ -2,8 +2,10 @@ package com.routeanalyzer.api.common;
 
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
 import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.api.xml.tcx.PositionT;
+import com.routeanalyzer.api.xml.tcx.TrackpointT;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
@@ -94,6 +96,11 @@ public class CommonUtils {
 								new Integer(heartRateXml.getValue())))
 				.orElse(toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
 						null));
+	}
+
+	public static TrackPoint toTrackPoint(TrackpointT trackpointT, int indexTrackPoint) {
+		return toTrackPoint(trackpointT.getTime(), indexTrackPoint, trackpointT.getPosition(),
+				trackpointT.getAltitudeMeters(), trackpointT.getDistanceMeters(), trackpointT.getHeartRateBpm());
 	}
 
 	public static TrackPoint toTrackPoint(XMLGregorianCalendar xmlGregorianCalendar, int index, PositionT position,

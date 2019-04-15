@@ -29,14 +29,14 @@ public interface LapsOperations {
 	 * Split the lap from the init index of track list to end index of track list.
 	 * @param lap
 	 *            original lap
-	 * @param newLap
-	 *            split lap (works as a returned lap)
-	 * @param initIndex
+	 * @param initTrackPointIndex
 	 *            track point included
-	 * @param endIndex
+	 * @param endTrackPointIndex
 	 *            track point not included
+	 * @return newLap
+	 *            split lap
 	 */
-	void createSplitLap(Lap lap, Lap newLap, int initIndex, int endIndex);
+	Lap createSplitLap(Lap lap, int initTrackPointIndex, int endTrackPointIndex, int lapNewIndex);
 
 	/**
 	 * Exists any track point in the lap with the information defined in the params

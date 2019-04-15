@@ -13,11 +13,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.xml.bind.JAXBException;
 import java.nio.charset.StandardCharsets;
 
 import static com.routeanalyzer.api.common.JsonUtils.fromJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class TcxExportServiceImplTest {
@@ -49,4 +52,31 @@ public class TcxExportServiceImplTest {
                 .onSuccess(tcxExportedFile -> assertEquals(tcxXmlString, tcxExportedFile))
                 .onFailure(error -> assertThat(true).isFalse());
     }
+
+    @Test
+    public void exportActivityNull() {
+        // When
+        Try.of(() -> tcxExportService.export(null))
+                // Then
+                .onSuccess(tcxExportedFile -> assertThat(tcxExportedFile).isEmpty())
+                .onFailure(error -> assertThat(true).isFalse());
+    }
+
+    @Test
+    public void exportActivityThrowRuntimeException() throws JAXBException {
+        // When
+        doThrow(new JAXBException("Problems with xml."))
+                .when(tcxService).createXML(any());
+        Try.of(() -> tcxExportService.export(activityTcxTest))
+                // Then
+                .onSuccess(tcxExportedFile -> assertThat(true).isFalse())
+                .onFailure(error -> {
+                    assertThat(error).isInstanceOf(RuntimeException.class);
+                    assertThat(RuntimeException.class.cast(error).getCause()).isInstanceOf(JAXBException.class);
+                    assertThat(RuntimeException.class.cast(error).getCause().getMessage())
+                            .isEqualTo("Problems with xml.");
+                });
+    }
+
+
 }

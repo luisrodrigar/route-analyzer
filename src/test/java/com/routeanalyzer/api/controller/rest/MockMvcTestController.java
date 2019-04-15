@@ -43,12 +43,9 @@ public class MockMvcTestController {
 	 */
 	protected void uploadFileBuilder() {
 		builder = MockMvcRequestBuilders.multipart("/file/upload");
-		builder.with(new RequestPostProcessor() {
-			@Override
-			public MockHttpServletRequest postProcessRequest(MockHttpServletRequest request) {
-				request.setMethod("POST");
-				return request;
-			}
+		builder.with(request -> {
+			request.setMethod("POST");
+			return request;
 		});
 	}
 
@@ -95,12 +92,15 @@ public class MockMvcTestController {
 
 	/**
 	 * HTTP GET call Method checks if it is generated the following exception.
-	 * 
-	 * @param file
-	 * @param xmlType:
-	 *            type of the file which is uploading
+	 *
+	 * @param requestBuilder:
+	 *            to build the request
+	 * @param expectedResponse:
+	 *            expected response/value
 	 * @param descriptionError:
 	 *            description of the error which is expected to generate
+	 * @param isError
+	 * 			  boolean it determines if it is an error or not
 	 * @throws Exception
 	 */
 	protected void isGenerateErrorHTTP(RequestBuilder requestBuilder, ResultMatcher expectedResponse,
@@ -114,12 +114,15 @@ public class MockMvcTestController {
 
 	/**
 	 * HTTP GET call Method checks if it is thrown the following exception.
-	 * 
-	 * @param file
-	 * @param xmlType:
-	 *            type of the file which is uploading
+	 *
+	 * @param requestBuilder:
+	 *            to build the request
+	 * @param expectedResponse:
+	 *            expected response/value
 	 * @param descriptionError:
 	 *            description of the error which is expected to generate
+	 * @param exceptionError
+	 * 			  exception error generated
 	 * @throws Exception
 	 */
 	protected void isThrowingExceptionHTTP(RequestBuilder requestBuilder, ResultMatcher expectedResponse,
@@ -133,10 +136,11 @@ public class MockMvcTestController {
 	
 	/**
 	 * HTTP GET call Method checks if it is generated the following error.
-	 * 
-	 * @param file
-	 * @param xmlType:
-	 *            type of the file which is uploading
+	 *
+	 * @param requestBuilder:
+	 *            to build the request
+	 * @param expectedResponse:
+	 *            expected response/value
 	 * @param descriptionError:
 	 *            description of the error which is expected to generate
 	 * @throws Exception
@@ -151,9 +155,11 @@ public class MockMvcTestController {
 	}
 
 	/**
-	 * 
-	 * @param requestBuilder
-	 * @param activity
+	 *
+	 * @param requestBuilder:
+	 *            to build the request
+	 * @param activity:
+	 *            activity expected
 	 * @throws Exception
 	 */
 	protected void isReturningActivityHTTP(RequestBuilder requestBuilder, Activity activity) throws Exception {
@@ -164,9 +170,11 @@ public class MockMvcTestController {
 	}
 	
 	/**
-	 * 
-	 * @param requestBuilder
-	 * @param activity
+	 *
+	 * @param requestBuilder:
+	 *            to build the request
+	 * @param mediaType:
+	 *            activity expected
 	 * @throws Exception
 	 */
 	protected void isReturningFileHTTP(RequestBuilder requestBuilder, MediaType mediaType) throws Exception {

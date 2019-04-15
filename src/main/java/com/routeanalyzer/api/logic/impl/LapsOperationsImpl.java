@@ -7,6 +7,8 @@ import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.googlemaps.GoogleMapsServiceImpl;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -186,14 +188,14 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public void createSplitLap(Lap lap, Lap newLap, int initIndex, int endIndex) {
-		Function<List<TrackPoint>, Lap> setTrackPoints = trackPoints -> {
+	public Lap createSplitLap(Lap lap, int initTrackPointIndex, int endTrackPointIndex, int newLapIndex) {
+		Function<List<TrackPoint>, Function<Lap, Lap>> getSetterIndexTrackPoints = trackPoints -> newLap -> {
 			ofNullable(newLap)
 					.ifPresent(newLapParam -> ofNullable(trackPoints)
 							.ifPresent(newLapParam::setTracks));
 			return newLap;
 		};
-		Function<Integer, Lap> setCalories = calories -> {
+		Function<Integer, Function<Lap, Lap>> getSetterCalories = calories -> newLap -> {
 			ofNullable(newLap)
 					.ifPresent(newLapParam -> ofNullable(calories)
 							.ifPresent(newLapParam::setCalories));
@@ -202,39 +204,45 @@ public class LapsOperationsImpl implements LapsOperations {
 		Function<Lap, Lap> setStartTime = lapParam -> {
 			getFirstTrackPoint(lapParam)
 					.map(TrackPoint::getDate)
-					.ifPresent(lap::setStartTime);
+					.ifPresent(lapParam::setStartTime);
 			return lapParam;
 		};
-		getLapField(lap, Lap::getTracks)
-				.ifPresent(trackPoints ->
-						ofNullable(
-								IntStream
-										.range(initIndex, endIndex)
-										.mapToObj(indexEachTrackPoint ->
-												trackPoints.get(indexEachTrackPoint))
-										.collect(Collectors.toList()))
-								.map(setTrackPoints)
-								.map(this::resetValues)
-								.map(newLapParam -> ofNullable(trackPoints)
-										.map(List::size)
-										.filter(MathUtils::isPositiveNonZero)
-										.flatMap(sizeOfTrackPoints -> ofNullable(lap)
-												.map(Lap::getCalories)
-												.map(calories -> calories * sizeOfTrackPoints))
-										.flatMap(sizeOfTrackPointsCalories -> ofNullable(newLapParam)
-												.map(Lap::getTracks)
-												.map(List::size)
-												.map(sizeNewLapTrackPoints ->
-														sizeNewLapTrackPoints / sizeOfTrackPointsCalories )
-												.map(Math::round)
-												.map(Long::new)
-												.map(Long::intValue))
-										.map(setCalories)
-										.orElse(newLap)
-								)
-								.map(setStartTime)
-								.ifPresent(this::calculateSplitLapValues)
-				);
+		return ofNullable(lap)
+				.map(SerializationUtils::clone)
+				.map(newLap -> {
+					lap.setIndex(newLapIndex);
+					getLapField(lap, Lap::getTracks)
+							.ifPresent(trackPoints -> ofNullable(
+									MathUtils.sortingPositiveValues(initTrackPointIndex, endTrackPointIndex))
+									.filter(ArrayUtils::isNotEmpty)
+									.map(indexes -> IntStream.range(indexes[0], indexes[1])
+											.mapToObj(indexEachTrackPoint ->
+													trackPoints.get(indexEachTrackPoint)).collect(Collectors.toList()))
+											.map(getSetterIndexTrackPoints::apply)
+											.map(setTrackPoints -> setTrackPoints.apply(newLap))
+											.map(this::resetValues)
+											.map(newLapParam -> ofNullable(trackPoints)
+													.map(List::size)
+													.filter(MathUtils::isPositiveNonZero)
+													.flatMap(sizeOfTrackPoints -> ofNullable(lap)
+															.map(Lap::getCalories)
+															.map(calories -> calories * sizeOfTrackPoints))
+													.flatMap(sizeOfTrackPointsCalories -> ofNullable(newLapParam)
+															.map(Lap::getTracks)
+															.map(List::size)
+															.map(sizeNewLapTrackPoints ->
+																	sizeNewLapTrackPoints / sizeOfTrackPointsCalories )
+															.map(Math::round)
+															.map(Long::new)
+															.map(Long::intValue))
+													.map(getSetterCalories::apply)
+													.map(setCalories -> setCalories.apply(newLap))
+													.orElse(newLap)
+											)
+											.map(setStartTime)
+											.ifPresent(this::calculateSplitLapValues));
+					return newLap;
+				}).orElse(null);
 	}
 
 	@Override
