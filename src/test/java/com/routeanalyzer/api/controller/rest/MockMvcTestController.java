@@ -1,17 +1,12 @@
 package com.routeanalyzer.api.controller.rest;
 
-import static com.lordofthejars.nosqlunit.mongodb.MongoDbRule.MongoDbRuleBuilder.newMongoDbRule;
-import static org.hamcrest.CoreMatchers.is;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
+import com.routeanalyzer.api.model.Activity;
 import org.junit.Rule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,10 +14,14 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.routeanalyzer.api.model.Activity;
+import static com.lordofthejars.nosqlunit.mongodb.MongoDbRule.MongoDbRuleBuilder.newMongoDbRule;
+import static com.routeanalyzer.api.common.JsonUtils.toJson;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -126,12 +125,13 @@ public class MockMvcTestController {
 	 * @throws Exception
 	 */
 	protected void isThrowingExceptionHTTP(RequestBuilder requestBuilder, ResultMatcher expectedResponse,
-			String descriptionError, String exceptionError) throws Exception {
+			String descriptionError, Exception exceptionError) throws Exception {
 		String errorField = "$.error", descriptionField = "$.description", exceptionField = "$.exception";
 		mockMvc.perform(requestBuilder).andExpect(expectedResponse)
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
-				.andExpect(jsonPath(errorField, is(true))).andExpect(jsonPath(descriptionField, is(descriptionError)))
-				.andExpect(jsonPath(exceptionField, is(exceptionError)));
+				.andExpect(jsonPath(errorField, is(true)))
+				.andExpect(jsonPath(descriptionField, is(descriptionError)))
+				.andExpect(jsonPath(exceptionField, equalTo(toJson(exceptionError))));
 	}
 	
 	/**
@@ -165,8 +165,7 @@ public class MockMvcTestController {
 	protected void isReturningActivityHTTP(RequestBuilder requestBuilder, Activity activity) throws Exception {
 		mockMvc.perform(requestBuilder).andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
-				.andExpect(jsonPath("$.id", is(activity.getId())))
-				.andExpect(jsonPath("$.sourceXmlType", is(activity.getSourceXmlType())));
+				.andExpect(content().json(toJson(activity)));
 	}
 	
 	/**

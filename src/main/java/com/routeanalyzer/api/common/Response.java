@@ -10,5 +10,6 @@ public class Response {
     private Boolean error;
     private String description;
     private String errorMessage;
+    private String exception;
 
 }

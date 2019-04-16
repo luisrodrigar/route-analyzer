@@ -1,13 +1,14 @@
 package com.routeanalyzer.api.controller.rest.config;
 
+import com.routeanalyzer.api.logic.ActivityOperations;
+import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
+import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
+import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.TestPropertySource;
-
-import com.routeanalyzer.api.logic.ActivityOperations;
-import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 
 @Configuration
 @Profile("test-controller")
@@ -19,5 +20,11 @@ public class TestControllerConfiguration{
 
 	@MockBean
 	public OriginalRouteAS3Service aS3Service;
+
+	@MockBean
+	public TcxExportFileService tcxExportFileService;
+
+	@MockBean
+	public GpxExportFileService gpxExportFileService;
 	
 }
