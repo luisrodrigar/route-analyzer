@@ -1,5 +1,14 @@
 package com.routeanalyzer.api.common;
 
+import com.mongodb.Function;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.model.Lap;
+import com.routeanalyzer.api.model.Position;
+import com.routeanalyzer.api.model.TrackPoint;
+import io.vavr.control.Try;
+import lombok.experimental.UtilityClass;
+import org.springframework.core.io.Resource;
+
 import java.io.BufferedReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -8,48 +17,36 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
-
-import com.google.common.collect.Lists;
-import org.springframework.core.io.Resource;
-import com.mongodb.Function;
-import com.routeanalyzer.api.model.Activity;
-import com.routeanalyzer.api.model.Lap;
-import com.routeanalyzer.api.model.Position;
-import com.routeanalyzer.api.model.TrackPoint;
-
-import io.vavr.control.Try;
-import lombok.experimental.UtilityClass;
-
-import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 
 @UtilityClass
 public class TestUtils {
 
-	public final String FAKE_ID_GPX = "5ace8cd14c147400048aa6b0";
-	public final String FAKE_ID_TCX = "5ace8caf4c147400048aa6af";
+	public static final String ACTIVITY_GPX_ID = "5ace8cd14c147400048aa6b0";
+	public static final String ACTIVITY_TCX_ID = "5ace8caf4c147400048aa6af";
 
-	public byte[] getFileBytes(Resource resource) {
-		Function<Path, Try<byte[]>> toByteArray = (path) -> Try.of(() -> Files.readAllBytes(path));
-		return Optional.ofNullable(Try.of(() -> resource.getFile().toPath()).getOrNull()).map(toByteArray::apply)
-				.orElse(null).getOrNull();
+	public static Supplier<Activity> createUnknownActivity = () -> Activity.builder().build();
+
+	public static byte[] getFileBytes(Resource resource) {
+		Function<Path, Try<byte[]>> toByteArray = path -> Try.of(() -> Files.readAllBytes(path));
+		return Try.of(() -> resource.getFile().toPath()).flatMap(toByteArray::apply).getOrNull();
 	}
 
-	public Function<Path, BufferedReader> toBufferedReader = (path) -> Try
-			.of(() -> Files.newBufferedReader(path, StandardCharsets.UTF_8)).getOrNull();
+	public static Function<Path, BufferedReader> toBufferedReader = path -> Try.of(() ->
+			Files.newBufferedReader(path, StandardCharsets.UTF_8)).getOrNull();
 
-	public Supplier<Activity> createGPXActivity = () -> {
-		return createActivityByXmlType("gpx", FAKE_ID_GPX);
-	};
+	public static Supplier<Activity> createGPXActivity = () -> createActivityByXmlType("gpx", ACTIVITY_GPX_ID);
 
-	public LocalDateTime toLocalDateTime(long timeMillis) {
+	public static LocalDateTime toLocalDateTime(long timeMillis) {
 		return Instant.ofEpochMilli(timeMillis).atZone(ZoneId.systemDefault()).toLocalDateTime();
 	}
 
-	public Supplier<Activity> createTCXActivity = () -> {
-		Activity activity = createActivityByXmlType("tcx", FAKE_ID_TCX);
+	public static RuntimeException toRuntimeException(Exception exception) {
+		return new RuntimeException(exception);
+	}
+
+	public static Supplier<Activity> createTCXActivity = () -> {
+		Activity activity = createActivityByXmlType("tcx", ACTIVITY_TCX_ID);
 		Lap lap1 = createLap(98.6231732776618, 4.112047870706494, 103, 6.143949288527114, 16.0, 43.34577092311236, 1,
 				1519737373000L);
 		lap1.addTrack(TrackPoint.builder()
@@ -215,9 +212,7 @@ public class TestUtils {
 		return activity;
 	};
 
-	public Supplier<Activity> createUnknownActivity = () -> Activity.builder().build();
-
-	private Lap createLap(Double avgHeartRate, Double avgSpeed, Integer maxHeartRate, Double maxSpeed,
+	private static Lap createLap(Double avgHeartRate, Double avgSpeed, Integer maxHeartRate, Double maxSpeed,
 			Double totalTimeSeconds, Double distanceMeters, int index, long startTimeMilliseconds) {
 		return Lap.builder()
 				.averageHearRate(avgHeartRate)
@@ -231,7 +226,7 @@ public class TestUtils {
 				.build();
 	}
 
-	private Activity createActivityByXmlType(String xmlType, String id) {
+	private static Activity createActivityByXmlType(String xmlType, String id) {
 		return Activity.builder()
 				.device("Garmin Connect")
 				.name("Untitled")

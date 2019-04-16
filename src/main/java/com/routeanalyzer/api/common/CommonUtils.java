@@ -185,7 +185,7 @@ public class CommonUtils {
 
 	public static  ResponseEntity<String> toBadRequestParams() {
 		String description = "Activity was not found or other params are not valid.";
-		Response errorValue = new Response(true, description, null);
+		Response errorValue = new Response(true, description, null, null);
 		return badRequest().headers(toJsonHeaders()).body(JsonUtils.toJson(errorValue));
 	}
 

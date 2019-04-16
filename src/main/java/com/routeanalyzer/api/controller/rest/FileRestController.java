@@ -13,7 +13,6 @@ import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.common.Response;
 import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 import io.vavr.control.Try;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -28,9 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.xml.sax.SAXParseException;
 
-import javax.xml.bind.JAXBException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Collections;
@@ -40,18 +37,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
-import static org.springframework.http.ResponseEntity.BodyBuilder;
 import static org.springframework.http.ResponseEntity.badRequest;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 import static com.routeanalyzer.api.common.JsonUtils.toJson;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
-@RestController()
+@RestController
 @RequestMapping("/file")
-public class FileRestController {
-
-	private final Logger log = LoggerFactory.getLogger(FileRestController.class);
+@CrossOrigin(origins = "*", maxAge = 3600)
+public class FileRestController extends RestControllerBase {
 	
 	@Autowired
 	private ActivityMongoRepository mongoRepository;
@@ -61,6 +55,10 @@ public class FileRestController {
 	private TcxUploadFileService tcxService;
 	@Autowired
 	private GpxUploadFileService gpxService;
+
+	public FileRestController() {
+		super(LoggerFactory.getLogger(FileRestController.class));
+	}
 
 	/**
 	 * Upload xml file: tcx or gpx to activity object. It allows to process the
@@ -94,9 +92,9 @@ public class FileRestController {
 			log.error(amazonClientException.getClass().getSimpleName() + " error: " + amazonClientException.getMessage());
 			Response errorException = new Response(true,
 					"Problem with the type of the file which you want to upload",
-					amazonClientException.getMessage());
+					amazonClientException.getMessage(), toJson(amazonClientException));
 			return status(HttpStatus.INTERNAL_SERVER_ERROR).body(toJson(errorException));
-		}).recover(RuntimeException.class, handleExceptions)
+		}).recover(RuntimeException.class, handleControllerExceptions)
 		.get();
 	}
 
@@ -182,41 +180,4 @@ public class FileRestController {
 		return bufReader.lines().collect(Collectors.joining("\n"));
 	}
 
-    private Function<RuntimeException, ResponseEntity<String>> handleExceptions = error -> {
-        String logMessage = null;
-        String description = null;
-        String errorMessage = null;
-        BodyBuilder bodyBuilder = null;
-        HttpHeaders responseHeaders = new HttpHeaders();
-        if (SAXParseException.class.isInstance(error)) {
-            SAXParseException exception = SAXParseException.class.cast(error);
-            logMessage = "SAXParseException error: " + error.getMessage();
-            description = "Problem trying to parser xml file. Check if its correct.";
-            errorMessage = exception.getMessage();
-            bodyBuilder = badRequest();
-        } else if (JAXBException.class.isInstance(error)) {
-            JAXBException exception = JAXBException.class.cast(error);
-            logMessage = "JAXBException error: " + error.getMessage();
-            description = "Problem with the file format uploaded.";
-            errorMessage = exception.getMessage();
-            bodyBuilder = status(HttpStatus.INTERNAL_SERVER_ERROR);
-        } else if(AmazonClientException.class.isInstance(error)){
-            AmazonClientException exception = AmazonClientException.class.cast(error);
-            logMessage = "AmazonClientException error: " + error.getMessage();
-            description = "Problem trying to delete/get the activity/file :: Amazon S3 Problem";
-            errorMessage = exception.getMessage();
-            responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
-            bodyBuilder = status(HttpStatus.INTERNAL_SERVER_ERROR);
-        } else if(IOException.class.isInstance(error)) {
-            IOException exception = IOException.class.cast(error);
-            logMessage = "IOException error: " + error.getMessage();
-            description = "Problem trying to get the file :: Input/Output Problem";
-            errorMessage = exception.getMessage();
-            responseHeaders.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
-            bodyBuilder = status(HttpStatus.INTERNAL_SERVER_ERROR).headers(responseHeaders);
-        }
-        log.error(logMessage);
-        Response errorBody = new Response(true, description, errorMessage);
-        return bodyBuilder.body(toJson(errorBody));
-	};
 }
