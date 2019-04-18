@@ -159,7 +159,8 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLap(activity, timeMillisLap21, 1);
+		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
+				Lists.newArrayList(1));
 		// Then
 		assertThat(result).isNotNull();
 		assertThat(result).isEqualTo(activity);
@@ -180,7 +181,7 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLap(activity, null, 0);
+		Activity result = activityOperations.removeLaps(activity, null, Lists.newArrayList(0));
 		// Then
 		assertThat(result).isNotNull();
 		assertThat(result).isEqualTo(activity);
@@ -199,7 +200,7 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLap(activity, timeMillisLap21, 1);
+		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21), Lists.newArrayList(1));
 		// Then
 		assertThat(result).isNotNull();
 		assertThat(result.getLaps()).isEmpty();
@@ -220,7 +221,8 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLap(activity, timeMillisLap21, 120);
+		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
+				Lists.newArrayList(120));
 		// Then
 		assertThat(result).isNotNull();
 		assertThat(result.getLaps()).isNotEmpty();
@@ -242,7 +244,8 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLap(activity, timeMillisLap21, -1);
+		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
+				Lists.newArrayList(-1));
 		// Then
 		assertThat(result).isNotNull();
 		assertThat(result.getLaps()).isNotEmpty();
@@ -264,7 +267,7 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLap(activity, null, -1);
+		Activity result = activityOperations.removeLaps(activity, null, Lists.newArrayList(-1));
 		// Then
 		assertThat(result).isNotNull();
 		assertThat(result.getLaps()).isNotEmpty();
@@ -286,7 +289,7 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLap(activity, timeMillisLap11, null);
+		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap11), null);
 		// Then
 		assertThat(result).isNotNull();
 		assertThat(result.getLaps()).isNotEmpty();
@@ -298,7 +301,7 @@ public class ActivityOperationsImplTest {
 		// Given
 		activity = null;
 		// When
-		Activity result = activityOperations.removeLap(activity, timeMillisLap11, null);
+		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap11), null);
 		// Then
 		assertThat(result).isNull();
 	}

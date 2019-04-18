@@ -1,0 +1,33 @@
+{
+  "id": "5ace8caf4c147400048aa6af",
+  "device": "Garmin Connect",
+  "name": "Untitled",
+  "sourceXmlType": "tcx",
+  "date": "2011-07-25T11:33:52+02:00",
+  "laps": [
+    {
+      "startTime": "2018-02-27T14:16:40+01:00",
+      "index":  "2",
+      "totalTimeSeconds": "1.0",
+      "distanceMeters": "0.0",
+      "maximumSpeed": "6.717731656189975",
+      "averageSpeed": "6.717731656189975",
+      "averageHearRate": "120.0",
+      "maximumHeartRate":  "120",
+      "tracks": [
+        {
+          "date": "2018-02-27T14:17:30+01:00",
+          "index":  "1",
+          "position": {
+            "latitudeDegrees": "42.6132120",
+            "longitudeDegrees": "-6.5738250"
+          },
+          "altitudeMeters": "557.3",
+          "distanceMeters": "106.8994958749806443165653035975992679595947265625",
+          "speed": "6.71773165618997580850191297940909862518310546875",
+          "heartRateBpm":  "120"
+        }
+      ]
+    }
+  ]
+}

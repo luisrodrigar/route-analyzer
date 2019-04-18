@@ -29,7 +29,7 @@
 				},
 				{
 					"date": "2018-02-27T14:16:18+01:00",
-					"index":  "3",
+					"index":  "2",
 					"position": {
 						"latitudeDegrees": "42.6132170",
 						"longitudeDegrees": "-6.5733730"
@@ -41,7 +41,7 @@
 				},
 				{
 					"date": "2018-02-27T14:16:20+01:00",
-					"index":  "4",
+					"index":  "3",
 					"position": {
 						"latitudeDegrees": "42.6132120",
 						"longitudeDegrees": "-6.5734430"
@@ -50,132 +50,12 @@
 					"distanceMeters": "18.734670396302984585190642974339425563812255859375",
 					"speed": "2.8811720464786834128290138323791325092315673828125",
 					"heartRateBpm":  "96"
-				},
-				{
-					"date": "2018-02-27T14:16:23+01:00",
-					"index":  "5",
-					"position": {
-						"latitudeDegrees": "42.6132120",
-						"longitudeDegrees": "-6.5735170"
-					},
-					"altitudeMeters": "557.3",
-					"distanceMeters": "24.797219675559592388935925555415451526641845703125",
-					"speed": "2.02084975975220260124842752702534198760986328125",
-					"heartRateBpm":  "96"
-				},
-				{
-					"date": "2018-02-27T14:16:24+01:00",
-					"index":  "6",
-					"position": {
-						"latitudeDegrees": "42.6132120",
-						"longitudeDegrees": "-6.5735920"
-					},
-					"altitudeMeters": "557.3",
-					"distanceMeters": "30.94116896408670669416096643544733524322509765625",
-					"speed": "6.143949288527114305225040880031883716583251953125",
-					"heartRateBpm":  "96"
-				},
-				{
-					"date": "2018-02-27T14:16:26+01:00",
-					"index":  "7",
-					"position": {
-						"latitudeDegrees": "42.6132120",
-						"longitudeDegrees": "-6.5736650"
-					},
-					"altitudeMeters": "557.3",
-					"distanceMeters": "36.92196552280743304663701565004885196685791015625",
-					"speed": "2.9903982793603649525948640075512230396270751953125",
-					"heartRateBpm":  "99"
-				},
-				{
-					"date": "2018-02-27T14:16:29+01:00",
-					"index":  "8",
-					"position": {
-						"latitudeDegrees": "42.6132120",
-						"longitudeDegrees": "-6.5737430"
-					},
-					"altitudeMeters": "557.3",
-					"distanceMeters": "43.31308175389903425411830539815127849578857421875",
-					"speed": "2.130372077030533883856833199388347566127777099609375",
-					"heartRateBpm":  "103"
-				}
-			]
-		},
-		{
-			"startTime": "2018-02-27T14:16:30+01:00",
-			"index":  "2",
-			"totalTimeSeconds": "8.0",
-			"distanceMeters": "28.934607828341",
-			"maximumSpeed": "7.053560612105727",
-			"averageSpeed": "4.112047870706494",
-			"averageHearRate": "112.2",
-			"maximumHeartRate":  "116",
-			"tracks": [
-				{
-					"date": "2018-02-27T14:16:30+01:00",
-					"index":  "1",
-					"position": {
-						"latitudeDegrees": "42.6132120",
-						"longitudeDegrees": "-6.5738250"
-					},
-					"altitudeMeters": "557.3",
-					"distanceMeters": "50.0308134100890100626202183775603771209716796875",
-					"speed": "6.71773165618997580850191297940909862518310546875",
-					"heartRateBpm":  "106"
-				},
-				{
-					"date": "2018-02-27T14:16:33+01:00",
-					"index":  "2",
-					"position": {
-						"latitudeDegrees": "42.6132120",
-						"longitudeDegrees": "-6.5739120"
-					},
-					"altitudeMeters": "557.3",
-					"distanceMeters": "57.1588956258753597694521886296570301055908203125",
-					"speed": "2.376027405262116420914253467344678938388824462890625",
-					"heartRateBpm":  "109"
-				},
-				{
-					"date": "2018-02-27T14:16:35+01:00",
-					"index":  "3",
-					"position": {
-						"latitudeDegrees": "42.6132170",
-						"longitudeDegrees": "-6.5739970"
-					},
-					"altitudeMeters": "557.3",
-					"distanceMeters": "64.1455475473528196062034112401306629180908203125",
-					"speed": "3.49332596073872991837561130523681640625",
-					"heartRateBpm":  "115"
-				},
-				{
-					"date": "2018-02-27T14:16:36+01:00",
-					"index":  "4",
-					"position": {
-						"latitudeDegrees": "42.6132200",
-						"longitudeDegrees": "-6.5740830"
-					},
-					"altitudeMeters": "557.3",
-					"distanceMeters": "71.199108159458546651876531541347503662109375",
-					"speed": "7.0535606121057270456731203012168407440185546875",
-					"heartRateBpm":  "115"
-				},
-				{
-					"date": "2018-02-27T14:16:38+01:00",
-					"index":  "5",
-					"position": {
-						"latitudeDegrees": "42.6132350",
-						"longitudeDegrees": "-6.5741700"
-					},
-					"altitudeMeters": "557.3",
-					"distanceMeters": "78.519740751347598006759653799235820770263671875",
-					"speed": "3.6603162959445256774415611289441585540771484375",
-					"heartRateBpm":  "116"
 				}
 			]
 		},
 		{
 			"startTime": "2018-02-27T14:16:40+01:00",
-			"index":  "3",
+			"index":  "2",
 			"totalTimeSeconds": "1.0",
 			"distanceMeters": "0.0",
 			"maximumSpeed": "6.717731656189975",
