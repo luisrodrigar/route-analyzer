@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 @Service
@@ -195,22 +196,35 @@ public class LapsOperationsImpl implements LapsOperations {
 							.ifPresent(newLapParam::setTracks));
 			return newLap;
 		};
-		Function<Integer, Function<Lap, Lap>> getSetterCalories = calories -> newLap -> {
-			ofNullable(newLap)
-					.ifPresent(newLapParam -> ofNullable(calories)
-							.ifPresent(newLapParam::setCalories));
-			return newLap;
-		};
 		Function<Lap, Lap> setStartTime = lapParam -> {
 			getFirstTrackPoint(lapParam)
 					.map(TrackPoint::getDate)
 					.ifPresent(lapParam::setStartTime);
 			return lapParam;
 		};
+		Function<List<TrackPoint>, Function<Lap, Lap>> getCalculatorCalories = trackPoints -> newLap ->
+				ofNullable(trackPoints)
+				.map(List::size)
+				.filter(MathUtils::isPositiveNonZero)
+				.flatMap(sizeOfTrackPoints -> ofNullable(lap)
+						.map(Lap::getCalories)
+						.map(calories -> calories * sizeOfTrackPoints))
+				.flatMap(sizeOfTrackPointsCalories -> ofNullable(newLap)
+						.map(Lap::getTracks)
+						.map(List::size)
+						.map(sizeNewLapTrackPoints -> sizeNewLapTrackPoints / sizeOfTrackPointsCalories )
+						.map(Math::round)
+						.map(Long::new)
+						.map(Long::intValue))
+				.map(calories -> {
+					newLap.setCalories(calories);
+					return newLap;
+				})
+				.orElse(null);
 		return ofNullable(lap)
 				.map(SerializationUtils::clone)
 				.map(newLap -> {
-					lap.setIndex(newLapIndex);
+					newLap.setIndex(newLapIndex);
 					getLapField(lap, Lap::getTracks)
 							.ifPresent(trackPoints -> ofNullable(
 									MathUtils.sortingPositiveValues(initTrackPointIndex, endTrackPointIndex))
@@ -218,29 +232,15 @@ public class LapsOperationsImpl implements LapsOperations {
 									.map(indexes -> IntStream.range(indexes[0], indexes[1])
 											.mapToObj(indexEachTrackPoint ->
 													trackPoints.get(indexEachTrackPoint)).collect(Collectors.toList()))
-											.map(getSetterIndexTrackPoints::apply)
-											.map(setTrackPoints -> setTrackPoints.apply(newLap))
-											.map(this::resetValues)
-											.map(newLapParam -> ofNullable(trackPoints)
-													.map(List::size)
-													.filter(MathUtils::isPositiveNonZero)
-													.flatMap(sizeOfTrackPoints -> ofNullable(lap)
-															.map(Lap::getCalories)
-															.map(calories -> calories * sizeOfTrackPoints))
-													.flatMap(sizeOfTrackPointsCalories -> ofNullable(newLapParam)
-															.map(Lap::getTracks)
-															.map(List::size)
-															.map(sizeNewLapTrackPoints ->
-																	sizeNewLapTrackPoints / sizeOfTrackPointsCalories )
-															.map(Math::round)
-															.map(Long::new)
-															.map(Long::intValue))
-													.map(getSetterCalories::apply)
-													.map(setCalories -> setCalories.apply(newLap))
-													.orElse(newLap)
-											)
-											.map(setStartTime)
-											.ifPresent(this::calculateSplitLapValues));
+									.map(getSetterIndexTrackPoints::apply)
+									.map(setTrackPoints -> setTrackPoints.apply(newLap))
+									.map(this::resetValues)
+									.map(newLapParam -> ofNullable(trackPoints)
+													.map(getCalculatorCalories::apply)
+													.map(calculateCalories -> calculateCalories.apply(newLap))
+													.orElse(newLap))
+									.map(setStartTime)
+									.ifPresent(this::calculateSplitLapValues));
 					return newLap;
 				}).orElse(null);
 	}
@@ -367,11 +367,11 @@ public class LapsOperationsImpl implements LapsOperations {
 		getLastTrackPoint(lap)
 				.map(TrackPoint::getDate)
 				.flatMap(timeMillisLastTrack -> getFirstTrackPoint(lap)
-								.map(TrackPoint::getDate)
-								.map(timeMillisFirstTrack -> Duration.between(timeMillisFirstTrack, timeMillisLastTrack))
-								.map(Duration::getNano)
-								.map(nanoseconds -> ((double) nanoseconds)/ 1E9)
-				)
+						.map(TrackPoint::getDate)
+						.map(timeMillisFirstTrack -> Duration.between(timeMillisFirstTrack, timeMillisLastTrack))
+						.map(Duration::toNanos)
+						.map(Double::valueOf)
+						.map(nanoseconds -> nanoseconds / 1E9))
 				.ifPresent(totalTimeSeconds -> ofNullable(totalTimeSeconds)
 						.ifPresent(lap::setTotalTimeSeconds));
 	}

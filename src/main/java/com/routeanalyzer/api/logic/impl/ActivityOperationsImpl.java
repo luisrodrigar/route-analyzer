@@ -11,6 +11,7 @@ import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.CommonUtils.toValueOrNull;
@@ -166,31 +168,30 @@ public class ActivityOperationsImpl implements ActivityOperations {
 												)
 										)
 								)
-				).orElse(activity);
+				).orElse(null);
 	}
 
 	@Override
-	public Activity removeLap(Activity act, Long startTime, Integer indexLap) {
-		Predicate<Object> isEqualIndex = ofNullable(indexLap)
-				.map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysFalse());
-		Predicate<Object> isEqualTimeMillis = ofNullable(startTime)
-				.map(Predicate::isEqual).orElseGet(() -> Predicates.alwaysTrue());
+	public Activity removeLaps(Activity act, List<Long> startTimeList, List<Integer> indexLapList) {
+		Predicate<Object> isIndexIncluded = indexLap -> ofNullable(indexLapList.stream()
+				.anyMatch(indexLapEle -> indexLapEle.equals(indexLap)))
+				.orElse(false);
+		Predicate<Long> isTimeMillisIncluded = timeMillis -> ofNullable(startTimeList.stream()
+				.anyMatch(timeMillisEle -> timeMillisEle.equals(timeMillis)))
+				.orElse(true);
 		ofNullable(act)
 				.map(Activity::getLaps)
-				.ifPresent(laps -> ofNullable(laps)
-						.map(lapsStream -> lapsStream.stream()
-								.filter(lapParam -> ofNullable(lapParam)
-										.map(Lap::getIndex)
-										.filter(isEqualIndex)
-										.isPresent())
-								.filter(lapParam -> ofNullable(lapParam)
-										.map(Lap::getStartTime)
-										.flatMap(DateUtils::toTimeMillis)
-										.filter(isEqualTimeMillis)
-										.isPresent())
-								.findFirst()
-								.orElse(null))
-						.ifPresent(laps::remove));
+				.ifPresent(laps -> laps.stream()
+						.filter(lapParam -> ofNullable(lapParam)
+								.map(Lap::getIndex)
+								.filter(isIndexIncluded)
+								.isPresent())
+						.filter(lapParam -> ofNullable(lapParam)
+								.map(Lap::getStartTime)
+								.flatMap(DateUtils::toTimeMillis)
+								.filter(isTimeMillisIncluded)
+								.isPresent())
+						.forEach(laps::remove));
 		return act;
 	}
 
@@ -262,8 +263,10 @@ public class ActivityOperationsImpl implements ActivityOperations {
 
 	private Optional<Integer[]> getResultIndexLaps(String index1, String index2) {
 		return ofNullable(index1)
+				.filter(StringUtils::isNumeric)
 				.map(Integer::parseInt)
 				.flatMap(indexLeftParam -> ofNullable(index2)
+						.filter(StringUtils::isNumeric)
 						.map(Integer::parseInt)
 						.map((indexRightParam) -> MathUtils.sortingPositiveValues(indexLeftParam, indexRightParam)));
 	}

@@ -3,6 +3,8 @@ package com.routeanalyzer.api.logic;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Position;
 
+import java.util.List;
+
 public interface ActivityOperations {
 
 	/**
@@ -59,7 +61,7 @@ public interface ActivityOperations {
 	 * @param indexLap
 	 * @return
 	 */
-	Activity removeLap(Activity act, Long startTime, Integer indexLap);
+	Activity removeLaps(Activity act, List<Long> startTime, List<Integer> indexLap);
 
 	/**
 	 * Calculate total distance and speed of an activity.

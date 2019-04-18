@@ -1,5 +1,6 @@
 package com.routeanalyzer.api.controller.rest;
 
+import static com.routeanalyzer.api.common.TestUtils.toActivity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -81,10 +82,16 @@ public class FileRestControllerTest extends MockMvcTestController {
 	@Value("classpath:controller/oviedo.tcx.xml")
 	private Resource tcxXmlResource;
 
+
+	@Value("classpath:utils/json-activity-tcx.json")
+	private static Resource tcxJsonResource;
+	@Value("classpath:utils/json-activity-gpx.json")
+	private static Resource gpxJsonResource;
+
 	@Before
 	public void setUp() throws AmazonClientException, SAXParseException, IOException, JAXBException {
-		gpxActivity = TestUtils.createGPXActivity.get();
-		tcxActivity = TestUtils.createTCXActivity.get();
+		gpxActivity = toActivity(gpxJsonResource).get();
+		tcxActivity = toActivity(tcxJsonResource).get();
 		unknownXml = TestUtils.createUnknownActivity.get();
 
 		loadMultiPartFiles();

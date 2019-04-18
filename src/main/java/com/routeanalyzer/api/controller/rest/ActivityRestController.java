@@ -1,20 +1,12 @@
 package com.routeanalyzer.api.controller.rest;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import com.routeanalyzer.api.common.CommonUtils;
-import com.routeanalyzer.api.common.JsonUtils;
+import com.routeanalyzer.api.common.Response;
+import com.routeanalyzer.api.database.ActivityMongoRepository;
+import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
 import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
-import com.routeanalyzer.api.common.Response;
+import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import io.vavr.control.Try;
 import org.apache.commons.lang3.StringUtils;
@@ -30,20 +22,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.routeanalyzer.api.database.ActivityMongoRepository;
-import com.routeanalyzer.api.logic.ActivityOperations;
-import com.routeanalyzer.api.model.Activity;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import static com.routeanalyzer.api.common.CommonUtils.toJsonHeaders;
-import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.COMMA_DELIMITER;
-import static org.springframework.http.ResponseEntity.ok;
-import static org.springframework.http.ResponseEntity.badRequest;
-import static org.springframework.http.ResponseEntity.notFound;
-import static org.springframework.http.ResponseEntity.status;
-import static java.util.Optional.ofNullable;
+import static com.routeanalyzer.api.common.CommonUtils.getFileExportResponse;
 import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.COLOR_DELIMITER;
+import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.COMMA_DELIMITER;
 import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.LAP_DELIMITER;
 import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.STARTED_HEX_CHAR;
+import static java.util.Optional.ofNullable;
+import static org.springframework.http.ResponseEntity.notFound;
 
 @RestController
 @RequestMapping("activity")
@@ -66,8 +61,7 @@ public class ActivityRestController extends RestControllerBase {
 	@GetMapping(value = "/{id}", produces = "application/json;")
 	public @ResponseBody ResponseEntity<String> getActivityById(@PathVariable String id) {
 		return getOptionalActivityById(id)
-				.map(JsonUtils::toJson)
-				.map(ok().headers(CommonUtils.toJsonHeaders())::body)
+				.map(CommonUtils::toOKMessageResponse)
 				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
@@ -93,8 +87,7 @@ public class ActivityRestController extends RestControllerBase {
 								.map(longitude -> activityOperationsService
 										.removePoint(activity, latitude, longitude, timeInMillis, index))
 								.map(mongoRepository::save)
-								.map(JsonUtils::toJson)
-								.map(ok().headers(CommonUtils.toJsonHeaders())::body)))
+								.map(CommonUtils::toOKMessageResponse)))
 				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
@@ -106,8 +99,7 @@ public class ActivityRestController extends RestControllerBase {
 				.flatMap(mongoRepository::findById)
 				.map(activity -> activityOperationsService.joinLaps(activity, indexLeft, indexRight))
 				.map(mongoRepository::save)
-				.map(JsonUtils::toJson)
-				.map(badRequest().headers(CommonUtils.toJsonHeaders())::body)
+				.map(CommonUtils::toOKMessageResponse)
 				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
@@ -117,8 +109,7 @@ public class ActivityRestController extends RestControllerBase {
 		return getOptionalActivityById(id)
 				.map(activity -> activityOperationsService.splitLap(activity, lat, lng, timeInMillis, index))
 				.map(mongoRepository::save)
-				.map(JsonUtils::toJson)
-				.map(ok().headers(toJsonHeaders())::body)
+				.map(CommonUtils::toOKMessageResponse)
 				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
@@ -130,40 +121,18 @@ public class ActivityRestController extends RestControllerBase {
 	    return getOptionalActivityById(id)
 				.flatMap(activity -> ofNullable(indexLaps)
 						.map(splitStringByComma)
-						.flatMap(index -> ofNullable(startTimeLaps)
+						.map(indexStrings -> this.toListType(indexStrings, Integer::parseInt))
+						.map(index -> ofNullable(startTimeLaps)
 								.map(splitStringByComma)
-								.map(this::toListDates)
-								.flatMap(datesList -> ofNullable(index)
-										.map(List::size)
-										.map(maxSizeIndex -> IntStream.range(0, maxSizeIndex))
-										.map(intStream -> intStream.mapToObj(Integer::new))
-										.map(indexes -> indexes.map(indexParam ->
-												ofNullable(indexParam)
-														.map(index::get)
-														.map(Integer::parseInt)
-														.map(indexLap -> ofNullable(datesList)
-																.filter(List::isEmpty)
-																.map(datesListParam -> activityOperationsService
-																		.removeLap(activity, null, indexLap))
-																.orElseGet(() -> activityOperationsService
-																		.removeLap(activity, datesList.get(indexParam), indexLap)))
-														.orElseGet(null))
-												.collect(Collectors.toList())))
-										.map(mongoRepository::saveAll)))
-				.map(JsonUtils::toJson)
+								.map(indexStrings -> this.toListType(indexStrings, Long::new))
+								.map(datesList -> activityOperationsService
+										.removeLaps(activity, datesList, index))
+								.orElseGet(() -> activityOperationsService
+										.removeLaps(activity, null, index)))
+						.map(mongoRepository::save))
 				.map(CommonUtils::toOKMessageResponse)
 				.orElseGet(() -> CommonUtils.toBadRequestParams());
 	}
-
-	private List<Long> toListDates(List<String> dates) {
-	    return ofNullable(dates)
-                .map(List::size)
-                .map(maxSizeDates -> IntStream.range(0, maxSizeDates))
-                .map(intStream -> intStream.mapToObj(Integer::new))
-                .map(indexes -> indexes.map(dates::get)
-                        .map(Long::parseLong).collect(Collectors.toList()))
-                .orElseGet(Collections::emptyList);
-    }
 
 	@PutMapping(value = "/{id}/color/laps")
 	public @ResponseBody ResponseEntity<String> setColorLap(@PathVariable String id, @RequestParam String data) {
@@ -183,10 +152,19 @@ public class ActivityRestController extends RestControllerBase {
                                 .map(lapStream -> lapStream.collect(Collectors.toList())))
                         .map(laps -> activity))
                 .map(mongoRepository::save)
-                .map(activity -> okSupplier)
-                .map(Supplier::get)
+                .map(activity -> okSupplier.get())
                 .map(CommonUtils::toOKMessageResponse)
                 .orElseGet(() -> CommonUtils.toBadRequestResponse(badRequestSupplier.get()));
+	}
+
+	private <T> List<T> toListType(List<String> listStrings, Function<String, T> convertTo) {
+		return ofNullable(listStrings)
+				.map(List::size)
+				.map(maxSizeDates -> IntStream.range(0, maxSizeDates))
+				.map(intStream -> intStream.mapToObj(Integer::new))
+				.map(indexes -> indexes.map(listStrings::get)
+						.map(convertTo).collect(Collectors.toList()))
+				.orElseGet(Collections::emptyList);
 	}
 
     private List<String> toLapList(String lapsStr) {
@@ -236,12 +214,12 @@ public class ActivityRestController extends RestControllerBase {
 		switch (typeLowercase) {
 			case sourceTcx:
 				return Try.of(() -> tcxExportService.export(activity))
-						.map(file -> CommonUtils.getFileExportResponse(file, activity.getId(), sourceTcx))
+						.map(file -> getFileExportResponse(file, activity.getId(), sourceTcx))
 						.recover(RuntimeException.class, handleControllerExceptions)
 						.getOrElse(notFound().build());
 			case sourceGpx:
 				return Try.of(() -> gpxExportService.export(activity))
-						.map(file -> CommonUtils.getFileExportResponse(file, activity.getId(), sourceGpx))
+						.map(file -> getFileExportResponse(file, activity.getId(), sourceGpx))
 						.recover(RuntimeException.class, handleControllerExceptions)
 						.getOrElse(notFound().build());
 			default:

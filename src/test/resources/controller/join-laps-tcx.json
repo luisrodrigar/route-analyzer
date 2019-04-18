@@ -1,0 +1,69 @@
+{
+  "id": "5ace8caf4c147400048aa6af",
+  "device": "Garmin Connect",
+  "name": "Untitled",
+  "sourceXmlType": "tcx",
+  "date": "2011-07-25T11:33:52+02:00",
+  "laps": [
+    {
+      "startTime": "2018-02-27T14:16:13+01:00",
+      "index": "1",
+      "totalTimeSeconds": "16.0",
+      "distanceMeters": "43.313081753899034",
+      "maximumSpeed": "6.143949288527114",
+      "averageSpeed": "2.6801723874025747",
+      "averageHearRate": "97.42857142857143",
+      "maximumHeartRate":  "103",
+      "tracks": [
+        {
+          "date": "2018-02-27T14:16:13+01:00",
+          "index":  "1",
+          "position": {
+            "latitudeDegrees": "42.6131970",
+            "longitudeDegrees": "-6.5732170"
+          },
+          "altitudeMeters": "557.3",
+          "distanceMeters": "0",
+          "speed": "0",
+          "heartRateBpm":  "96"
+        },
+        {
+          "date": "2018-02-27T14:16:18+01:00",
+          "index":  "2",
+          "position": {
+            "latitudeDegrees": "42.6132170",
+            "longitudeDegrees": "-6.5733730"
+          },
+          "altitudeMeters": "557.3",
+          "distanceMeters": "12.9723263033456159831757759093306958675384521484375",
+          "speed": "2.5944652606691231966351551818661391735076904296875",
+          "heartRateBpm":  "96"
+        },
+        {
+          "date": "2018-02-27T14:16:20+01:00",
+          "index":  "3",
+          "position": {
+            "latitudeDegrees": "42.6132120",
+            "longitudeDegrees": "-6.5734430"
+          },
+          "altitudeMeters": "557.3",
+          "distanceMeters": "18.734670396302984585190642974339425563812255859375",
+          "speed": "2.8811720464786834128290138323791325092315673828125",
+          "heartRateBpm":  "96"
+        },
+        {
+          "date": "2018-02-27T14:17:30+01:00",
+          "index":  "4",
+          "position": {
+            "latitudeDegrees": "42.6132120",
+            "longitudeDegrees": "-6.5738250"
+          },
+          "altitudeMeters": "557.3",
+          "distanceMeters": "106.8994958749806443165653035975992679595947265625",
+          "speed": "6.71773165618997580850191297940909862518310546875",
+          "heartRateBpm":  "120"
+        }
+      ]
+    }
+  ]
+}
