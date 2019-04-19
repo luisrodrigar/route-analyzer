@@ -27,12 +27,9 @@ public abstract class UploadFileService<T> {
      * Upload a specific xml file with the date of a sport activity
      * @param multiPartFile object with the data
      * @return A list with the data of every activity in the xml file.
-     * @throws IOException
-     * @throws AmazonClientException
-     * @throws JAXBException
-     * @throws SAXParseException
+     * @throws RuntimeException encapsulates: IOException, JAXBException
      */
-    public List<Activity> upload(MultipartFile multiPartFile) throws AmazonClientException {
+    public List<Activity> upload(MultipartFile multiPartFile) {
         return ofNullable(multiPartFile)
                 .map(unchecked(MultipartFile::getInputStream))
                 .map(unchecked(xmlService::readXML))

@@ -43,8 +43,7 @@ import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
-import static com.routeanalyzer.api.common.DateUtils.toLocalDateTime;
-import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
+import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
@@ -53,8 +52,6 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
 
     private ActivityOperations activityOperations;
     private LapsOperations lapsOperations;
-
-    public static final String SOURCE_XML_TYPE = "tcx";
 
     @Autowired
     public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperations,
@@ -91,7 +88,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
             AtomicInteger indexLap = new AtomicInteger();
             AtomicInteger indexTrackPoint = new AtomicInteger();
             Activity activity = new Activity();
-            activity.setSourceXmlType(SOURCE_XML_TYPE);
+            activity.setSourceXmlType(SOURCE_TCX_XML);
             of(eachActivity)
                     .map(ActivityT::getCreator)
                     .map(AbstractSourceT::getName)
@@ -179,7 +176,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
             Activity activity = new Activity();
             AtomicInteger indexLap = new AtomicInteger();
             AtomicInteger indexTrackPoint = new AtomicInteger();
-            activity.setSourceXmlType(SOURCE_XML_TYPE);
+            activity.setSourceXmlType(SOURCE_TCX_XML);
             of(course)
                     .map(CourseT::getName)
                     .ifPresent(activity::setName);

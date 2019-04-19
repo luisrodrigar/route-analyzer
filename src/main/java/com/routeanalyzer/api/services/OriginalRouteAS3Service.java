@@ -8,9 +8,7 @@ import com.amazonaws.AmazonServiceException;
 
 public interface OriginalRouteAS3Service {
 
-	public void uploadFile(byte[] byteArray, String fileName)
-			throws AmazonClientException;
-	public BufferedReader getFile(String fileName)
-			throws AmazonServiceException, AmazonClientException, IOException;
+	void uploadFile(byte[] byteArray, String fileName) throws AmazonClientException;
+	BufferedReader getFile(String fileName) throws AmazonClientException;
 
 }

@@ -391,10 +391,7 @@ public class ActivityOperationsImplTest {
 		Activity result = activityOperations.joinLaps(activity, indexLeft, indexRight);
 		// Then
 		verify(lapsOperations, times(0)).joinLaps(any(), any());
-		assertThat(result).isNotNull();
-		assertThat(result.getLaps()).isNotNull();
-		assertThat(result.getLaps().size()).isEqualTo(4);
-		assertThat(result).isEqualTo(activity);
+		assertThat(result).isNull();
 	}
 
 	@Test

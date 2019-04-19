@@ -173,11 +173,13 @@ public class ActivityOperationsImpl implements ActivityOperations {
 
 	@Override
 	public Activity removeLaps(Activity act, List<Long> startTimeList, List<Integer> indexLapList) {
-		Predicate<Object> isIndexIncluded = indexLap -> ofNullable(indexLapList.stream()
-				.anyMatch(indexLapEle -> indexLapEle.equals(indexLap)))
+		Predicate<Object> isIndexIncluded = indexLap -> ofNullable(indexLapList)
+				.map(indexLapListParam -> indexLapListParam.stream()
+						.anyMatch(indexLapEle -> indexLapEle.equals(indexLap)))
 				.orElse(false);
-		Predicate<Long> isTimeMillisIncluded = timeMillis -> ofNullable(startTimeList.stream()
-				.anyMatch(timeMillisEle -> timeMillisEle.equals(timeMillis)))
+		Predicate<Long> isTimeMillisIncluded = timeMillis -> ofNullable(startTimeList)
+				.map(startTimeListParam -> startTimeListParam.stream()
+						.anyMatch(timeMillisEle -> timeMillisEle.equals(timeMillis)))
 				.orElse(true);
 		ofNullable(act)
 				.map(Activity::getLaps)
@@ -191,6 +193,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 								.flatMap(DateUtils::toTimeMillis)
 								.filter(isTimeMillisIncluded)
 								.isPresent())
+						.collect(Collectors.toList())
 						.forEach(laps::remove));
 		return act;
 	}
