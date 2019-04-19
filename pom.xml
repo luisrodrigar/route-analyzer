@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<name>Route Analyzer API Service</name>
-	<groupId>com.routeanalizer</groupId>
+	<groupId>com.routeanalyzer</groupId>
 	<artifactId>api</artifactId>
 	<version>0.0.1</version>
 
