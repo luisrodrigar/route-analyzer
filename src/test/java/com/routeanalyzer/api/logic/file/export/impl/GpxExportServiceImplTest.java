@@ -17,6 +17,7 @@ import javax.xml.bind.JAXBException;
 import java.nio.charset.StandardCharsets;
 
 import static com.routeanalyzer.api.common.JsonUtils.fromJson;
+import static com.routeanalyzer.api.common.TestUtils.toRuntimeException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -30,7 +31,7 @@ public class GpxExportServiceImplTest {
     @InjectMocks
     private GpxExportFileService gpxExportService;
 
-    @Value("classpath:utils/json-activity-gpx.json")
+    @Value("classpath:utils/upload-file-gpx-test.json")
     private Resource activityGpxResource;
     @Value("classpath:utils/gpx-test.xml")
     private Resource gpxXmlResource;
@@ -47,9 +48,11 @@ public class GpxExportServiceImplTest {
 
     @Test
     public void export() {
+        // Given
         // When
-        Try.of(() -> gpxExportService.export(activityGpxTest))
-                .onSuccess(gpxExportedFile -> assertThat(gpxExportedFile).isEqualTo(gpxXmlString))
+        Try result = Try.of(() -> gpxExportService.export(activityGpxTest));
+        // Then
+        result.onSuccess(gpxExportedFile -> assertThat(gpxExportedFile).isEqualTo(gpxXmlString))
                 .onFailure(error -> assertThat(true).isFalse());
     }
 
@@ -62,17 +65,18 @@ public class GpxExportServiceImplTest {
     }
 
     @Test
-    public void exportThrowJAXBException() throws JAXBException {
+    public void exportThrowJAXBException() {
+        // Given
+        Exception jaxbException = new JAXBException("Problems with the xml");
         // When
-        doThrow(new JAXBException("Problems with the xml"))
-                .when(gpxService).createXML(any());
+        doThrow(toRuntimeException(jaxbException)).when(gpxService).createXML(any());
         Try.of(() -> gpxExportService.export(activityGpxTest))
                 .onSuccess(gpxExportedFile -> assertThat(true).isFalse())
                 .onFailure(error -> {
                     assertThat(error).isInstanceOf(RuntimeException.class);
-                    assertThat(RuntimeException.class.cast(error).getCause()).isInstanceOf(JAXBException.class);
-                    assertThat(RuntimeException.class.cast(error).getCause().getMessage())
-                            .isEqualTo("Problems with the xml");
+                    RuntimeException runtimeException = (RuntimeException) error;
+                    assertThat(runtimeException.getCause()).isInstanceOf(JAXBException.class);
+                    assertThat(runtimeException.getCause().getMessage()).isEqualTo("Problems with the xml");
                 });
     }
 }

@@ -24,12 +24,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
 import static com.routeanalyzer.api.common.JsonUtils.toJson;
 import static java.util.Optional.ofNullable;
 import static org.springframework.http.ResponseEntity.badRequest;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
-import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
 
 @UtilityClass
 public class CommonUtils {

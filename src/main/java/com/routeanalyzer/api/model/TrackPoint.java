@@ -8,6 +8,7 @@ import lombok.ToString;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -27,34 +28,17 @@ public class TrackPoint implements Comparable<TrackPoint>, Serializable {
 	private Integer heartRateBpm;
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((date == null) ? 0 : date.hashCode());
-		result = prime * result + ((index == null) ? 0 : index.hashCode());
-		return result;
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		TrackPoint that = (TrackPoint) o;
+		return date.equals(that.date) &&
+				position.equals(that.position);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		TrackPoint other = (TrackPoint) obj;
-		if (date == null) {
-			if (other.date != null)
-				return false;
-		} else if (!date.equals(other.date))
-			return false;
-		if (index == null) {
-			if (other.index != null)
-				return false;
-		} else if (!index.equals(other.index))
-			return false;
-		return true;
+	public int hashCode() {
+		return Objects.hash(date, position);
 	}
 
 	@Override

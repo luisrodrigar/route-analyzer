@@ -1,6 +1,7 @@
 package com.routeanalyzer.api.services.reader;
 
 import com.routeanalyzer.api.common.ThrowingFunction;
+import com.routeanalyzer.api.common.ThrowingSupplier;
 import com.routeanalyzer.api.services.XMLService;
 import org.apache.commons.lang3.StringUtils;
 
@@ -12,7 +13,9 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 public abstract class AbstractXMLService<T> implements XMLService<T> {
@@ -30,8 +33,9 @@ public abstract class AbstractXMLService<T> implements XMLService<T> {
 			});
 
 	@Override
-	public T readXML(InputStream inputFileXML) throws JAXBException {
-		return ofNullable(getJAXBContext())
+	public T readXML(InputStream inputFileXML) {
+		return ofNullable(ThrowingSupplier.unchecked(() -> getJAXBContext()))
+				.map(Supplier::get)
 				.map(ThrowingFunction.unchecked(JAXBContext::createUnmarshaller))
 				.flatMap(unmarshaller -> ofNullable(inputFileXML)
 					.map(StreamSource::new)
@@ -43,14 +47,15 @@ public abstract class AbstractXMLService<T> implements XMLService<T> {
 	}
 
 	@Override
-	public String createXML(JAXBElement<T> object) throws JAXBException {
+	public String createXML(JAXBElement<T> object) {
 		Function<Marshaller, StringWriter> getMarshalStringWriter=
 				ThrowingFunction.unchecked(marshaller -> {
 					StringWriter builderXml = new StringWriter();
 					marshaller.marshal(object, builderXml);
 					return builderXml;
 				});
-		return ofNullable(getJAXBContext())
+		return of(ThrowingSupplier.unchecked(() -> getJAXBContext()))
+				.map(Supplier::get)
 				.map(ThrowingFunction.unchecked(JAXBContext::createMarshaller))
 				.map(setPropertyJAXBFormatted)
 				.map(getMarshalStringWriter)

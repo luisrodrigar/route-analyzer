@@ -1,7 +1,6 @@
 package com.routeanalyzer.api.controller.rest;
 
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.routeanalyzer.api.common.Constants;
 import com.routeanalyzer.api.model.Activity;
 import org.junit.Rule;
 import org.springframework.beans.factory.annotation.Autowired;

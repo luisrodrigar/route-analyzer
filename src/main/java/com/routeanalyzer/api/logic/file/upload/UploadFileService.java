@@ -1,13 +1,9 @@
 package com.routeanalyzer.api.logic.file.upload;
 
-import com.amazonaws.AmazonClientException;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.AbstractXMLService;
 import org.springframework.web.multipart.MultipartFile;
-import org.xml.sax.SAXParseException;
 
-import javax.xml.bind.JAXBException;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +28,7 @@ public abstract class UploadFileService<T> {
     public List<Activity> upload(MultipartFile multiPartFile) {
         return ofNullable(multiPartFile)
                 .map(unchecked(MultipartFile::getInputStream))
-                .map(unchecked(xmlService::readXML))
+                .map(xmlService::readXML)
                 .map(Optional::ofNullable)
                 .map(this::toListActivities)
                 .orElseGet(Collections::emptyList);

@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -44,34 +45,20 @@ public class Activity implements Serializable {
 		return sizeBeforeAdding + 1 == laps.size();
 	}
 
+
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((date == null) ? 0 : date.hashCode());
-		result = prime * result + ((idUser == null) ? 0 : idUser.hashCode());
-		return result;
-	}
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Activity other = (Activity) obj;
-		if (date == null) {
-			if (other.date != null)
-				return false;
-		} else if (!date.equals(other.date))
-			return false;
-		if (idUser == null) {
-			if (other.idUser != null)
-				return false;
-		} else if (!idUser.equals(other.idUser))
-			return false;
-		return true;
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Activity activity = (Activity) o;
+		return Objects.equals(id, activity.id) &&
+				sourceXmlType.equals(activity.sourceXmlType) &&
+				date.equals(activity.date) &&
+				Objects.equals(laps, activity.laps);
 	}
 
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, sourceXmlType, date, laps);
+	}
 }

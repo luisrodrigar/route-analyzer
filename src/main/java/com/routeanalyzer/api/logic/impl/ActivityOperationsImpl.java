@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.logic.impl;
 
-import com.google.common.base.Predicates;
 import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;

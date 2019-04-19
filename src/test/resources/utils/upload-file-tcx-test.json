@@ -1,0 +1,79 @@
+{
+  "id": null,
+  "sourceXmlType": "tcx",
+  "date": "2011-07-25T11:33:52+02:00",
+  "laps": [
+    {
+      "startTime": "2018-02-27T14:16:13+01:00",
+      "index": "1",
+      "totalTimeSeconds": "16.0",
+      "distanceMeters": "43.313081753899034",
+      "maximumSpeed": "6.143949288527114",
+      "averageSpeed": "2.6801723874025747",
+      "averageHearRate": "97",
+      "maximumHeartRate":  "103",
+      "tracks": [
+        {
+          "date": "2018-02-27T14:16:13+01:00",
+          "index":  "1",
+          "position": {
+            "latitudeDegrees": "42.613197",
+            "longitudeDegrees": "-6.573217"
+          },
+          "altitudeMeters": "557.3",
+          "distanceMeters": "0.0",
+          "speed": "0.0",
+          "heartRateBpm":  "96"
+        },
+        {
+          "date": "2018-02-27T14:16:18+01:00",
+          "index":  "2",
+          "position": {
+            "latitudeDegrees": "42.613217",
+            "longitudeDegrees": "-6.573373"
+          },
+          "altitudeMeters": "557.3",
+          "distanceMeters": "12.972326303345616",
+          "speed": "2.594465260669123",
+          "heartRateBpm":  "96"
+        },
+        {
+          "date": "2018-02-27T14:16:20.000+01:00",
+          "index":  "3",
+          "position": {
+            "latitudeDegrees": "42.613212",
+            "longitudeDegrees": "-6.573443"
+          },
+          "altitudeMeters": "557.3",
+          "distanceMeters": "18.734670396302985",
+          "speed": "2.8811720464786834",
+          "heartRateBpm":  "96"
+        }
+      ]
+    },
+    {
+      "startTime": "2018-02-27T14:16:40+01:00",
+      "index":  "2",
+      "totalTimeSeconds": "1.0",
+      "distanceMeters": "0.0",
+      "maximumSpeed": "6.717731656189975",
+      "averageSpeed": "6.717731656189975",
+      "averageHearRate": "120.0",
+      "maximumHeartRate":  "120",
+      "tracks": [
+        {
+          "date": "2018-02-27T14:17:30+01:00",
+          "index":  "1",
+          "position": {
+            "latitudeDegrees": "42.613212",
+            "longitudeDegrees": "-6.573825"
+          },
+          "altitudeMeters": "557.3",
+          "distanceMeters": "106.89949587498064",
+          "speed": "6.717731656189976",
+          "heartRateBpm":  "120"
+        }
+      ]
+    }
+  ]
+}
