@@ -13,7 +13,7 @@
 				}
 			},
 			"laps": [],
-			"_class": "com.routeanalyzer.model.Activity"
+			"_class": "com.routeanalyzer.api.model.Activity"
 		}
 	]
 }

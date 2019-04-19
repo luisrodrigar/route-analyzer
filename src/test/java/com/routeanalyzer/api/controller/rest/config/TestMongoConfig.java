@@ -26,7 +26,7 @@ public class TestMongoConfig extends AbstractMongoConfiguration {
 
 	@Override
 	protected String getMappingBasePackage() {
-		return "com.routeanalyzer.database";
+		return "com.routeanalyzer.api.database";
 	}
 	
 	@Bean
