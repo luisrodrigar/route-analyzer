@@ -17,8 +17,8 @@ import javax.xml.bind.JAXBException;
 import java.nio.charset.StandardCharsets;
 
 import static com.routeanalyzer.api.common.JsonUtils.fromJson;
+import static com.routeanalyzer.api.common.TestUtils.toRuntimeException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 
@@ -48,8 +48,11 @@ public class TcxExportServiceImplTest {
 
     @Test
     public void export() {
-        Try.of(() -> tcxExportService.export(activityTcxTest))
-                .onSuccess(tcxExportedFile -> assertEquals(tcxXmlString, tcxExportedFile))
+        // Given
+        // When
+        Try result = Try.of(() -> tcxExportService.export(activityTcxTest));
+        // Then
+        result.onSuccess(tcxExportedFile ->assertThat(tcxExportedFile).isEqualTo(tcxExportedFile))
                 .onFailure(error -> assertThat(true).isFalse());
     }
 
@@ -63,17 +66,19 @@ public class TcxExportServiceImplTest {
     }
 
     @Test
-    public void exportActivityThrowRuntimeException() throws JAXBException {
+    public void exportActivityThrowRuntimeException() {
+        // Given
+        Exception jaxbException = new JAXBException("Problems with xml.");
         // When
-        doThrow(new JAXBException("Problems with xml."))
-                .when(tcxService).createXML(any());
+        doThrow(toRuntimeException(jaxbException)).when(tcxService).createXML(any());
         Try.of(() -> tcxExportService.export(activityTcxTest))
                 // Then
                 .onSuccess(tcxExportedFile -> assertThat(true).isFalse())
                 .onFailure(error -> {
                     assertThat(error).isInstanceOf(RuntimeException.class);
-                    assertThat(RuntimeException.class.cast(error).getCause()).isInstanceOf(JAXBException.class);
-                    assertThat(RuntimeException.class.cast(error).getCause().getMessage())
+                    RuntimeException runtimeException = (RuntimeException) error;
+                    assertThat(runtimeException.getCause()).isInstanceOf(JAXBException.class);
+                    assertThat(runtimeException.getCause().getMessage())
                             .isEqualTo("Problems with xml.");
                 });
     }

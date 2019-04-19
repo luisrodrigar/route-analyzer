@@ -4,18 +4,11 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.mongodb.Function;
 import com.routeanalyzer.api.model.Activity;
-import com.routeanalyzer.api.model.Lap;
-import com.routeanalyzer.api.model.Position;
-import com.routeanalyzer.api.model.TrackPoint;
 import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;

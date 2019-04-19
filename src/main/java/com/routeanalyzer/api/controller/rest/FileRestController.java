@@ -2,10 +2,7 @@ package com.routeanalyzer.api.controller.rest;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.google.common.base.Charsets;
-import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.JsonUtils;
-import com.routeanalyzer.api.common.ThrowingFunction;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
@@ -23,7 +20,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -41,10 +37,10 @@ import static com.routeanalyzer.api.common.Constants.GET_FILE_PATH;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static com.routeanalyzer.api.common.Constants.UPLOAD_FILE_PATH;
+import static com.routeanalyzer.api.common.ThrowingFunction.unchecked;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static org.springframework.http.ResponseEntity.ok;
-import static com.routeanalyzer.api.common.ThrowingFunction.unchecked;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)

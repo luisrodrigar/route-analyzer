@@ -1,20 +1,19 @@
 package com.routeanalyzer.api.logic.file.export.impl;
 
 import com.routeanalyzer.api.common.DateUtils;
-import com.routeanalyzer.api.common.ThrowingFunction;
 import com.routeanalyzer.api.logic.file.export.ExportFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.reader.GPXService;
-import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.ObjectFactory;
 import com.routeanalyzer.api.xml.gpx11.ExtensionsType;
 import com.routeanalyzer.api.xml.gpx11.GpxType;
 import com.routeanalyzer.api.xml.gpx11.MetadataType;
 import com.routeanalyzer.api.xml.gpx11.TrkType;
 import com.routeanalyzer.api.xml.gpx11.TrksegType;
 import com.routeanalyzer.api.xml.gpx11.WptType;
+import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.ObjectFactory;
 import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,7 +117,7 @@ public class GpxExportFileService implements ExportFileService {
                                     return gpxType;
                                 }))
                 .map(objectFactorySupplier.get()::createGpx)
-                .map(ThrowingFunction.unchecked(gpxService::createXML))
+                .map(gpxService::createXML)
                 .orElse(StringUtils.EMPTY);
     }
 

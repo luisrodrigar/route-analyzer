@@ -1,15 +1,14 @@
 package com.routeanalyzer.api.services;
 
-import java.io.InputStream;
+import org.xml.sax.SAXParseException;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-
-import org.xml.sax.SAXParseException;
+import java.io.InputStream;
 
 public interface XMLService<T> {
 	
-	public T readXML(InputStream inputFileXML) throws JAXBException, SAXParseException;
-	public String createXML(JAXBElement<T> object) throws JAXBException;
+	T readXML(InputStream inputFileXML) throws JAXBException, SAXParseException;
+	String createXML(JAXBElement<T> object) throws JAXBException;
 	
 }

@@ -2,14 +2,12 @@ package com.routeanalyzer.api.logic.file.export.impl;
 
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
-import com.routeanalyzer.api.common.ThrowingFunction;
 import com.routeanalyzer.api.logic.file.export.ExportFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.reader.TCXService;
-import com.routeanalyzer.api.xml.tcx.activityextension.ObjectFactory;
 import com.routeanalyzer.api.xml.tcx.ActivityLapT;
 import com.routeanalyzer.api.xml.tcx.ActivityListT;
 import com.routeanalyzer.api.xml.tcx.ActivityT;
@@ -23,6 +21,7 @@ import com.routeanalyzer.api.xml.tcx.TrackpointT;
 import com.routeanalyzer.api.xml.tcx.TrainingCenterDatabaseT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityLapExtensionT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityTrackpointExtensionT;
+import com.routeanalyzer.api.xml.tcx.activityextension.ObjectFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -141,7 +140,7 @@ public class TcxExportFileService implements ExportFileService {
                 .map(setActivityField -> setActivityField.apply(act))
                 .flatMap(createTrainingCenterDatabase)
                 .map(objectFactorySupplier.get()::createTrainingCenterDatabase)
-                .map(ThrowingFunction.unchecked(tcxService::createXML))
+                .map(tcxService::createXML)
                 .orElse(StringUtils.EMPTY);
     }
 

@@ -26,12 +26,12 @@ import java.util.function.Consumer;
 import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.DateUtils.toLocalDateTime;
+import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 

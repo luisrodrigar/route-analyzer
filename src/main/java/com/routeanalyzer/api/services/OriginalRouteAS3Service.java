@@ -1,10 +1,8 @@
 package com.routeanalyzer.api.services;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
+
+import java.io.BufferedReader;
 
 public interface OriginalRouteAS3Service {
 

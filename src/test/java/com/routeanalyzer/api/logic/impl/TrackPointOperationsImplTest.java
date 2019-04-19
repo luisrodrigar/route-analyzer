@@ -15,7 +15,6 @@ import java.time.ZoneOffset;
 
 import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
-import static com.routeanalyzer.api.common.MathUtils.round;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;

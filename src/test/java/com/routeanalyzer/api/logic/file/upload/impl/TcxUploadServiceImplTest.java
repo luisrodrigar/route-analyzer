@@ -24,8 +24,10 @@ import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.routeanalyzer.api.common.JsonUtils.fromJson;
+import static com.routeanalyzer.api.common.TestUtils.toRuntimeException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -45,7 +47,7 @@ public class TcxUploadServiceImplTest {
     @InjectMocks
     private TcxUploadFileService tcxUploadService;
 
-    @Value("classpath:utils/json-activity-tcx.json")
+    @Value("classpath:utils/upload-file-tcx-test.json")
     private Resource activityTcxResource;
     @Value("classpath:utils/tcx-test.xml")
     private Resource tcxXmlResource;
@@ -61,21 +63,29 @@ public class TcxUploadServiceImplTest {
     }
 
     @Test
-    public void uploadTest() throws JAXBException, IOException {
-        doReturn(tcxObject).when(tcxService).readXML(Mockito.any());
+    public void uploadTcxTest() throws IOException {
+        // Given
         MultipartFile multipart = new MockMultipartFile("file", tcxXmlResource.getInputStream());
-        assertThat(Arrays.asList(activityTcxTest)).isEqualTo(tcxUploadService.upload(multipart));
+        // When
+        doReturn(tcxObject).when(tcxService).readXML(Mockito.any());
+        List<Activity> result = tcxUploadService.upload(multipart);
+        // Then
+        assertThat(result).isEqualTo(Arrays.asList(activityTcxTest));
     }
 
     @Test
-    public void uploadThrowExceptionTest() throws IOException, JAXBException {
-        doThrow(new JAXBException("")).when(tcxService).readXML(Mockito.any());
+    public void uploadThrowExceptionTest() throws IOException {
+        // Given
         MultipartFile multipart = new MockMultipartFile("file", tcxXmlResource.getInputStream());
+        Exception jaxbException = new JAXBException("Error parser");
+        // When
+        doThrow(toRuntimeException(jaxbException)).when(tcxService).readXML(Mockito.any());
+        // Then
         Try.of(() -> tcxUploadService.upload(multipart))
-                .onSuccess((success) -> assertThat(true).isTrue())
+                .onSuccess((success) -> assertThat(true).isFalse())
                 .onFailure((error) -> {
                     assertThat(error).isInstanceOf(RuntimeException.class);
-                    RuntimeException runExc = RuntimeException.class.cast(error);
+                    RuntimeException runExc = (RuntimeException) error;
                     assertThat(runExc.getCause()).isInstanceOf(JAXBException.class);
                 });
     }

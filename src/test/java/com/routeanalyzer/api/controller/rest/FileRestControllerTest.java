@@ -1,29 +1,14 @@
 package com.routeanalyzer.api.controller.rest;
 
-import static com.routeanalyzer.api.common.Constants.AMAZON_CLIENT_EXCEPTION_MESSAGE;
-import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
-import static com.routeanalyzer.api.common.Constants.GET_FILE_PATH;
-import static com.routeanalyzer.api.common.Constants.JAXB_EXCEPTION_MESSAGE;
-import static com.routeanalyzer.api.common.Constants.SAX_PARSE_EXCEPTION_MESSAGE;
-import static com.routeanalyzer.api.common.TestUtils.toActivity;
-import static com.routeanalyzer.api.common.TestUtils.toRuntimeException;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Optional;
-
-import javax.xml.bind.JAXBException;
-
+import com.amazonaws.AmazonClientException;
+import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
+import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
+import com.routeanalyzer.api.common.TestUtils;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
 import com.routeanalyzer.api.logic.file.upload.impl.TcxUploadFileService;
-import org.assertj.core.api.Assertions;
+import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,28 +27,36 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.xml.sax.SAXParseException;
 
-import com.amazonaws.AmazonClientException;
-import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.routeanalyzer.api.logic.ActivityOperations;
-import com.routeanalyzer.api.model.Activity;
-import com.routeanalyzer.api.services.OriginalRouteAS3Service;
-import com.routeanalyzer.api.common.TestUtils;
+import javax.xml.bind.JAXBException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Optional;
 
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doThrow;
-
+import static com.routeanalyzer.api.common.Constants.AMAZON_CLIENT_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.GET_FILE_PATH;
+import static com.routeanalyzer.api.common.Constants.JAXB_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.SAX_PARSE_EXCEPTION_MESSAGE;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static com.routeanalyzer.api.common.Constants.UPLOAD_FILE_PATH;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.MediaType.APPLICATION_XML;
 import static com.routeanalyzer.api.common.TestUtils.getFileBytes;
+import static com.routeanalyzer.api.common.TestUtils.toActivity;
+import static com.routeanalyzer.api.common.TestUtils.toRuntimeException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.contains;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_XML;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ActiveProfiles("test-mongodb")

@@ -33,7 +33,6 @@ import java.util.stream.Stream;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 @Service
@@ -389,9 +388,9 @@ public class LapsOperationsImpl implements LapsOperations {
 		Function<Lap, OptionalDouble> getAvgSpeedLap = lapParam ->
 				getAvgValueTrackPoint(lap, trackPoint -> trackPoint.getSpeed().doubleValue());
 		Consumer<Number> setMaxSpeed = maxSpeedNumber ->
-				lap.setMaximumSpeed(Double.class.cast(maxSpeedNumber));
+				lap.setMaximumSpeed((Double) maxSpeedNumber);
 		Consumer<Number> setAvgSpeed = avgSpeedNumber ->
-				lap.setAverageSpeed(Double.class.cast(avgSpeedNumber));
+				lap.setAverageSpeed((Double) avgSpeedNumber);
 
 		calculateLapAggregateValue(lap, TrackPoint::getSpeed, getMaxSpeedLap, getAvgSpeedLap, setMaxSpeed, setAvgSpeed);
 	}
@@ -411,9 +410,9 @@ public class LapsOperationsImpl implements LapsOperations {
 		Function<Lap, OptionalDouble> getAvgHeartRateLap = lapParam ->
 				getAvgValueTrackPoint(lap, trackPoint -> trackPoint.getHeartRateBpm().doubleValue());
 		Consumer<Number> setMaxHeartRate = maxHeartRateNumber ->
-				lap.setMaximumHeartRate(Integer.class.cast(maxHeartRateNumber));
+				lap.setMaximumHeartRate((Integer) maxHeartRateNumber);
 		Consumer<Number> setAvgHeartRate = avgHeartRateNumber ->
-				lap.setAverageHearRate(Double.class.cast(avgHeartRateNumber));
+				lap.setAverageHearRate((Double) avgHeartRateNumber);
 
 		calculateLapAggregateValue(lap, TrackPoint::getHeartRateBpm, getMaxHeartRateLap, getAvgHeartRateLap,
 				setMaxHeartRate, setAvgHeartRate);

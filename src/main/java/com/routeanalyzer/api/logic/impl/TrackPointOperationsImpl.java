@@ -40,7 +40,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 				).orElse(false);
 		// Time Millis
 		boolean isTimeMillis = isEqualsValueTrack(track, TrackPoint::getDate,
-				(localDateTime) -> toTimeMillis(LocalDateTime.class.cast(localDateTime)).orElse(null), timeInMillis);
+				(localDateTime) -> toTimeMillis((LocalDateTime) localDateTime).orElse(null), timeInMillis);
 		// Index
 		boolean isIndex = isEqualsValueTrack(track, TrackPoint::getIndex,
 				(indexParam) -> ((Integer) indexParam).longValue(), index.longValue());

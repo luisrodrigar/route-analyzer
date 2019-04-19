@@ -1,10 +1,10 @@
 package com.routeanalyzer.api.logic.file.upload.impl;
 
+import com.routeanalyzer.api.common.TestUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.GPXService;
-import com.routeanalyzer.api.common.TestUtils;
 import com.routeanalyzer.api.xml.gpx11.GpxType;
 import io.vavr.control.Try;
 import org.junit.Before;
@@ -25,13 +25,13 @@ import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 
+import static com.routeanalyzer.api.common.JsonUtils.fromJson;
+import static com.routeanalyzer.api.common.TestUtils.toRuntimeException;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static com.routeanalyzer.api.common.JsonUtils.fromJson;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 public class GpxUploadServiceImplTest {
 
@@ -49,7 +49,7 @@ public class GpxUploadServiceImplTest {
 
     @Value("classpath:utils/gpx-test.xml")
     private Resource gpxXmlResource;
-    @Value("classpath:utils/json-activity-gpx.json")
+    @Value("classpath:utils/upload-file-gpx-test.json")
     private Resource activityGpxResource;
 
 
@@ -64,21 +64,29 @@ public class GpxUploadServiceImplTest {
     }
 
     @Test
-    public void uploadTest() throws JAXBException, IOException {
-        doReturn(gpxObject).when(gpxService).readXML(Mockito.any());
+    public void uploadGpxTest() throws JAXBException, IOException {
+        // Given
         MultipartFile multipart = new MockMultipartFile("file", gpxXmlResource.getInputStream());
-        assertThat(Arrays.asList(activityGpxTest)).isEqualTo(gpxUploadService.upload(multipart));
+        // When
+        doReturn(gpxObject).when(gpxService).readXML(Mockito.any());
+        List<Activity> result = gpxUploadService.upload(multipart);
+        // Then
+        assertThat(result).isEqualTo(Arrays.asList(activityGpxTest));
     }
 
     @Test
     public void uploadThrowExceptionTest() throws IOException, SAXParseException, JAXBException {
-        doThrow(new JAXBException("")).when(gpxService).readXML(Mockito.any());
+        // Given
         MultipartFile multipart = new MockMultipartFile("file", gpxXmlResource.getInputStream());
-        Try.of(() -> gpxUploadService.upload(multipart))
-                .onSuccess((success) -> assertThat(true).isTrue())
+        Exception jaxbException = new JAXBException("Problems with xml.");
+        // When
+        doThrow(toRuntimeException(jaxbException)).when(gpxService).readXML(Mockito.any());
+        Try result = Try.of(() -> gpxUploadService.upload(multipart));
+        // Then
+        result.onSuccess((success) -> assertThat(true).isTrue())
                 .onFailure(error -> {
                     assertThat(error).isInstanceOf(RuntimeException.class);
-                    RuntimeException runExc = RuntimeException.class.cast(error);
+                    RuntimeException runExc = (RuntimeException) error;
                     assertThat(runExc.getCause()).isInstanceOf(JAXBException.class);
                 });
     }
