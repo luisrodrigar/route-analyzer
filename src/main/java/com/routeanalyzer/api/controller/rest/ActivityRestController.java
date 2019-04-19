@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,6 +32,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.CommonUtils.getFileExportResponse;
+import static com.routeanalyzer.api.common.Constants.COLORS_LAP_PATH;
+import static com.routeanalyzer.api.common.Constants.EXPORT_AS_PATH;
+import static com.routeanalyzer.api.common.Constants.GET_ACTIVITY_PATH;
+import static com.routeanalyzer.api.common.Constants.JOIN_LAPS_PATH;
+import static com.routeanalyzer.api.common.Constants.REMOVE_LAP_PATH;
+import static com.routeanalyzer.api.common.Constants.REMOVE_POINT_PATH;
+import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
+import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
+import static com.routeanalyzer.api.common.Constants.SPLIT_LAP_PATH;
 import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.COLOR_DELIMITER;
 import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.COMMA_DELIMITER;
 import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.LAP_DELIMITER;
@@ -41,7 +49,6 @@ import static java.util.Optional.ofNullable;
 import static org.springframework.http.ResponseEntity.notFound;
 
 @RestController
-@RequestMapping("activity")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ActivityRestController extends RestControllerBase {
 
@@ -58,14 +65,14 @@ public class ActivityRestController extends RestControllerBase {
 		super(LoggerFactory.getLogger(ActivityRestController.class));
 	}
 
-	@GetMapping(value = "/{id}", produces = "application/json;")
+	@GetMapping(value = GET_ACTIVITY_PATH, produces = "application/json;")
 	public @ResponseBody ResponseEntity<String> getActivityById(@PathVariable String id) {
 		return getOptionalActivityById(id)
 				.map(CommonUtils::toOKMessageResponse)
 				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
-	@GetMapping(value = "/{id}/export/{type}")
+	@GetMapping(value = EXPORT_AS_PATH)
 	public ResponseEntity<String> exportAs(@PathVariable final String id, @PathVariable final String type) {
 		return getOptionalActivityById(id)
 				.flatMap(activity -> ofNullable(type)
@@ -76,7 +83,7 @@ public class ActivityRestController extends RestControllerBase {
 
 	}
 
-	@PutMapping(value = "/{id}/remove/point")
+	@PutMapping(value = REMOVE_POINT_PATH)
 	public @ResponseBody ResponseEntity<String> removePoint(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
 		return getOptionalActivityById(id)
@@ -91,7 +98,7 @@ public class ActivityRestController extends RestControllerBase {
 				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
-	@PutMapping(value = "/{id}/join/laps")
+	@PutMapping(value = JOIN_LAPS_PATH)
 	public @ResponseBody ResponseEntity<String> joinLaps(@PathVariable String id,
 			@RequestParam(name = "index1") String indexLeft, @RequestParam(name = "index2") String indexRight) {
 		return ofNullable(id)
@@ -103,7 +110,7 @@ public class ActivityRestController extends RestControllerBase {
 				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
-	@PutMapping(value = "/{id}/split/lap", produces = "application/json;")
+	@PutMapping(value = SPLIT_LAP_PATH)
 	public @ResponseBody ResponseEntity<String> splitLap(@PathVariable String id, @RequestParam String lat,
 			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
 		return getOptionalActivityById(id)
@@ -113,7 +120,7 @@ public class ActivityRestController extends RestControllerBase {
 				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
-	@PutMapping(value = "/{id}/remove/laps", produces = "application/json;")
+	@PutMapping(value = REMOVE_LAP_PATH)
 	public @ResponseBody ResponseEntity<String> removeLaps(@PathVariable String id,
 			@RequestParam(name = "date") String startTimeLaps, @RequestParam(name = "index") String indexLaps) {
 	    Function<String, List<String>> splitStringByComma = string -> ofNullable(string).map(stringParam ->
@@ -134,7 +141,7 @@ public class ActivityRestController extends RestControllerBase {
 				.orElseGet(() -> CommonUtils.toBadRequestParams());
 	}
 
-	@PutMapping(value = "/{id}/color/laps")
+	@PutMapping(value = COLORS_LAP_PATH)
 	public @ResponseBody ResponseEntity<String> setColorLap(@PathVariable String id, @RequestParam String data) {
         Supplier<AtomicInteger> atomicIntegerSupplier = () -> new AtomicInteger();
         Supplier<Response> okSupplier = () -> new Response(false,
@@ -208,18 +215,16 @@ public class ActivityRestController extends RestControllerBase {
 				.flatMap(mongoRepository::findById);
 	}
 
-	private ResponseEntity<String> getResponseByType(String typeLowercase, Activity activity) {
-		final String sourceTcx = "tcx";
-		final String sourceGpx = "gpx";
-		switch (typeLowercase) {
-			case sourceTcx:
+	private ResponseEntity<String> getResponseByType(String type, Activity activity) {
+		switch (type.toLowerCase()) {
+			case SOURCE_TCX_XML:
 				return Try.of(() -> tcxExportService.export(activity))
-						.map(file -> getFileExportResponse(file, activity.getId(), sourceTcx))
+						.map(file -> getFileExportResponse(file, activity.getId(), SOURCE_TCX_XML))
 						.recover(RuntimeException.class, handleControllerExceptions)
 						.getOrElse(notFound().build());
-			case sourceGpx:
+			case SOURCE_GPX_XML:
 				return Try.of(() -> gpxExportService.export(activity))
-						.map(file -> getFileExportResponse(file, activity.getId(), sourceGpx))
+						.map(file -> getFileExportResponse(file, activity.getId(), SOURCE_GPX_XML))
 						.recover(RuntimeException.class, handleControllerExceptions)
 						.getOrElse(notFound().build());
 			default:

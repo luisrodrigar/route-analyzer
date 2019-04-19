@@ -1,6 +1,13 @@
 package com.routeanalyzer.api.controller.rest;
 
+import static com.routeanalyzer.api.common.Constants.AMAZON_CLIENT_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.GET_FILE_PATH;
+import static com.routeanalyzer.api.common.Constants.JAXB_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.SAX_PARSE_EXCEPTION_MESSAGE;
 import static com.routeanalyzer.api.common.TestUtils.toActivity;
+import static com.routeanalyzer.api.common.TestUtils.toRuntimeException;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -13,8 +20,10 @@ import java.util.Optional;
 
 import javax.xml.bind.JAXBException;
 
+import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
 import com.routeanalyzer.api.logic.file.upload.impl.TcxUploadFileService;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,6 +35,7 @@ import org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoCo
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Example;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
@@ -48,6 +58,13 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doThrow;
 
+import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
+import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
+import static com.routeanalyzer.api.common.Constants.UPLOAD_FILE_PATH;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.MediaType.APPLICATION_XML;
+import static com.routeanalyzer.api.common.TestUtils.getFileBytes;
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @ActiveProfiles("test-mongodb")
 @EnableAutoConfiguration(exclude = { MongoAutoConfiguration.class, MongoDataAutoConfiguration.class,
@@ -57,16 +74,22 @@ public class FileRestControllerTest extends MockMvcTestController {
 	@Autowired
 	protected ApplicationContext applicationContext;
 	@Autowired
-	private ActivityOperations activityOperationsService;
-	@Autowired
 	private OriginalRouteAS3Service aS3Service;
 	@Autowired
-	private TcxUploadFileService tcxService;
+	private TcxUploadFileService tcxUploadFileService;
 	@Autowired
-	private GpxUploadFileService gpxService;
+	private GpxUploadFileService gpxUploadFileService;
+	@Autowired
+	private ActivityMongoRepository activityMongoRepository;
 
-	private MockMultipartFile xmlFile, xmlOtherFile, exceptionJAXBFile, exceptionSAXFile;
-	private Activity gpxActivity, tcxActivity, unknownXml;
+	private MockMultipartFile xmlFile;
+	private MockMultipartFile xmlOtherFile;
+	private MockMultipartFile exceptionJAXBFile;
+	private MockMultipartFile exceptionSAXFile;
+
+	private Activity gpxActivity;
+	private Activity tcxActivity;
+	private Activity unknownXml;
 
 	@Value("classpath:controller/xml-input-fake-1.json")
 	private Resource fake1;
@@ -84,90 +107,104 @@ public class FileRestControllerTest extends MockMvcTestController {
 
 
 	@Value("classpath:utils/json-activity-tcx.json")
-	private static Resource tcxJsonResource;
+	private Resource tcxJsonResource;
 	@Value("classpath:utils/json-activity-gpx.json")
-	private static Resource gpxJsonResource;
+	private Resource gpxJsonResource;
+
+	private static final String APPLICATION_XML_STR = APPLICATION_XML.toString();
 
 	@Before
 	public void setUp() throws AmazonClientException, SAXParseException, IOException, JAXBException {
 		gpxActivity = toActivity(gpxJsonResource).get();
 		tcxActivity = toActivity(tcxJsonResource).get();
 		unknownXml = TestUtils.createUnknownActivity.get();
-
 		loadMultiPartFiles();
-		setMockBehaviour();
-	}
-
-	private void setMockBehaviour() throws AmazonClientException, SAXParseException, IOException, JAXBException {
-		String exceptionDescription = "Syntax error while trying to parse the file.";
-		doReturn(Arrays.asList(gpxActivity)).when(gpxService).upload(xmlFile);
-		doReturn(Arrays.asList(tcxActivity)).when(tcxService).upload(xmlFile);
-		doThrow(new JAXBException(exceptionDescription))
-				.when(gpxService).upload(exceptionJAXBFile);
-		doThrow(new SAXParseException(exceptionDescription, null))
-				.when(tcxService).upload(exceptionSAXFile);
-		doReturn(Arrays.asList(unknownXml))
-				.when(tcxService).upload(xmlOtherFile);
 	}
 
 	private void loadMultiPartFiles() {
 		String fileName = "file";
-
-		xmlFile = new MockMultipartFile(fileName, "", MediaType.APPLICATION_XML.toString(),
-				TestUtils.getFileBytes(fake1));
-		xmlOtherFile = new MockMultipartFile(fileName, "", MediaType.APPLICATION_XML.toString(),
-				TestUtils.getFileBytes(fake2));
-		exceptionJAXBFile = new MockMultipartFile(fileName, "", MediaType.APPLICATION_XML.toString(),
-				TestUtils.getFileBytes(fakeJAXBException));
-		exceptionSAXFile = new MockMultipartFile(fileName, "", MediaType.APPLICATION_XML.toString(),
-				TestUtils.getFileBytes(fakeSAXParseException));
+		xmlFile = new MockMultipartFile(fileName, "", APPLICATION_XML_STR, getFileBytes(fake1));
+		xmlOtherFile = new MockMultipartFile(fileName, "", APPLICATION_XML_STR, getFileBytes(fake2));
+		exceptionJAXBFile = new MockMultipartFile(fileName, "", APPLICATION_XML_STR,
+				getFileBytes(fakeJAXBException));
+		exceptionSAXFile = new MockMultipartFile(fileName, "", APPLICATION_XML_STR,
+				getFileBytes(fakeSAXParseException));
 	}
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/controller/db-activity-gpx.json")
-	public void uploadGPXFile() throws Exception {
-		uploadFileBuilder();
-		mockMvc.perform(builder.file(xmlFile).param("type", "gpx")).andExpect(status().isOk());
+	public void uploadGPXFileTest() throws Exception {
+		// Given
+		setPostFileBuilder(UPLOAD_FILE_PATH);
+		// When
+		doReturn(Arrays.asList(gpxActivity)).when(gpxUploadFileService).upload(eq(xmlFile));
+		// Then
+		mockMvc.perform(builder.file(xmlFile).param("type", SOURCE_GPX_XML)).andExpect(status().isOk());
+		assertThat(activityMongoRepository.exists(Example.of(gpxActivity))).isTrue();
 	}
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/controller/db-activity-tcx.json")
-	public void uploadTCXFile() throws Exception {
-		uploadFileBuilder();
-		mockMvc.perform(builder.file(xmlFile).param("type", "tcx")).andExpect(status().isOk());
+	public void uploadTCXFileTest() throws Exception {
+		// Given
+		setPostFileBuilder(UPLOAD_FILE_PATH);
+		// When
+		doReturn(Arrays.asList(tcxActivity)).when(tcxUploadFileService).upload(eq(xmlFile));
+		// Then
+		mockMvc.perform(builder.file(xmlFile).param("type", SOURCE_TCX_XML))
+				.andExpect(status().isOk());
+		assertThat(activityMongoRepository.exists(Example.of(tcxActivity))).isTrue();
 	}
 
 	@Test
-	public void uploadUnknownFile() throws Exception {
-		uploadFileBuilder();
+	public void uploadUnknownFileTest() throws Exception {
+		// Given
+		setPostFileBuilder(UPLOAD_FILE_PATH);
+		// When
+		doReturn(Arrays.asList(unknownXml)).when(tcxUploadFileService).upload(eq(xmlOtherFile));
+		// Then
 		isGenerateErrorByMockMultipartHTTPPost(xmlFile, status().isBadRequest(), "kml",
-				"Problem with the type of the file which you want to upload");
+				BAD_REQUEST_MESSAGE);
 	}
 
 	@Test
-	public void uploadSyntaxErrorJAXBExceptionFile() throws Exception {
-		uploadFileBuilder();
-		isThrowingExceptionByMockMultipartHTTPPost(exceptionJAXBFile, status().isInternalServerError(), "gpx",
-				"Problem with the file format uploaded.", "Syntax error while trying to parse the file.");
+	public void uploadFileThrowJAXBExceptionTest() throws Exception {
+		// Given
+		String exceptionDescription = "Syntax error while trying to parse the file.";
+		Exception exception = toRuntimeException(new JAXBException(exceptionDescription));
+		setPostFileBuilder(UPLOAD_FILE_PATH);
+		// When
+		doThrow(exception).when(gpxUploadFileService).upload(eq(exceptionJAXBFile));
+		// Then
+		isThrowingExceptionByMockMultipartHTTPPost(exceptionJAXBFile, status().isInternalServerError(), SOURCE_GPX_XML,
+				JAXB_EXCEPTION_MESSAGE, exception.getCause());
 	}
 
 	@Test
-	public void uploadSyntaxErrorSAXExceptionFile() throws Exception {
-		uploadFileBuilder();
-		isThrowingExceptionByMockMultipartHTTPPost(exceptionSAXFile, status().isBadRequest(), "tcx",
-				"Problem trying to parser xml file. Check if its correct.",
-				"Syntax error while trying to parse the file.");
+	public void uploadFileThrowSAXExceptionTest() throws Exception {
+		// Given
+		String exceptionDescription = "Syntax error while trying to parse the file.";
+		Exception exception = toRuntimeException(new SAXParseException(exceptionDescription, null));
+		setPostFileBuilder(UPLOAD_FILE_PATH);
+		// When
+		doThrow(exception).when(tcxUploadFileService).upload(eq(exceptionSAXFile));
+		// Then
+		isThrowingExceptionByMockMultipartHTTPPost(exceptionSAXFile, status().isBadRequest(), SOURCE_TCX_XML,
+				SAX_PARSE_EXCEPTION_MESSAGE, exception.getCause());
 	}
 
 	@Test
-	public void uploadAWSS3ThrowException() throws Exception {
-		// AWS AS3 throws an Exception when
-		doThrow(new AmazonClientException("Problems with AWS S3")).when(aS3Service).uploadFile(any(), anyString());
-		uploadFileBuilder();
-		isThrowingExceptionByMockMultipartHTTPPost(xmlOtherFile, status().isInternalServerError(), "tcx",
-				"Problem with the type of the file which you want to upload", "Problems with AWS S3");
+	public void uploadThrowAmazonExceptionException() throws Exception {
+		// Given
+		Exception exception = new AmazonClientException("Problems with AWS S3");
+		setPostFileBuilder(UPLOAD_FILE_PATH);
+		// When
+		doReturn(Arrays.asList(unknownXml)).when(tcxUploadFileService).upload(eq(xmlOtherFile));
+		// Amazon exception is generated after getting al the uploaded files.
+		doThrow(exception).when(aS3Service).uploadFile(any(), anyString());
+		// Then
+		isThrowingExceptionByMockMultipartHTTPPost(xmlOtherFile, status().isInternalServerError(), SOURCE_TCX_XML,
+				AMAZON_CLIENT_EXCEPTION_MESSAGE, exception);
 	}
 
 	/**
@@ -179,17 +216,21 @@ public class FileRestControllerTest extends MockMvcTestController {
 	 */
 
 	@Test
-	public void getFileTest() throws Exception {
+	public void getGpxFileTest() throws Exception {
 		BufferedReader gpxBufferedReader = Optional.ofNullable(gpxXmlResource.getFile().toPath())
 				.map(TestUtils.toBufferedReader::apply).orElse(null);
-		BufferedReader tcxBufferedReader = Optional.ofNullable(tcxXmlResource.getFile().toPath())
-				.map(TestUtils.toBufferedReader::apply).orElse(null);
-		when(aS3Service.getFile(contains("gpx"))).thenReturn(gpxBufferedReader);
-		when(aS3Service.getFile(contains("tcx"))).thenReturn(tcxBufferedReader);
-		mockMvc.perform(get("/file/get/{type}/{id}", "gpx", "some_id")).andExpect(status().isOk())
+		when(aS3Service.getFile(contains(SOURCE_GPX_XML))).thenReturn(gpxBufferedReader);
+		mockMvc.perform(get(GET_FILE_PATH, SOURCE_GPX_XML, "some_id")).andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM.toString()))
 				.andExpect(content().xml(new String(TestUtils.getFileBytes(gpxXmlResource), StandardCharsets.UTF_8)));
-		mockMvc.perform(get("/file/get/{type}/{id}", "tcx", "some_id")).andExpect(status().isOk())
+	}
+
+	@Test
+	public void getTcxFileTest() throws Exception {
+		BufferedReader tcxBufferedReader = Optional.ofNullable(tcxXmlResource.getFile().toPath())
+				.map(TestUtils.toBufferedReader::apply).orElse(null);
+		when(aS3Service.getFile(contains(SOURCE_TCX_XML))).thenReturn(tcxBufferedReader);
+		mockMvc.perform(get(GET_FILE_PATH, SOURCE_TCX_XML, "some_id")).andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM.toString()))
 				.andExpect(content().xml(new String(TestUtils.getFileBytes(tcxXmlResource), StandardCharsets.UTF_8)));
 	}

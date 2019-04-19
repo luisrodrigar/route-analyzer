@@ -2,13 +2,13 @@ package com.routeanalyzer.api.common;
 
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
-import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
 import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.api.xml.tcx.PositionT;
 import com.routeanalyzer.api.xml.tcx.TrackpointT;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
@@ -17,15 +17,19 @@ import org.springframework.util.MultiValueMap;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.routeanalyzer.api.common.JsonUtils.toJson;
 import static java.util.Optional.ofNullable;
 import static org.springframework.http.ResponseEntity.badRequest;
 import static org.springframework.http.ResponseEntity.ok;
+import static org.springframework.http.ResponseEntity.status;
+import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
 
 @UtilityClass
 public class CommonUtils {
@@ -183,18 +187,21 @@ public class CommonUtils {
 		return ResponseEntity.ok().headers(toApplicationFileHeaders(id, fileType)).body(file);
 	}
 
-	public static  ResponseEntity<String> toBadRequestParams() {
-		String description = "Activity was not found or other params are not valid.";
-		Response errorValue = new Response(true, description, null, null);
+	public static ResponseEntity<String> toBadRequestParams() {
+		Response errorValue = new Response(true, BAD_REQUEST_MESSAGE, null, null);
 		return badRequest().headers(toJsonHeaders()).body(JsonUtils.toJson(errorValue));
 	}
 
-	public static  ResponseEntity<String> toBadRequestResponse(Object response) {
+	public static ResponseEntity<String> toBadRequestResponse(Object response) {
 		return badRequest().headers(toJsonHeaders()).body(JsonUtils.toJson(response));
 	}
 
-	public static  ResponseEntity<String> toOKMessageResponse(Object response) {
+	public static ResponseEntity<String> toOKMessageResponse(Object response) {
 		return ok().headers(toJsonHeaders()).body(JsonUtils.toJson(response));
+	}
+
+	public static ResponseEntity<String> emptyResponse() {
+		return status(HttpStatus.NOT_FOUND).body(toJson(Collections.emptyList()));
 	}
 
 	/**

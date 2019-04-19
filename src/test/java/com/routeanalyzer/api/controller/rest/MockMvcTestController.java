@@ -1,6 +1,7 @@
 package com.routeanalyzer.api.controller.rest;
 
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
+import com.routeanalyzer.api.common.Constants;
 import com.routeanalyzer.api.model.Activity;
 import org.junit.Rule;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +41,8 @@ public class MockMvcTestController {
 	 * HTTP POST with a file in the body uploadFile(...) test methods
 	 * 
 	 */
-	protected void uploadFileBuilder() {
-		builder = MockMvcRequestBuilders.multipart("/file/upload");
+	protected void setPostFileBuilder(String path) {
+		builder = MockMvcRequestBuilders.multipart(path);
 		builder.with(request -> {
 			request.setMethod("POST");
 			return request;
@@ -62,13 +63,15 @@ public class MockMvcTestController {
 	 * @throws Exception
 	 */
 	protected void isThrowingExceptionByMockMultipartHTTPPost(MockMultipartFile file, ResultMatcher expectedResponse,
-			String xmlType, String descriptionError, String descriptionException) throws Exception {
-		String typeField = "type", errorField = "$.error", descriptionField = "$.description",
-				exceptionField = "$.exception";
+			String xmlType, String descriptionError, Object descriptionException) throws Exception {
+		String typeField = "type";
+		String errorField = "$.error";
+		String descriptionField = "$.description";
+		String exceptionField = "$.exception";
 		mockMvc.perform(builder.file(file).param(typeField, xmlType)).andExpect(expectedResponse)
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(jsonPath(errorField, is(true))).andExpect(jsonPath(descriptionField, is(descriptionError)))
-				.andExpect(jsonPath(exceptionField, is(descriptionException)));
+				.andExpect(jsonPath(exceptionField, is(toJson(descriptionException))));
 	}
 
 	/**
@@ -83,7 +86,9 @@ public class MockMvcTestController {
 	 */
 	protected void isGenerateErrorByMockMultipartHTTPPost(MockMultipartFile file, ResultMatcher expectedResponse,
 			String xmlType, String descriptionError) throws Exception {
-		String typeField = "type", errorField = "$.error", descriptionField = "$.description";
+		String typeField = "type";
+		String errorField = "$.error";
+		String descriptionField = "$.description";
 		mockMvc.perform(builder.file(file).param(typeField, xmlType)).andExpect(expectedResponse)
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(jsonPath(errorField, is(true))).andExpect(jsonPath(descriptionField, is(descriptionError)));

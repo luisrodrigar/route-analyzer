@@ -28,14 +28,13 @@ import java.util.stream.Collectors;
 
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static java.util.Optional.ofNullable;
+import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 
 @Service
 public class GpxUploadFileService extends UploadFileService<GpxType> {
 
     private ActivityOperations activityOperations;
     private LapsOperations lapsOperations;
-
-    public static final String SOURCE_XML_TYPE = "gpx";
 
     private final Function<List<TrksegType>, TrksegType> getFirstTrkSegType = trkSegTypes -> trkSegTypes.get(0);
     private final Function<List<WptType>, WptType> getFirstWptType = wptTypeList -> wptTypeList.get(0);
@@ -62,7 +61,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                     Optional<TrkType> optTrkType = ofNullable(track);
                     Activity activity = new Activity();
                     // Source xml type, in this case gpx.
-                    activity.setDevice(SOURCE_XML_TYPE);
+                    activity.setDevice(SOURCE_GPX_XML);
                     // Set the the date
                     optGpx.ifPresent(gpxParam -> optGpx
                             .map(GpxType::getMetadata)

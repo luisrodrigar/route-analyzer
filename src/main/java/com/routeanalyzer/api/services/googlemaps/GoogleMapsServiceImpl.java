@@ -1,12 +1,5 @@
 package com.routeanalyzer.api.services.googlemaps;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 import com.google.common.collect.Maps;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.ElevationService;
@@ -14,8 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.sound.midi.Track;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+import static com.routeanalyzer.api.common.Constants.DELIMITER_COORDINATES;
+import static com.routeanalyzer.api.common.Constants.DELIMITER_POSITIONS;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
@@ -27,9 +25,6 @@ public class GoogleMapsServiceImpl implements ElevationService {
 	@Value("${google.maps.elevation.url}")
 	private String urlPathElevation;
 
-	public static final String DELIMITER_POSITIONS = "|";
-	public static final String DELIMITER_COORDINATES = ",";
-
 	public Map<String, String> getAltitude(String positions) {
 		String urlLocations = "locations=" + positions;
 		String url = urlPathElevation + "json?" + urlLocations + "&key=" + googleMapsKey;
@@ -39,7 +34,8 @@ public class GoogleMapsServiceImpl implements ElevationService {
 		result.put("status", response.getStatus());
 		if("OK".equalsIgnoreCase(response.getStatus())){
 			response.getResults().forEach(eachResult -> {
-				String key = eachResult.getLocation().getLat() + "," + eachResult.getLocation().getLng();
+				String key = eachResult.getLocation().getLat() + DELIMITER_COORDINATES
+						+ eachResult.getLocation().getLng();
 				result.put(key, eachResult.getElevation().toString());
 			});
 		}

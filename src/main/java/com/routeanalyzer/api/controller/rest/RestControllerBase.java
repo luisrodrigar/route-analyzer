@@ -12,9 +12,16 @@ import java.io.IOException;
 import java.util.function.Function;
 
 import static com.routeanalyzer.api.common.CommonUtils.toJsonHeaders;
+import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
 import static com.routeanalyzer.api.common.JsonUtils.toJson;
 import static org.springframework.http.ResponseEntity.badRequest;
 import static org.springframework.http.ResponseEntity.status;
+
+import static com.routeanalyzer.api.common.Constants.JAXB_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.AMAZON_CLIENT_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.SAX_PARSE_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.IO_EXCEPTION_MESSAGE;
+
 
 public abstract class RestControllerBase {
 
@@ -34,27 +41,33 @@ public abstract class RestControllerBase {
         if (SAXParseException.class.isInstance(originException)) {
             exception = SAXParseException.class.cast(originException);
             logMessage = "SAXParseException error: " + error.getMessage();
-            description = "Problem trying to parser xml file. Check if its correct.";
+            description = SAX_PARSE_EXCEPTION_MESSAGE;
             errorMessage = exception.getMessage();
             bodyBuilder = badRequest();
         } else if (JAXBException.class.isInstance(originException)) {
             exception = JAXBException.class.cast(originException);
             logMessage = "JAXBException error: " + error.getMessage();
-            description = "Problem with the file format exported/uploaded.";
+            description = JAXB_EXCEPTION_MESSAGE;
             errorMessage = exception.getMessage();
             bodyBuilder = status(HttpStatus.INTERNAL_SERVER_ERROR);
         } else if(AmazonClientException.class.isInstance(originException)){
             exception = AmazonClientException.class.cast(originException);
             logMessage = "AmazonClientException error: " + error.getMessage();
-            description = "Problem trying to delete/get the activity/file :: Amazon S3 Problem";
+            description = AMAZON_CLIENT_EXCEPTION_MESSAGE;
             errorMessage = exception.getMessage();
             bodyBuilder = status(HttpStatus.INTERNAL_SERVER_ERROR);
         } else if(IOException.class.isInstance(originException)) {
             exception = IOException.class.cast(originException);
             logMessage = "IOException error: " + error.getMessage();
-            description = "Problem trying to get the file :: Input/Output Problem";
+            description = IO_EXCEPTION_MESSAGE;
             errorMessage = exception.getMessage();
             bodyBuilder = status(HttpStatus.INTERNAL_SERVER_ERROR);
+        } else if(IllegalArgumentException.class.isInstance(originException)) {
+            exception = IllegalArgumentException.class.cast(originException);
+            logMessage = "Illegal Argument Exception error: " + error.getMessage();
+            description = BAD_REQUEST_MESSAGE;
+            errorMessage = exception.getMessage();
+            bodyBuilder = badRequest();
         }
         log.error(logMessage);
         Response errorBody = new Response(true, description, errorMessage, toJson(exception));
