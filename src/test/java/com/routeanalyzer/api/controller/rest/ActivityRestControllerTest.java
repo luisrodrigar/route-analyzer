@@ -1,6 +1,7 @@
 package com.routeanalyzer.api.controller.rest;
 
 import com.google.common.collect.Lists;
+import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
 import com.routeanalyzer.api.common.TestUtils;
@@ -165,6 +166,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-without-point.json")
 	public void removeExistingPointTest() throws Exception {
 		// Given
 		String latitudePointToDelete = "42.6132170";
@@ -208,6 +210,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-without-lap.json")
 	public void removeLapActivityTest() throws Exception {
 		// Given
 		Activity removeLapActivity = toActivity(removeLapTcxJsonResource).get();
@@ -226,6 +229,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-without-laps.json")
 	public void removeLapsActivityTest() throws Exception {
 		// Given
 		String timeMillis1 = "1519737373000";
@@ -246,6 +250,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-join-laps.json")
 	public void joinLapsTest() throws Exception {
 		// Given
 		Activity joinLapsActivity = toActivity(joinLapsTcxJsonResource).get();
@@ -283,6 +288,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-split-lap.json")
 	public void splitLapTest() throws Exception {
 		// Given
 		Activity splitActivity = TestUtils.toActivity(splitTcxJsonResource).get();
@@ -341,6 +347,7 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx-lap-colors.json")
 	public void setColorLapsTest() throws Exception {
 		// Given
 		Activity lapColorsActivity = toActivity(lapColorsTcxJsonResource).get();

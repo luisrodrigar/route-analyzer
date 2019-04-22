@@ -50,9 +50,9 @@ public class TcxExportServiceImplTest {
     public void export() {
         // Given
         // When
-        Try result = Try.of(() -> tcxExportService.export(activityTcxTest));
+        Try<String> result = Try.of(() -> tcxExportService.export(activityTcxTest));
         // Then
-        result.onSuccess(tcxExportedFile ->assertThat(tcxExportedFile).isEqualTo(tcxExportedFile))
+        result.onSuccess(tcxExportedFile ->assertThat(tcxExportedFile).isEqualTo(tcxXmlString))
                 .onFailure(error -> assertThat(true).isFalse());
     }
 

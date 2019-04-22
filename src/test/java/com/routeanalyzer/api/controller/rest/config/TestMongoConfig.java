@@ -18,21 +18,17 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @ComponentScan(basePackageClasses = { ActivityMongoRepository.class })
 @EnableMongoRepositories
 public class TestMongoConfig extends AbstractMongoConfiguration {
-	
-	@Override
-	protected String getDatabaseName() {
-		return "routeanalyzer-test";
-	}
+
+    public static final String DATABASE_NAME = "routeanalyzer-test";
 
 	@Override
-	protected String getMappingBasePackage() {
-		return "com.routeanalyzer.api.database";
+	protected String getDatabaseName() {
+		return DATABASE_NAME;
 	}
 	
 	@Bean
-	@Override
 	public MongoClient mongoClient() {
-		return new Fongo("routeanalyzer-test").getMongo();
+		return new Fongo(DATABASE_NAME).getMongo();
 	}
 	
 	// Disabled the mongo db driver logger

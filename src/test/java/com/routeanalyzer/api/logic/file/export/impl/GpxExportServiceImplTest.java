@@ -50,7 +50,7 @@ public class GpxExportServiceImplTest {
     public void export() {
         // Given
         // When
-        Try result = Try.of(() -> gpxExportService.export(activityGpxTest));
+        Try<String> result = Try.of(() -> gpxExportService.export(activityGpxTest));
         // Then
         result.onSuccess(gpxExportedFile -> assertThat(gpxExportedFile).isEqualTo(gpxXmlString))
                 .onFailure(error -> assertThat(true).isFalse());

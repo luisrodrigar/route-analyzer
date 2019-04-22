@@ -1,6 +1,7 @@
 package com.routeanalyzer.api.controller.rest;
 
 import com.amazonaws.AmazonClientException;
+import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
 import com.routeanalyzer.api.common.TestUtils;
@@ -126,6 +127,7 @@ public class FileRestControllerTest extends MockMvcTestController {
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-gpx.json")
 	public void uploadGPXFileTest() throws Exception {
 		// Given
 		setPostFileBuilder(UPLOAD_FILE_PATH);
@@ -138,6 +140,7 @@ public class FileRestControllerTest extends MockMvcTestController {
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+	@ShouldMatchDataSet(location = "/controller/db-activity-tcx.json")
 	public void uploadTCXFileTest() throws Exception {
 		// Given
 		setPostFileBuilder(UPLOAD_FILE_PATH);
