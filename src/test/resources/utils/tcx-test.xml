@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<ns5:TrainingCenterDatabase xmlns:ns5="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
-                            xmlns:nsae="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+<ns5:TrainingCenterDatabase xmlns:ns5="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2" xmlns:nsup="http://www.garmin.com/xmlschemas/UserProfile/v2" xmlns:nsag="http://www.garmin.com/xmlschemas/ActivityGoals/v1" xmlns:nspe="http://www.garmin.com/xmlschemas/ProfileExtension/v1" xmlns:nsae="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
     <ns5:Activities>
         <ns5:Activity>
             <ns5:Id>2011-07-25T11:33:52.000+02:00</ns5:Id>

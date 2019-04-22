@@ -81,7 +81,7 @@ public class GpxUploadServiceImplTest {
         Exception jaxbException = new JAXBException("Problems with xml.");
         // When
         doThrow(toRuntimeException(jaxbException)).when(gpxService).readXML(Mockito.any());
-        Try result = Try.of(() -> gpxUploadService.upload(multipart));
+        Try<List<Activity>> result = Try.of(() -> gpxUploadService.upload(multipart));
         // Then
         result.onSuccess((success) -> assertThat(true).isTrue())
                 .onFailure(error -> {
