@@ -1,7 +1,7 @@
 package com.routeanalyzer.api.controller.rest;
 
 import com.routeanalyzer.api.common.CommonUtils;
-import com.routeanalyzer.api.common.Response;
+import com.routeanalyzer.api.controller.Response;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
@@ -144,10 +144,18 @@ public class ActivityRestController extends RestControllerBase {
 	@PutMapping(value = COLORS_LAP_PATH)
 	public @ResponseBody ResponseEntity<String> setColorLap(@PathVariable String id, @RequestParam String data) {
         Supplier<AtomicInteger> atomicIntegerSupplier = () -> new AtomicInteger();
-        Supplier<Response> okSupplier = () -> new Response(false,
-                "Lap's colors are updated.", null, null);
-        Supplier<Response> badRequestSupplier = () -> new Response(true,
-                "Not being possible to update lap's colors.", null, null);
+        Supplier<Response> okSupplier = () -> Response.builder()
+				.error(false)
+				.description("Lap's colors are updated.")
+				.errorMessage(null)
+				.exception(null)
+				.build();
+        Supplier<Response> badRequestSupplier = () -> Response.builder()
+				.error(true)
+				.description("Not being possible to update lap's colors.")
+				.errorMessage(null)
+				.exception(null)
+				.build();
 		return getOptionalActivityById(id)
 				.flatMap(activity -> ofNullable(data)
 						.map(this::toLapList)

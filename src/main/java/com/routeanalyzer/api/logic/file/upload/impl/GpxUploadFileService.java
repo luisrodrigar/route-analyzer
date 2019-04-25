@@ -36,9 +36,6 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
     private ActivityOperations activityOperations;
     private LapsOperations lapsOperations;
 
-    private final Function<List<TrksegType>, TrksegType> getFirstTrkSegType = trkSegTypes -> trkSegTypes.get(0);
-    private final Function<List<WptType>, WptType> getFirstWptType = wptTypeList -> wptTypeList.get(0);
-
     @Autowired
     public GpxUploadFileService(GPXService gpxService, ActivityOperations activityOperations,
                                 LapsOperations lapsOperations) {
@@ -70,9 +67,9 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                                     .map(AtomicInteger::get)
                                     .map(indexLapParam -> xmlGregorianCalendar)
                                     .orElseGet(() -> optTrkType.map(TrkType::getTrkseg)
-                                            .map(getFirstTrkSegType)
+                                            .map(CommonUtils::getFirstElement)
                                             .map(TrksegType::getTrkpt)
-                                            .map(getFirstWptType)
+                                            .map(CommonUtils::getFirstElement)
                                             .map(WptType::getTime).orElse(null)))
                             .flatMap(DateUtils::toLocalDateTime)
                             .ifPresent(activity::setDate));
@@ -86,7 +83,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                             Optional<TrksegType> optTrkSegType = ofNullable(trkSegType);
                             // Lap start time
                             optTrkSegType.map(TrksegType::getTrkpt)
-                                    .map(getFirstWptType)
+                                    .map(CommonUtils::getFirstElement)
                                     .map(WptType::getTime)
                                     .flatMap(DateUtils::toLocalDateTime)
                                     .ifPresent(lap::setStartTime);
