@@ -1,9 +1,11 @@
-package com.routeanalyzer.api.common;
+package com.routeanalyzer.api.controller;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 @AllArgsConstructor
 public class Response {
 

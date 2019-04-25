@@ -1,7 +1,7 @@
 package com.routeanalyzer.api.controller.rest;
 
 import com.amazonaws.AmazonClientException;
-import com.routeanalyzer.api.common.Response;
+import com.routeanalyzer.api.controller.Response;
 import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -69,7 +69,12 @@ public abstract class RestControllerBase {
             bodyBuilder = badRequest();
         }
         log.error(logMessage);
-        Response errorBody = new Response(true, description, errorMessage, toJson(exception));
+        Response errorBody = Response.builder()
+                .error(true)
+                .description(description)
+                .errorMessage(errorMessage)
+                .exception(toJson(exception))
+                .build();
         return bodyBuilder.headers(toJsonHeaders()).body(toJson(errorBody));
     };
 

@@ -1,6 +1,7 @@
 package com.routeanalyzer.api.logic.file.upload.impl;
 
 import com.google.common.collect.Lists;
+import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
@@ -224,7 +225,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                 IntStream.range(indexStart.get(), MathUtils.increaseUnit(indexEnd.get()))
                         .forEach(index -> of(course)
                             .map(CourseT::getTrack)
-                            .map(trackTs -> trackTs.get(0))
+                            .map(CommonUtils::getFirstElement)
                             .map(TrackT::getTrackpoint)
                             .map(trackPointTs -> trackPointTs.get(index))
                             .flatMap(trT -> of(indexTrackPoint)

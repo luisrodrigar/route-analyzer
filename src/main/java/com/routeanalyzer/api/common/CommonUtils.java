@@ -1,5 +1,6 @@
 package com.routeanalyzer.api.common;
 
+import com.routeanalyzer.api.controller.Response;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
@@ -17,6 +18,7 @@ import org.springframework.util.MultiValueMap;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +39,12 @@ public class CommonUtils {
 	public static <T> T toValueOrNull(String object, Function<String, T> convertTo) {
 		return ofNullable(object)
 				.map(convertTo)
+				.orElse(null);
+	}
+
+	public static <T> T getFirstElement(List<T> list) {
+		return ofNullable(list)
+				.map(listParam -> listParam.get(0))
 				.orElse(null);
 	}
 
@@ -181,14 +189,21 @@ public class CommonUtils {
 		return responseHeaders;
 	}
 
-	// Response
+	/**
+	 * Response Utils
+ 	 */
 
 	public static ResponseEntity<String> getFileExportResponse(String file, String id, String fileType) {
 		return ResponseEntity.ok().headers(toApplicationFileHeaders(id, fileType)).body(file);
 	}
 
 	public static ResponseEntity<String> toBadRequestParams() {
-		Response errorValue = new Response(true, BAD_REQUEST_MESSAGE, null, null);
+		Response errorValue = Response.builder()
+				.error(true)
+				.description(BAD_REQUEST_MESSAGE)
+				.errorMessage(null)
+				.exception(null)
+				.build();
 		return badRequest().headers(toJsonHeaders()).body(JsonUtils.toJson(errorValue));
 	}
 
