@@ -18,7 +18,6 @@ import org.springframework.util.MultiValueMap;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -223,7 +222,12 @@ public class CommonUtils {
 	 * String utils
 	 */
 	public static List<String> splitStringByDelimiter(String str, String delimiter) {
-		return Stream.of(str.split(delimiter)).filter(StringUtils::isNotEmpty).collect(Collectors.toList());
+		return ofNullable(str)
+				.map(stringParam ->
+						Stream.of(stringParam.split(delimiter))
+								.filter(StringUtils::isNotEmpty)
+								.collect(Collectors.toList()))
+				.orElseGet(Collections::emptyList);
 	}
 
 	public static String toStringValue(Object value) {
