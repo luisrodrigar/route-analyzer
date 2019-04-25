@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.CommonUtils.getFileExportResponse;
+import static com.routeanalyzer.api.common.CommonUtils.splitStringByDelimiter;
 import static com.routeanalyzer.api.common.Constants.COLORS_LAP_PATH;
 import static com.routeanalyzer.api.common.Constants.COLOR_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
@@ -123,8 +124,7 @@ public class ActivityRestController extends RestControllerBase {
 	@PutMapping(value = REMOVE_LAP_PATH)
 	public @ResponseBody ResponseEntity<String> removeLaps(@PathVariable String id,
 			@RequestParam(name = "date") String startTimeLaps, @RequestParam(name = "index") String indexLaps) {
-	    Function<String, List<String>> splitStringByComma = string -> ofNullable(string).map(stringParam ->
-                CommonUtils.splitStringByDelimiter(stringParam, COMMA_DELIMITER)).orElseGet(Collections::emptyList);
+	    Function<String, List<String>> splitStringByComma = string -> splitStringByDelimiter(string, COMMA_DELIMITER);
 	    return getOptionalActivityById(id)
 				.flatMap(activity -> ofNullable(indexLaps)
 						.map(splitStringByComma)
