@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.routeanalyzer.api.common.Constants.DELIMITER_COORDINATES;
-import static com.routeanalyzer.api.common.Constants.DELIMITER_POSITIONS;
+import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
+import static com.routeanalyzer.api.common.Constants.POSITIONS_DELIMITER;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
@@ -34,7 +34,7 @@ public class GoogleMapsServiceImpl implements ElevationService {
 		result.put("status", response.getStatus());
 		if("OK".equalsIgnoreCase(response.getStatus())){
 			response.getResults().forEach(eachResult -> {
-				String key = eachResult.getLocation().getLat() + DELIMITER_COORDINATES
+				String key = eachResult.getLocation().getLat() + COMMA_DELIMITER
 						+ eachResult.getLocation().getLng();
 				result.put(key, eachResult.getElevation().toString());
 			});
@@ -48,13 +48,13 @@ public class GoogleMapsServiceImpl implements ElevationService {
 		return trackPointList.stream()
 				.filter(isTrackValid)
 				.map(trackPoint ->
-						trackPoint.getPosition().getLatitudeDegrees() + DELIMITER_COORDINATES +
+						trackPoint.getPosition().getLatitudeDegrees() + COMMA_DELIMITER +
 								trackPoint.getPosition().getLongitudeDegrees())
-				.collect(Collectors.joining(DELIMITER_POSITIONS));
+				.collect(Collectors.joining(POSITIONS_DELIMITER));
 	}
 
 	public String getCoordinatesCode(TrackPoint trackPoint) {
-		return trackPoint.getPosition().getLatitudeDegrees() + DELIMITER_COORDINATES
+		return trackPoint.getPosition().getLatitudeDegrees() + COMMA_DELIMITER
 				+ trackPoint.getPosition().getLongitudeDegrees();
 	}
 

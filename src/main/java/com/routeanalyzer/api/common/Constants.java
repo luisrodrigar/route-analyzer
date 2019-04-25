@@ -7,8 +7,11 @@ public class Constants {
 
     public static final String SOURCE_GPX_XML = "gpx";
     public static final String SOURCE_TCX_XML = "tcx";
-    public static final String DELIMITER_POSITIONS = "|";
-    public static final String DELIMITER_COORDINATES = ",";
+    public static final String POSITIONS_DELIMITER = "|";
+    public static final String COMMA_DELIMITER = ",";
+    public static String LAP_DELIMITER = "@";
+    public static String COLOR_DELIMITER = "-";
+    public static String STARTED_HEX_CHAR = "#";
 
     private static final String ACTIVITY_ROOT_PATH = "/activity";
 

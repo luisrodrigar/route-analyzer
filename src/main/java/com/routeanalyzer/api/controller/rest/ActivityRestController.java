@@ -33,18 +33,18 @@ import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.CommonUtils.getFileExportResponse;
 import static com.routeanalyzer.api.common.Constants.COLORS_LAP_PATH;
+import static com.routeanalyzer.api.common.Constants.COLOR_DELIMITER;
+import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.EXPORT_AS_PATH;
 import static com.routeanalyzer.api.common.Constants.GET_ACTIVITY_PATH;
 import static com.routeanalyzer.api.common.Constants.JOIN_LAPS_PATH;
+import static com.routeanalyzer.api.common.Constants.LAP_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.REMOVE_LAP_PATH;
 import static com.routeanalyzer.api.common.Constants.REMOVE_POINT_PATH;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static com.routeanalyzer.api.common.Constants.SPLIT_LAP_PATH;
-import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.COLOR_DELIMITER;
-import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.COMMA_DELIMITER;
-import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.LAP_DELIMITER;
-import static com.routeanalyzer.api.logic.impl.LapsOperationsImpl.STARTED_HEX_CHAR;
+import static com.routeanalyzer.api.common.Constants.STARTED_HEX_CHAR;
 import static java.util.Optional.ofNullable;
 import static org.springframework.http.ResponseEntity.notFound;
 
