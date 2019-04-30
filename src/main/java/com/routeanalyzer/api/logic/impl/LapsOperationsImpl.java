@@ -33,7 +33,6 @@ import java.util.stream.Stream;
 
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
 @Service
@@ -82,8 +81,8 @@ public class LapsOperationsImpl implements LapsOperations {
 	public void calculateAltitude(Lap lap) {
 		String okStatus = "OK";
 		Predicate<Map<String, String>> isOKResponse = elevations -> okStatus.equalsIgnoreCase(elevations.get("status"));
-		Predicate<Lap> nonHasAltitudeValues = (lapParam) -> hasLapTrackPointValue(lapParam,
-				track -> isNull(track.getAltitudeMeters()));
+		Predicate<Lap> nonHasAltitudeValues = (lapParam) ->
+				hasLapTrackPointValue(lapParam, TrackPoint::getAltitudeMeters, Objects::isNull);
 		ofNullable(lap)
 				.filter(nonHasAltitudeValues)
 				.filter(hasPositionValues)
@@ -268,8 +267,7 @@ public class LapsOperationsImpl implements LapsOperations {
 		calculateAggregateSpeed(lap);
 	}
 
-	private Predicate<Lap> hasPositionValues = (lapParam) -> hasLapTrackPointValue(lapParam,
-			track -> nonNull(track.getPosition()));
+	private Predicate<Lap> hasPositionValues = (lapParam) -> hasLapTrackPointValue(lapParam, TrackPoint::getPosition, Objects::nonNull);
 
 	private Predicate<List<TrackPoint>> isNotEmpty = trackPointList -> !trackPointList.isEmpty();
 
@@ -409,14 +407,12 @@ public class LapsOperationsImpl implements LapsOperations {
 				setMaxHeartRate, setAvgHeartRate);
 	}
 
-	private void calculateLapAggregateValue(Lap lap, Function<TrackPoint, Number> getterValueMethod,
+	private void calculateLapAggregateValue(Lap lap, Function<TrackPoint, Object> getterValueMethod,
 											Function<Lap, Optional<Number>> getMaxValueLap,
 											Function<Lap, OptionalDouble> getAvgValueLap,
 											Consumer<Number> setMaxValue, Consumer<Number> setAvgValue) {
 		// Check if the lap has heart rate data
-		Predicate<Lap> hasLapValues = lapParam ->
-				hasLapTrackPointValue(lapParam, (track) -> ofNullable(track)
-						.map(getterValueMethod).map(Objects::nonNull).orElse(false));
+		Predicate<Lap> hasLapValues = lapParam -> hasLapTrackPointValue(lapParam, getterValueMethod, Objects::nonNull);
 		// Check if the lap has aggregate heart rate values such as average or maximum.
 		// Heart Rate
 		ofNullable(lap)
@@ -427,6 +423,7 @@ public class LapsOperationsImpl implements LapsOperations {
 							.ifPresent(setMaxValue);
 					ofNullable(lapParam)
 							.map(getAvgValueLap)
+							.filter(OptionalDouble::isPresent)
 							.map(OptionalDouble::getAsDouble)
 							.ifPresent(setAvgValue);
 				});
@@ -447,11 +444,12 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * 
 	 * @param lap
 	 * @param function
+	 * @param condition
 	 * @return
 	 */
-	private boolean hasLapTrackPointValue(Lap lap, Function<TrackPoint, Boolean> function) {
+	private boolean hasLapTrackPointValue(Lap lap, Function<TrackPoint, Object> function, Predicate<Object> condition) {
 		return getLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
-					.stream().map(function).reduce(Boolean::logicalAnd).orElse(false);
+				.stream().map(function).allMatch(condition);
 	}
 
 	/**
