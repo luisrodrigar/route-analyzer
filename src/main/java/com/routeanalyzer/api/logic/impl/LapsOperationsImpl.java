@@ -82,7 +82,7 @@ public class LapsOperationsImpl implements LapsOperations {
 		String okStatus = "OK";
 		Predicate<Map<String, String>> isOKResponse = elevations -> okStatus.equalsIgnoreCase(elevations.get("status"));
 		Predicate<Lap> nonHasAltitudeValues = (lapParam) ->
-				hasLapTrackPointValue(lapParam, TrackPoint::getAltitudeMeters, Objects::isNull);
+				lapTrackPointValueHasCondition(lapParam, TrackPoint::getAltitudeMeters, Objects::isNull);
 		ofNullable(lap)
 				.filter(nonHasAltitudeValues)
 				.filter(hasPositionValues)
@@ -157,7 +157,7 @@ public class LapsOperationsImpl implements LapsOperations {
 
 	@Override
 	public boolean fulfillCriteriaPositionTime(Lap lap, Position positionParam, Long timeInMillis, Integer index) {
-		return getLapField(lap, Lap::getTracks)
+		return getOptLapField(lap, Lap::getTracks)
 				.flatMap(tracks ->
 						ofNullable(positionParam)
 								.map(position ->
@@ -215,7 +215,7 @@ public class LapsOperationsImpl implements LapsOperations {
 				.map(SerializationUtils::clone)
 				.map(newLap -> {
 					newLap.setIndex(newLapIndex);
-					getLapField(lap, Lap::getTracks)
+					getOptLapField(lap, Lap::getTracks)
 							.ifPresent(trackPoints -> ofNullable(
 									MathUtils.sortingPositiveValues(initTrackPointIndex, endTrackPointIndex))
 									.filter(ArrayUtils::isNotEmpty)
@@ -267,12 +267,12 @@ public class LapsOperationsImpl implements LapsOperations {
 		calculateAggregateSpeed(lap);
 	}
 
-	private Predicate<Lap> hasPositionValues = (lapParam) -> hasLapTrackPointValue(lapParam, TrackPoint::getPosition, Objects::nonNull);
+	private Predicate<Lap> hasPositionValues = (lapParam) -> lapTrackPointValueHasCondition(lapParam, TrackPoint::getPosition, Objects::nonNull);
 
 	private Predicate<List<TrackPoint>> isNotEmpty = trackPointList -> !trackPointList.isEmpty();
 
 	private Optional<TrackPoint> getLastTrackPoint(Lap lap){
-		return getLapField(lap, Lap::getTracks)
+		return getOptLapField(lap, Lap::getTracks)
 				.flatMap(trackPointList -> ofNullable(trackPointList)
 						.filter(isNotEmpty)
 						.map(List::size)
@@ -284,25 +284,23 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	private Optional<TrackPoint> getFirstTrackPoint(Lap lap){
-		return getLapField(lap, Lap::getTracks)
+		return getOptLapField(lap, Lap::getTracks)
 				.filter(isNotEmpty)
 				.map(CommonUtils::getFirstElement);
 	}
 
 	private List<TrackPoint> joinTrackPointLaps(Lap lapLeft, Lap lapRight) {
-		return Stream
-				.concat(ofNullable(lapLeft).map(Lap::getTracks).orElseGet(Collections::emptyList).stream(),
-						ofNullable(lapRight).map(Lap::getTracks).orElseGet(Collections::emptyList).stream())
+		return Stream.concat(getTrackPoints(lapLeft).stream(), getTrackPoints(lapRight).stream())
 				.collect(Collectors.toList());
 	}
 
 	private Optional<Double> sumDoubleFieldLaps(Lap lapLeft, Lap lapRight, Function<Lap, Double> methodGetter) {
-		return Stream.of(getLapField(lapLeft, methodGetter), getLapField(lapRight, methodGetter))
+		return Stream.of(getOptLapField(lapLeft, methodGetter), getOptLapField(lapRight, methodGetter))
 				.reduce(Optional.empty(), (l1, l2) -> !l1.isPresent() ? l2 : !l2.isPresent() ? l1 : Optional.of(l1.get() + l2.get()));
 	}
 
 	private Optional<Integer> sumIntFieldLaps(Lap lapLeft, Lap lapRight, Function<Lap, Integer> methodGetter) {
-		return Stream.of(getLapField(lapLeft, methodGetter), getLapField(lapRight, methodGetter))
+		return Stream.of(getOptLapField(lapLeft, methodGetter), getOptLapField(lapRight, methodGetter))
 				.reduce(Optional.empty(), (l1, l2) -> !l1.isPresent() ? l2 : !l2.isPresent() ? l1 : Optional.of(l1.get() + l2.get()));
 	}
 
@@ -412,7 +410,8 @@ public class LapsOperationsImpl implements LapsOperations {
 											Function<Lap, OptionalDouble> getAvgValueLap,
 											Consumer<Number> setMaxValue, Consumer<Number> setAvgValue) {
 		// Check if the lap has heart rate data
-		Predicate<Lap> hasLapValues = lapParam -> hasLapTrackPointValue(lapParam, getterValueMethod, Objects::nonNull);
+		Predicate<Lap> hasLapValues = lapParam -> lapTrackPointValueHasCondition(lapParam, getterValueMethod,
+				Objects::nonNull);
 		// Check if the lap has aggregate heart rate values such as average or maximum.
 		// Heart Rate
 		ofNullable(lap)
@@ -429,14 +428,18 @@ public class LapsOperationsImpl implements LapsOperations {
 				});
 	}
 
+	private List<TrackPoint> getTrackPoints(Lap lap) {
+		return getOptLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList);
+	}
+
 	/**
 	 *
 	 * @param lap
 	 * @param methodGetter
-	 * @param <T>
+	 * @param <T> encapsulated in an Optional value
 	 * @return
 	 */
-	private <T> Optional<T> getLapField(Lap lap, Function<Lap, T> methodGetter) {
+	private <T> Optional<T> getOptLapField(Lap lap, Function<Lap, T> methodGetter) {
 		return ofNullable(lap).map(methodGetter);
 	}
 
@@ -447,8 +450,9 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * @param condition
 	 * @return
 	 */
-	private boolean hasLapTrackPointValue(Lap lap, Function<TrackPoint, Object> function, Predicate<Object> condition) {
-		return getLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
+	private boolean lapTrackPointValueHasCondition(Lap lap, Function<TrackPoint, Object> function,
+												   Predicate<Object> condition) {
+		return getOptLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
 				.stream().map(function).allMatch(condition);
 	}
 
@@ -459,7 +463,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * @return
 	 */
 	private Optional<TrackPoint> getMaxValueTrackPoint(Lap lap, Comparator<TrackPoint> comparator) {
-		return getLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
+		return getOptLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
 					.stream().max(comparator);
 	}
 
@@ -467,7 +471,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * 
 	 */
 	private OptionalDouble getAvgValueTrackPoint(Lap lap, ToDoubleFunction<TrackPoint> function) {
-		return getLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
+		return getOptLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
 				.stream().mapToDouble(function).average();
 	}
 
