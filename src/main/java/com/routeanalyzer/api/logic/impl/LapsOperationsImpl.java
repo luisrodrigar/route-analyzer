@@ -428,10 +428,6 @@ public class LapsOperationsImpl implements LapsOperations {
 				});
 	}
 
-	private List<TrackPoint> getTrackPoints(Lap lap) {
-		return getOptLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList);
-	}
-
 	/**
 	 *
 	 * @param lap
@@ -443,6 +439,10 @@ public class LapsOperationsImpl implements LapsOperations {
 		return ofNullable(lap).map(methodGetter);
 	}
 
+	private List<TrackPoint> getTrackPoints(Lap lap) {
+		return getOptLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList);
+	}
+
 	/**
 	 * 
 	 * @param lap
@@ -450,10 +450,9 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * @param condition
 	 * @return
 	 */
-	private boolean lapTrackPointValueHasCondition(Lap lap, Function<TrackPoint, Object> function,
-												   Predicate<Object> condition) {
-		return getOptLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
-				.stream().map(function).allMatch(condition);
+	private boolean lapTrackPointValueHasCondition(Lap lap, Function<TrackPoint,
+			Object> function, Predicate<Object> condition) {
+		return getTrackPoints(lap).stream().map(function).allMatch(condition);
 	}
 
 	/**
@@ -463,16 +462,14 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * @return
 	 */
 	private Optional<TrackPoint> getMaxValueTrackPoint(Lap lap, Comparator<TrackPoint> comparator) {
-		return getOptLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
-					.stream().max(comparator);
+		return getTrackPoints(lap).stream().max(comparator);
 	}
 
 	/**
 	 * 
 	 */
 	private OptionalDouble getAvgValueTrackPoint(Lap lap, ToDoubleFunction<TrackPoint> function) {
-		return getOptLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList)
-				.stream().mapToDouble(function).average();
+		return getTrackPoints(lap).stream().mapToDouble(function).average();
 	}
 
 }
