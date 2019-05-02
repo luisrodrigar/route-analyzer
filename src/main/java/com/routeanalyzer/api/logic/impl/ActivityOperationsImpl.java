@@ -88,33 +88,31 @@ public class ActivityOperationsImpl implements ActivityOperations {
 													.map(MathUtils::decreaseUnit))
 											.filter(lastPosition -> indexPosition < lastPosition)
 											.map(lastPosition -> indexPosition))
-									.flatMap(indexPosition ->
-										ofNullable(indexLap)
-												.map(laps::get)
-												.flatMap(lap -> of(lap)
-														.map(SerializationUtils::clone)
-														.map(lapSplitLeft -> lapsOperationsService.createSplitLap(lap,
-																	0, indexPosition, lap.getIndex()))
-														.flatMap(lapSplitLeft -> of(lap)
-																.map(SerializationUtils::clone)
-																.flatMap(lapSplitRight -> of(lap)
-																		.map(Lap::getIndex)
-																		.map(MathUtils::increaseUnit)
-																		.map(indexRightLap -> lapsOperationsService
-																				.createSplitLap(lap, indexPosition,
-																						lap.getTracks().size(), indexRightLap)))
-																.flatMap(lapSplitRight -> of(indexLap)
-																		.map(MathUtils::increaseUnit)
-																		.map(indexLapParam -> {
-																			increaseIndexFollowingLaps(indexLapParam, laps);
-																			return indexLapParam;
-																		})
-																		.map(indexRightLapParam -> {
-																			laps.remove(indexLap.intValue());
-																			laps.add(indexLap.intValue(), lapSplitLeft);
-																			laps.add(indexRightLapParam.intValue(), lapSplitRight);
-																			return activity;
-																		}))))))))
+									.flatMap(indexPosition -> ofNullable(indexLap)
+											.map(laps::get)
+											.flatMap(lap -> of(lap)
+													.map(SerializationUtils::clone)
+													.map(lapSplitLeft -> lapsOperationsService.createSplitLap(lap,
+															0, indexPosition, lap.getIndex()))
+													.flatMap(lapSplitLeft -> of(lap)
+															.map(SerializationUtils::clone)
+															.flatMap(lapSplitRight -> of(lap)
+																	.map(Lap::getIndex)
+																	.map(MathUtils::increaseUnit)
+																	.map(indexRightLap -> lapsOperationsService
+																			.createSplitLap(lap, indexPosition,
+																					lap.getTracks().size(), indexRightLap)))
+															.flatMap(lapSplitRight -> of(indexLap)
+																	.map(MathUtils::increaseUnit)
+																	.map(indexLapParam -> {
+																		increaseIndexFollowingLaps(indexLapParam, laps);
+																		return indexLapParam; })
+																	.map(indexRightLapParam -> {
+																		laps.remove(indexLap.intValue());
+																		laps.add(indexLap.intValue(), lapSplitLeft);
+																		laps.add(indexRightLapParam.intValue(), lapSplitRight);
+																		return activity; })
+															)))))))
 				.orElse(null);
 	}
 
