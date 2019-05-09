@@ -199,18 +199,19 @@ public class LapsOperationsImpl implements LapsOperations {
 				.flatMap(sizeOfTrackPoints -> ofNullable(lap)
 						.map(Lap::getCalories)
 						.map(calories -> calories * sizeOfTrackPoints))
-				.flatMap(sizeOfTrackPointsCalories -> ofNullable(newLap)
-						.map(Lap::getTracks)
-						.map(List::size)
-						.map(sizeNewLapTrackPoints -> sizeNewLapTrackPoints / sizeOfTrackPointsCalories )
-						.map(Math::round)
-						.map(Long::new)
-						.map(Long::intValue))
-				.map(calories -> {
-					newLap.setCalories(calories);
-					return newLap;
-				})
-				.orElse(null);
+						.filter(MathUtils::isPositiveNonZero)
+						.flatMap(sizeOfTrackPointsCalories -> ofNullable(newLap)
+								.map(Lap::getTracks)
+								.map(List::size)
+								.map(sizeNewLapTrackPoints -> sizeNewLapTrackPoints / sizeOfTrackPointsCalories )
+								.map(Math::round)
+								.map(Long::new)
+								.map(Long::intValue))
+						.map(calories -> {
+							newLap.setCalories(calories);
+							return newLap;
+						})
+						.orElse(null);
 		return ofNullable(lap)
 				.map(SerializationUtils::clone)
 				.map(newLap -> {
