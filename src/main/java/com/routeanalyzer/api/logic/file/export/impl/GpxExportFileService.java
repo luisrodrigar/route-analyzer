@@ -101,21 +101,18 @@ public class GpxExportFileService implements ExportFileService {
         return ofNullable(act).map(Activity::getLaps)
                 .flatMap(this::toOptionalTrkType)
                 .map(addTrkType)
-                .flatMap(gpxType ->
-                        ofNullable(act).map(Activity::getDate)
+                .map(gpxType -> {
+                        of(act)
+                                .map(Activity::getDate)
                                 .flatMap(DateUtils::toDate)
                                 .map(DateUtils::createGregorianCalendar)
                                 .map(DateUtils::createXmlGregorianCalendar)
                                 .map(generateMetadata)
-                                .map(metadataType -> {
-                                    gpxType.setMetadata(metadataType);
-                                    return act;
-                                })
+                                .ifPresent(gpxType::setMetadata);
+                        of(act)
                                 .map(Activity::getDevice)
-                                .map(device -> {
-                                    gpxType.setCreator(device);
-                                    return gpxType;
-                                }))
+                                .ifPresent(gpxType::setCreator);
+                        return gpxType;})
                 .map(objectFactorySupplier.get()::createGpx)
                 .map(gpxService::createXML)
                 .orElse(StringUtils.EMPTY);
