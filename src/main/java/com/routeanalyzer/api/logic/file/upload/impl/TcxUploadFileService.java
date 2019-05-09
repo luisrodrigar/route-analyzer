@@ -256,6 +256,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                         .filter(ActivityLapExtensionT.class::isInstance)
                         .map(ActivityLapExtensionT.class::cast)
                         .map(ActivityLapExtensionT::getAvgSpeed)
+                        .filter(Objects::nonNull)
                         .findFirst()
                         .ifPresent(modelLap::setAverageSpeed));
     }
@@ -272,6 +273,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                         .filter(ActivityTrackpointExtensionT.class::isInstance)
                         .map(ActivityTrackpointExtensionT.class::cast)
                         .map(ActivityTrackpointExtensionT::getSpeed)
+                        .filter(Objects::nonNull)
                         .map(MathUtils::toBigDecimal)
                         .findFirst()
                         .ifPresent(speed -> modelTrackPoint.setSpeed(speed))
