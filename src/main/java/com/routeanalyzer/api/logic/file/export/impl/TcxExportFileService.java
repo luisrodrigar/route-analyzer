@@ -118,7 +118,7 @@ public class TcxExportFileService implements ExportFileService {
     private Function<ActivityT, Function<Activity, ActivityT>> getSetterActivityField = activityT -> activity -> {
         // Sport is an enum
         of(activity).map(Activity::getSport)
-                .map(SportT::valueOf)
+                .map(SportT::fromValue)
                 .ifPresent(activityT::setSport);
 
         // Set xml gregorian calendar date
@@ -185,7 +185,7 @@ public class TcxExportFileService implements ExportFileService {
                                 .ifPresent(lapT::setTotalTimeSeconds);
                         // Intensity
                         optLap.map(Lap::getIntensity)
-                                .map(IntensityT::valueOf)
+                                .map(IntensityT::fromValue)
                                 .ifPresent(lapT::setIntensity);
                         // Average speed
                         optLap.map(Lap::getAverageSpeed)
