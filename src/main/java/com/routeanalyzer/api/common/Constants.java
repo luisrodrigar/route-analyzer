@@ -35,4 +35,8 @@ public class Constants {
     public static final String IO_EXCEPTION_MESSAGE = "Problem trying to get the file :: Input/Output Problem";
     public static final String BAD_REQUEST_MESSAGE = "Activity was not found or other params are not valid.";
     public static final String BAD_TYPE_MESSAGE = "Xml file type not found";
+
+    public static final String KEY_TO_ENCRYPT = "route-analyzer-k";
+    public static final String INIT_VECTOR = "RandomInitVector";
+
 }

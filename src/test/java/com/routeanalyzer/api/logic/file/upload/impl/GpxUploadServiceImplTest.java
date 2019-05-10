@@ -1,6 +1,6 @@
 package com.routeanalyzer.api.logic.file.upload.impl;
 
-import com.routeanalyzer.api.common.TestUtils;
+import utils.TestUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.model.Activity;
@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.routeanalyzer.api.common.JsonUtils.fromJson;
-import static com.routeanalyzer.api.common.TestUtils.toRuntimeException;
+import static utils.TestUtils.toRuntimeException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
