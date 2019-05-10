@@ -8,8 +8,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class EncrypterTest {
 
-    public static final String RESULT_EXPECTED = "AKIA4NWBTY2YUG7EHHEA";
-    public static final String ENCODED_STR = "DlM1pGPUM6CcV2SkAI6xMCD3C926uxdOsb1W3J2vkdc=";
+    public static final String RESULT_EXPECTED = "rTDAasfasgASDFASFasfasa";
+    public static final String ENCODED_STR = "LSE+bVLIUmXOyhadEwDQ0mhhJ2hs0IHjePuQgH9Zpn8=";
 
     @Test
     public void encryptTest() {
