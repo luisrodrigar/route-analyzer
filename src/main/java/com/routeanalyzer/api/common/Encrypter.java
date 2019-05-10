@@ -11,6 +11,10 @@ import javax.crypto.spec.SecretKeySpec;
 import static com.routeanalyzer.api.common.Constants.INIT_VECTOR;
 import static com.routeanalyzer.api.common.Constants.KEY_TO_ENCRYPT;
 
+/**
+ * Encrypter with AES of 128bytes.
+ * Using Cipher java class
+ */
 @UtilityClass
 public class Encrypter {
     public static String encrypt(String value) {
