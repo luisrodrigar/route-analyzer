@@ -1,12 +1,15 @@
 package com.routeanalyzer.api.common;
 
+import com.google.common.base.Charsets;
 import com.routeanalyzer.api.controller.Response;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.api.xml.tcx.PositionT;
 import com.routeanalyzer.api.xml.tcx.TrackpointT;
+import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,17 +18,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
+import java.security.SecureRandom;
+import java.security.spec.KeySpec;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.INIT_VECTOR;
+import static com.routeanalyzer.api.common.Constants.KEY_TO_ENCRYPT;
 import static com.routeanalyzer.api.common.JsonUtils.toJson;
 import static java.util.Optional.ofNullable;
 import static org.springframework.http.ResponseEntity.badRequest;

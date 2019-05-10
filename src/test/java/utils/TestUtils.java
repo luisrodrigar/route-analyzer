@@ -1,8 +1,9 @@
-package com.routeanalyzer.api.common;
+package utils;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.mongodb.Function;
+import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.model.Activity;
 import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
@@ -25,16 +26,12 @@ public class TestUtils {
 
 	public static Supplier<Activity> createUnknownActivity = () -> Activity.builder().build();
 
-	public static byte[] getFileBytes(Resource resource) {
-		Function<Path, Try<byte[]>> toByteArray = path -> Try.of(() -> Files.readAllBytes(path));
-		return Try.of(() -> resource.getFile().toPath()).flatMap(toByteArray::apply).getOrNull();
-	}
-
 	public static Function<Path, BufferedReader> toBufferedReader = path -> Try.of(() ->
 			Files.newBufferedReader(path, StandardCharsets.UTF_8)).getOrNull();
 
-	public static LocalDateTime toLocalDateTime(long timeMillis) {
-		return Instant.ofEpochMilli(timeMillis).atZone(ZoneId.systemDefault()).toLocalDateTime();
+	public static byte[] getFileBytes(Resource resource) {
+		Function<Path, Try<byte[]>> toByteArray = path -> Try.of(() -> Files.readAllBytes(path));
+		return Try.of(() -> resource.getFile().toPath()).flatMap(toByteArray::apply).getOrNull();
 	}
 
 	public static RuntimeException toRuntimeException(Exception exception) {

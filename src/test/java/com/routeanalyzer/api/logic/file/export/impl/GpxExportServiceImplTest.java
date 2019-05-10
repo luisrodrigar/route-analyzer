@@ -1,6 +1,6 @@
 package com.routeanalyzer.api.logic.file.export.impl;
 
-import com.routeanalyzer.api.common.TestUtils;
+import utils.TestUtils;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.GPXService;
 import io.vavr.control.Try;
@@ -17,7 +17,7 @@ import javax.xml.bind.JAXBException;
 import java.nio.charset.StandardCharsets;
 
 import static com.routeanalyzer.api.common.JsonUtils.fromJson;
-import static com.routeanalyzer.api.common.TestUtils.toRuntimeException;
+import static utils.TestUtils.toRuntimeException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
