@@ -7,6 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
+import java.util.Optional;
+
 import static java.util.Optional.ofNullable;
 
 public abstract class ExportFileService<T> {
@@ -25,10 +27,10 @@ public abstract class ExportFileService<T> {
      */
     public String export(Activity act) {
         return ofNullable(act)
-                .map(this::convertToXmlObjects)
+                .flatMap(this::convertToXmlObjects)
                 .map(xmlService::createXML)
                 .orElse(StringUtils.EMPTY);
     }
 
-    public abstract JAXBElement<T> convertToXmlObjects(Activity activity);
+    public abstract Optional<JAXBElement<T>> convertToXmlObjects(Activity activity);
 }

@@ -39,15 +39,14 @@ public class GpxExportFileService extends ExportFileService<GpxType> {
     }
 
     @Override
-    public JAXBElement<GpxType> convertToXmlObjects(Activity activity) {
+    public Optional<JAXBElement<GpxType>> convertToXmlObjects(Activity activity) {
         return ofNullable(activity)
                 .map(Activity::getLaps)
                 .flatMap(this::toOptionalTrkType)
                 .map(addTrkType)
                 .map(addGlobalData)
                 .map(adderGlobalData -> adderGlobalData.apply(activity))
-                .map(objectFactorySupplier.get()::createGpx)
-                .orElse(null);
+                .map(objectFactorySupplier.get()::createGpx);
     }
 
     /**

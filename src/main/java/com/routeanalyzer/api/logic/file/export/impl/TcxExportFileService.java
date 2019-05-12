@@ -46,7 +46,7 @@ public class TcxExportFileService extends ExportFileService<TrainingCenterDataba
     }
 
     @Override
-    public JAXBElement<TrainingCenterDatabaseT> convertToXmlObjects(Activity activity) {
+    public Optional<JAXBElement<TrainingCenterDatabaseT>> convertToXmlObjects(Activity activity) {
         return ofNullable(activity)
                 .map(Activity::getLaps)
                 .map(this::toTcxLaps)
@@ -54,8 +54,7 @@ public class TcxExportFileService extends ExportFileService<TrainingCenterDataba
                 .map(getSetterActivityField::apply)
                 .map(setActivityField -> setActivityField.apply(activity))
                 .flatMap(createTrainingCenterDatabase)
-                .map(objectFactorySupplier.get()::createTrainingCenterDatabase)
-                .orElse(null);
+                .map(objectFactorySupplier.get()::createTrainingCenterDatabase);
     }
 
     /**
