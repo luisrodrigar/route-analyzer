@@ -39,13 +39,24 @@ import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 @Service
-public class TcxExportFileService implements ExportFileService {
-
-    private TCXService tcxService;
+public class TcxExportFileService extends ExportFileService<TrainingCenterDatabaseT> {
 
     @Autowired
     public TcxExportFileService(TCXService tcxService) {
-        this.tcxService = tcxService;
+        super(tcxService);
+    }
+
+    @Override
+    public JAXBElement<TrainingCenterDatabaseT> convertToXmlObjects(Activity activity) {
+        return ofNullable(activity)
+                .map(Activity::getLaps)
+                .map(this::toTcxLaps)
+                .map(addActivityLaps)
+                .map(getSetterActivityField::apply)
+                .map(setActivityField -> setActivityField.apply(activity))
+                .flatMap(createTrainingCenterDatabase)
+                .map(objectFactorySupplier.get()::createTrainingCenterDatabase)
+                .orElse(null);
     }
 
     /**
@@ -129,20 +140,6 @@ public class TcxExportFileService implements ExportFileService {
                 .ifPresent(activityT::setId);
         return activityT;
     };
-
-    @Override
-    public String export(Activity act) throws RuntimeException {
-        return ofNullable(act)
-                .map(Activity::getLaps)
-                .map(this::toTcxLaps)
-                .map(addActivityLaps)
-                .map(getSetterActivityField::apply)
-                .map(setActivityField -> setActivityField.apply(act))
-                .flatMap(createTrainingCenterDatabase)
-                .map(objectFactorySupplier.get()::createTrainingCenterDatabase)
-                .map(tcxService::createXML)
-                .orElse(StringUtils.EMPTY);
-    }
 
     private List<ActivityLapT> toTcxLaps(List<Lap> optLapList) {
         ObjectFactory extensionFactory =

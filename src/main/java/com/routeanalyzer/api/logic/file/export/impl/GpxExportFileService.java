@@ -32,13 +32,23 @@ import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 @Service
-public class GpxExportFileService implements ExportFileService {
-
-    private GPXService gpxService;
+public class GpxExportFileService extends ExportFileService<GpxType> {
 
     @Autowired
     public GpxExportFileService(GPXService gpxService) {
-        this.gpxService = gpxService;
+        super(gpxService);
+    }
+
+    @Override
+    public JAXBElement<GpxType> convertToXmlObjects(Activity activity) {
+        return ofNullable(activity)
+                .map(Activity::getLaps)
+                .flatMap(this::toOptionalTrkType)
+                .map(addTrkType)
+                .map(addGlobalData)
+                .map(adderGlobalData -> adderGlobalData.apply(activity))
+                .map(objectFactorySupplier.get()::createGpx)
+                .orElse(null);
     }
 
     /**
@@ -55,11 +65,31 @@ public class GpxExportFileService implements ExportFileService {
     private Supplier<ExtensionsType> createExtensionsType = () -> new ExtensionsType();
     private Supplier<MetadataType> createMetadataType = () -> new MetadataType();
 
+    private Function<XMLGregorianCalendar, MetadataType> generateMetadata = xmlGregorianCalendar -> {
+        MetadataType metadata = createMetadataType.get();
+        metadata.setTime(xmlGregorianCalendar);
+        return metadata;
+    };
+
     /**
      *
      * Functions
      *
      */
+    private Function<GpxType, Function<Activity, GpxType>> addGlobalData = gpxType -> act -> {
+        of(act)
+                .map(Activity::getDate)
+                .flatMap(DateUtils::toDate)
+                .map(DateUtils::createGregorianCalendar)
+                .map(DateUtils::createXmlGregorianCalendar)
+                .map(generateMetadata)
+                .ifPresent(gpxType::setMetadata);
+        of(act)
+                .map(Activity::getDevice)
+                .ifPresent(gpxType::setCreator);
+        return gpxType;
+    };
+
     private Function<List<TrksegType>, TrkType> addTrkSegType = trkSegTypes -> {
         TrkType trkType = createTrkType.get();
         trkType.getTrkseg().addAll(trkSegTypes);
@@ -86,37 +116,10 @@ public class GpxExportFileService implements ExportFileService {
         gpx.addTrk(trkType);
         return gpx;
     };
-    private Function<XMLGregorianCalendar, MetadataType> generateMetadata = xmlGregorianCalendar -> {
-        MetadataType metadata = createMetadataType.get();
-        metadata.setTime(xmlGregorianCalendar);
-        return metadata;
-    };
     private Function<ExtensionsType, Function<WptType, WptType>> getAdderExtensions = extensionsType -> wpt -> {
         wpt.setExtensions(extensionsType);
         return wpt;
     };
-
-    @Override
-    public String export(Activity act) throws RuntimeException {
-        return ofNullable(act).map(Activity::getLaps)
-                .flatMap(this::toOptionalTrkType)
-                .map(addTrkType)
-                .map(gpxType -> {
-                        of(act)
-                                .map(Activity::getDate)
-                                .flatMap(DateUtils::toDate)
-                                .map(DateUtils::createGregorianCalendar)
-                                .map(DateUtils::createXmlGregorianCalendar)
-                                .map(generateMetadata)
-                                .ifPresent(gpxType::setMetadata);
-                        of(act)
-                                .map(Activity::getDevice)
-                                .ifPresent(gpxType::setCreator);
-                        return gpxType;})
-                .map(objectFactorySupplier.get()::createGpx)
-                .map(gpxService::createXML)
-                .orElse(StringUtils.EMPTY);
-    }
 
     private Optional<TrkType> toOptionalTrkType(List<Lap> laps) {
         return of(laps.stream()
