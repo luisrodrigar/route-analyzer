@@ -79,7 +79,7 @@ public class ActivityRestController extends RestControllerBase {
 				.flatMap(activity -> ofNullable(type)
 						.filter(StringUtils::isNotEmpty)
 						.map(String::toLowerCase)
-						.map(typeLowerCase -> getResponseByType(typeLowerCase, activity)))
+						.map(typeLowerCase -> exportByType(typeLowerCase, activity)))
 				.orElseGet(CommonUtils::toBadRequestParams);
 
 	}
@@ -223,7 +223,7 @@ public class ActivityRestController extends RestControllerBase {
 				.flatMap(mongoRepository::findById);
 	}
 
-	private ResponseEntity<String> getResponseByType(String type, Activity activity) {
+	private ResponseEntity<String> exportByType(String type, Activity activity) {
 		switch (type.toLowerCase()) {
 			case SOURCE_TCX_XML:
 				return Try.of(() -> tcxExportService.export(activity))

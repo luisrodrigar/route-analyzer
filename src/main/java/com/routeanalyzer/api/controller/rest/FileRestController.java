@@ -121,11 +121,11 @@ public class FileRestController extends RestControllerBase {
 	}
 
 	Function<MultipartFile, Optional<String>> uploadTcxFile = multipartFile ->
-			getBodyResponse(multipartFile, tcxService);
+			upload(multipartFile, tcxService);
 	Function<MultipartFile, Optional<String>> uploadGpxFile = multipartFile ->
-			getBodyResponse(multipartFile, gpxService);
+			upload(multipartFile, gpxService);
 
-	private Optional<String> getBodyResponse(MultipartFile multiPart, UploadFileService service) {
+	private Optional<String> upload(MultipartFile multiPart, UploadFileService service) {
 		Function<List<String>, Optional<String>> createJsonIds = ids -> ofNullable(ids).map(JsonUtils::toJson);
 		return ofNullable(multiPart)
 				.map(unchecked(MultipartFile::getBytes))
