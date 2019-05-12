@@ -15,7 +15,6 @@ import com.routeanalyzer.api.xml.gpx11.TrksegType;
 import com.routeanalyzer.api.xml.gpx11.WptType;
 import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.ObjectFactory;
 import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

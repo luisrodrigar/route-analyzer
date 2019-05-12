@@ -1,13 +1,11 @@
 package com.routeanalyzer.api.logic.file.export;
 
 import com.routeanalyzer.api.model.Activity;
-import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.services.reader.AbstractXMLService;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import java.util.List;
 
 import static java.util.Optional.ofNullable;
 
