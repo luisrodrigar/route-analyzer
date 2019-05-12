@@ -1,5 +1,7 @@
 package com.routeanalyzer.api.logic.file.upload;
 
+import com.routeanalyzer.api.logic.ActivityOperations;
+import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.AbstractXMLService;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,9 +16,14 @@ import static java.util.Optional.ofNullable;
 public abstract class UploadFileService<T> {
 
     protected AbstractXMLService<T> xmlService;
+    protected ActivityOperations activityOperationsService;
+    protected LapsOperations lapsOperationsService;
 
-    public UploadFileService(AbstractXMLService<T> xmlService) {
+    public UploadFileService(AbstractXMLService<T> xmlService, ActivityOperations activityOperations,
+                             LapsOperations lapsOperations) {
         this.xmlService = xmlService;
+        this.activityOperationsService = activityOperations;
+        this.lapsOperationsService = lapsOperations;
     }
 
     /**
