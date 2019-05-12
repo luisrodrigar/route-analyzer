@@ -19,11 +19,11 @@ import static java.util.Optional.ofNullable;
 @Service
 public class TrackPointOperationsImpl implements TrackPointOperations {
 
-	private PositionOperations positionUtils;
+	private PositionOperations positionUtilsService;
 
 	@Autowired
 	public TrackPointOperationsImpl(PositionOperations positionUtils) {
-		this.positionUtils = positionUtils;
+		this.positionUtilsService = positionUtils;
 	}
 
 	@Override
@@ -36,7 +36,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 						.flatMap(latitudeDegrees -> ofNullable(position)
 								.map(Position::getLongitudeDegrees)
 								.map(longitudeDegrees ->
-										positionUtils.isThisPosition(positionParam, latitudeDegrees, longitudeDegrees)))
+										positionUtilsService.isThisPosition(positionParam, latitudeDegrees, longitudeDegrees)))
 				).orElse(false);
 		// Time Millis
 		boolean isTimeMillis = isEqualsValueTrack(track, TrackPoint::getDate,
@@ -55,7 +55,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 				.map(TrackPoint::getPosition)
 				.flatMap(originPosition -> ofNullable(end)
 						.map(TrackPoint::getPosition)
-						.map(endPosition -> positionUtils.calculateDistance(originPosition, endPosition)))
+						.map(endPosition -> positionUtilsService.calculateDistance(originPosition, endPosition)))
 				.orElse(null);
 	}
 
