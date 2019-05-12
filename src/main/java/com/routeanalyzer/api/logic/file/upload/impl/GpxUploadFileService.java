@@ -32,15 +32,10 @@ import static java.util.Optional.ofNullable;
 @Service
 public class GpxUploadFileService extends UploadFileService<GpxType> {
 
-    private ActivityOperations activityOperations;
-    private LapsOperations lapsOperations;
-
     @Autowired
-    public GpxUploadFileService(GPXService gpxService, ActivityOperations activityOperations,
-                                LapsOperations lapsOperations) {
-        super(gpxService);
-        this.activityOperations = activityOperations;
-        this.lapsOperations = lapsOperations;
+    public GpxUploadFileService(GPXService gpxService, ActivityOperations activityOperationsService,
+                                LapsOperations lapsOperationsService) {
+        super(gpxService, activityOperationsService, lapsOperationsService);
     }
 
     /**
@@ -91,12 +86,12 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                             // Set all the track point in lap object
                             setTrackPoints(lap, optTrkSegType, indexTrackPoint);
                             // calculating lap values
-                            lapsOperations.calculateLapValues(lap);
+                            lapsOperationsService.calculateLapValues(lap);
                             // adding lap
                             activity.addLap(lap);
                         }));
                     // calculating distance speed values
-                    activityOperations.calculateDistanceSpeedValues(activity);
+                    activityOperationsService.calculateDistanceSpeedValues(activity);
                     // adding activity
                     return activity;
                 }).collect(Collectors.toList())

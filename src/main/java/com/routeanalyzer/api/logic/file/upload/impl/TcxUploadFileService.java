@@ -51,15 +51,10 @@ import static java.util.Optional.ofNullable;
 @Service
 public class TcxUploadFileService extends UploadFileService<TrainingCenterDatabaseT> {
 
-    private ActivityOperations activityOperations;
-    private LapsOperations lapsOperations;
-
     @Autowired
-    public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperations,
-                                LapsOperations lapsOperations) {
-        super(tcxService);
-        this.activityOperations = activityOperations;
-        this.lapsOperations = lapsOperations;
+    public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperationsService,
+                                LapsOperations lapsOperationsService) {
+        super(tcxService, activityOperationsService, lapsOperationsService);
     }
 
     private Function<PositionT, Predicate<Position>> getIsThisPosition = positionT -> positionToCompare ->
@@ -162,10 +157,10 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                                                         }))
                                                 .ifPresent(lap::addTrack))));
                 // Calculate values not informed of a lap.
-                lapsOperations.calculateLapValues(lap);
+                lapsOperationsService.calculateLapValues(lap);
                 activity.addLap(lap);
             });
-            activityOperations.calculateDistanceSpeedValues(activity);
+            activityOperationsService.calculateDistanceSpeedValues(activity);
             activities.add(activity);
         });
         return activities;
@@ -237,10 +232,10 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                                     }))
                             .ifPresent(lap::addTrack));
                 // Calculate values not informed of a lap.
-                lapsOperations.calculateLapValues(lap);
+                lapsOperationsService.calculateLapValues(lap);
                 activity.addLap(lap);
             });
-            activityOperations.calculateDistanceSpeedValues(activity);
+            activityOperationsService.calculateDistanceSpeedValues(activity);
             activities.add(activity);
         });
         return activities;
