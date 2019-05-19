@@ -1,32 +1,22 @@
 package com.routeanalyzer.api.services.googlemaps;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.common.collect.Lists;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GMResponse {
 	private String status;
-	private List<GMResult> results;
-
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-
-	public List<GMResult> getResults() {
-		return results;
-	}
-
-	public void setResults(List<GMResult> results) {
-		this.results = results;
-	}
-
-	@Override
-	public String toString() {
-		return "GMResponse [status=" + status + ", results=" + results + "]";
-	}
+	@Builder.Default
+	private List<GMResult> results = Lists.newArrayList();
 }
