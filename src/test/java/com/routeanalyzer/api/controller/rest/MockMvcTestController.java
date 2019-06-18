@@ -1,6 +1,7 @@
 package com.routeanalyzer.api.controller.rest;
 
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
+import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.model.Activity;
 import org.junit.Rule;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static com.lordofthejars.nosqlunit.mongodb.MongoDbRule.MongoDbRuleBuilder.newMongoDbRule;
-import static com.routeanalyzer.api.common.JsonUtils.toJson;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -59,7 +59,7 @@ public class MockMvcTestController {
 	 *            description of the error which is expected to generate
 	 * @param descriptionException:
 	 *            description of the exception which is expected to generate
-	 * @throws Exception
+	 * @throws Exception: exception if occurs something
 	 */
 	protected void isThrowingExceptionByMockMultipartHTTPPost(MockMultipartFile file, ResultMatcher expectedResponse,
 			String xmlType, String descriptionError, Object descriptionException) throws Exception {
@@ -70,7 +70,7 @@ public class MockMvcTestController {
 		mockMvc.perform(builder.file(file).param(typeField, xmlType)).andExpect(expectedResponse)
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(jsonPath(errorField, is(true))).andExpect(jsonPath(descriptionField, is(descriptionError)))
-				.andExpect(jsonPath(exceptionField, is(toJson(descriptionException))));
+				.andExpect(jsonPath(exceptionField, is(JsonUtils.toJson(descriptionException))));
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class MockMvcTestController {
 	 *            type of the file which is uploading
 	 * @param descriptionError:
 	 *            description of the error which is expected to generate
-	 * @throws Exception
+	 * @throws Exception: exception if occurs something
 	 */
 	protected void isGenerateErrorByMockMultipartHTTPPost(MockMultipartFile file, ResultMatcher expectedResponse,
 			String xmlType, String descriptionError) throws Exception {
@@ -104,7 +104,7 @@ public class MockMvcTestController {
 	 *            description of the error which is expected to generate
 	 * @param isError
 	 * 			  boolean it determines if it is an error or not
-	 * @throws Exception
+	 * @throws Exception: exception if occurs something
 	 */
 	protected void isGenerateErrorHTTP(RequestBuilder requestBuilder, ResultMatcher expectedResponse,
 			String descriptionError, boolean isError) throws Exception {
@@ -126,7 +126,7 @@ public class MockMvcTestController {
 	 *            description of the error which is expected to generate
 	 * @param exceptionError
 	 * 			  exception error generated
-	 * @throws Exception
+	 * @throws Exception: exception if occurs something
 	 */
 	protected void isThrowingExceptionHTTP(RequestBuilder requestBuilder, ResultMatcher expectedResponse,
 			String descriptionError, Exception exceptionError) throws Exception {
@@ -135,7 +135,7 @@ public class MockMvcTestController {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(jsonPath(errorField, is(true)))
 				.andExpect(jsonPath(descriptionField, is(descriptionError)))
-				.andExpect(jsonPath(exceptionField, equalTo(toJson(exceptionError))));
+				.andExpect(jsonPath(exceptionField, equalTo(JsonUtils.toJson(exceptionError))));
 	}
 	
 	/**
@@ -147,7 +147,7 @@ public class MockMvcTestController {
 	 *            expected response/value
 	 * @param descriptionError:
 	 *            description of the error which is expected to generate
-	 * @throws Exception
+	 * @throws Exception: exception if occurs something
 	 */
 	protected void isThrowingExceptionHTTP(RequestBuilder requestBuilder, ResultMatcher expectedResponse,
 			String descriptionError) throws Exception {
@@ -164,12 +164,12 @@ public class MockMvcTestController {
 	 *            to build the request
 	 * @param activity:
 	 *            activity expected
-	 * @throws Exception
+	 * @throws Exception: exception if occurs something
 	 */
 	protected void isReturningActivityHTTP(RequestBuilder requestBuilder, Activity activity) throws Exception {
 		mockMvc.perform(requestBuilder).andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
-				.andExpect(content().json(toJson(activity)));
+				.andExpect(content().json(JsonUtils.toJson(activity)));
 	}
 	
 	/**
@@ -178,7 +178,7 @@ public class MockMvcTestController {
 	 *            to build the request
 	 * @param mediaType:
 	 *            activity expected
-	 * @throws Exception
+	 * @throws Exception: exception if occurs something
 	 */
 	protected void isReturningFileHTTP(RequestBuilder requestBuilder, MediaType mediaType) throws Exception {
 		mockMvc.perform(requestBuilder).andExpect(status().isOk())

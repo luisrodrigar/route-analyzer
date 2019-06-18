@@ -1,10 +1,10 @@
 package com.routeanalyzer.api.controller.rest;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import utils.TestUtils;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
 import com.routeanalyzer.api.logic.file.upload.impl.TcxUploadFileService;
@@ -27,11 +27,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.xml.sax.SAXParseException;
+import utils.TestUtils;
 
 import javax.xml.bind.JAXBException;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -43,9 +42,7 @@ import static com.routeanalyzer.api.common.Constants.SAX_PARSE_EXCEPTION_MESSAGE
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static com.routeanalyzer.api.common.Constants.UPLOAD_FILE_PATH;
-import static utils.TestUtils.getFileBytes;
-import static utils.TestUtils.toActivity;
-import static utils.TestUtils.toRuntimeException;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
@@ -58,6 +55,10 @@ import static org.springframework.http.MediaType.APPLICATION_XML;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static utils.TestUtils.getFileBytes;
+import static utils.TestUtils.toActivity;
+import static utils.TestUtils.toRuntimeException;
+import static utils.TestUtils.toS3ObjectInputStream;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ActiveProfiles("test-mongodb")
@@ -213,22 +214,22 @@ public class FileRestControllerTest extends MockMvcTestController {
 
 	@Test
 	public void getGpxFileTest() throws Exception {
-		BufferedReader gpxBufferedReader = Optional.ofNullable(gpxXmlResource.getFile().toPath())
-				.map(TestUtils.toBufferedReader::apply).orElse(null);
-		when(aS3Service.getFile(contains(SOURCE_GPX_XML))).thenReturn(gpxBufferedReader);
+		Optional<S3ObjectInputStream> optGpxS3ObjectInput = Optional.ofNullable(gpxXmlResource.getFile().toPath())
+				.map(toS3ObjectInputStream::apply);
+		when(aS3Service.getFile(contains(SOURCE_GPX_XML))).thenReturn(optGpxS3ObjectInput);
 		mockMvc.perform(get(GET_FILE_PATH, SOURCE_GPX_XML, "some_id")).andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM.toString()))
-				.andExpect(content().xml(new String(TestUtils.getFileBytes(gpxXmlResource), StandardCharsets.UTF_8)));
+				.andExpect(content().xml(new String(getFileBytes(gpxXmlResource), UTF_8)));
 	}
 
 	@Test
 	public void getTcxFileTest() throws Exception {
-		BufferedReader tcxBufferedReader = Optional.ofNullable(tcxXmlResource.getFile().toPath())
-				.map(TestUtils.toBufferedReader::apply).orElse(null);
-		when(aS3Service.getFile(contains(SOURCE_TCX_XML))).thenReturn(tcxBufferedReader);
+		Optional<S3ObjectInputStream> optTcxS3ObjectInput = Optional.ofNullable(tcxXmlResource.getFile().toPath())
+				.map(toS3ObjectInputStream::apply);
+		when(aS3Service.getFile(contains(SOURCE_TCX_XML))).thenReturn(optTcxS3ObjectInput);
 		mockMvc.perform(get(GET_FILE_PATH, SOURCE_TCX_XML, "some_id")).andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM.toString()))
-				.andExpect(content().xml(new String(TestUtils.getFileBytes(tcxXmlResource), StandardCharsets.UTF_8)));
+				.andExpect(content().xml(new String(getFileBytes(tcxXmlResource), UTF_8)));
 	}
 
 }

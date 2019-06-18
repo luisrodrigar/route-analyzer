@@ -14,12 +14,10 @@ public class MathUtils {
     // Radius of earth in meters
     public static final double EARTHS_RADIUS_METERS = 6371000.0;
 
-    /**
-     * Mathematic operations
-     */
+    // Mathematics operations
 
-    public static Optional<BigDecimal> toBigDecimal(String number) {
-        return ofNullable(number).filter(StringUtils::isNotEmpty).map(BigDecimal::new);
+    public static BigDecimal toBigDecimal(String number) {
+        return ofNullable(number).filter(StringUtils::isNotEmpty).map(BigDecimal::new).orElse(null);
     }
 
     public static BigDecimal toBigDecimal(Double number) {
@@ -43,9 +41,7 @@ public class MathUtils {
         return num - 1;
     }
 
-    /**
-     * Logical operations
-     */
+    // Logical operations
 
     public static boolean isPositiveNonZero(Double value) {
         return value > 0;
@@ -84,9 +80,6 @@ public class MathUtils {
         return new Integer[]{smallerNumber, biggerNumber};
     }
 
-    /**
-     *
-     */
     public static double metersBetweenCoordinates(double latP1, double lngP1, double latP2, double lngP2) {
         // Point P
         double rho1 = EARTHS_RADIUS_METERS * Math.cos(latP1);

@@ -51,8 +51,8 @@ public class TrackPointOperationsImplTest {
 				park, "100", "970.64", null, 78);
 		madridTrack = toTrackPoint(now.plusHours(6L), 3,
 				madrid, "100", "372247.30", null, 78);
-		latParam = toBigDecimal("12").orElse(null);
-		lngParam = toBigDecimal("6").orElse(null);
+		latParam = toBigDecimal("12");
+		lngParam = toBigDecimal("6");
 	}
 
 	@Test

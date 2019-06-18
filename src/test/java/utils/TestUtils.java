@@ -1,5 +1,6 @@
 package utils;
 
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.mongodb.Function;
@@ -9,14 +10,11 @@ import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
 import org.springframework.core.io.Resource;
 
-import java.io.BufferedReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.function.Supplier;
+
+import static java.nio.file.Files.newInputStream;
 
 @UtilityClass
 public class TestUtils {
@@ -26,8 +24,8 @@ public class TestUtils {
 
 	public static Supplier<Activity> createUnknownActivity = () -> Activity.builder().build();
 
-	public static Function<Path, BufferedReader> toBufferedReader = path -> Try.of(() ->
-			Files.newBufferedReader(path, StandardCharsets.UTF_8)).getOrNull();
+	public static Function<Path, S3ObjectInputStream> toS3ObjectInputStream = path -> Try.of(() ->
+			new S3ObjectInputStream(newInputStream(path), null)).getOrNull();
 
 	public static byte[] getFileBytes(Resource resource) {
 		Function<Path, Try<byte[]>> toByteArray = path -> Try.of(() -> Files.readAllBytes(path));

@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
+import org.mockito.Mockito;
 import utils.TestUtils;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.ActivityOperations;
@@ -66,8 +67,6 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 	private TcxExportFileService tcxExportFileService;
 	@Autowired
 	private ActivityOperations activityOperations;
-	@Autowired
-	private ActivityRestController activityRestController;
 	@Autowired
 	private ActivityMongoRepository activityMongoRepository;
 
@@ -155,12 +154,22 @@ public class ActivityRestControllerTest extends MockMvcTestController {
 	@Test
 	@UsingDataSet(locations = "/controller/db-activity-tcx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void exportAsTCX() throws Exception {
+		// Given
+		// When
+		doReturn(EMPTY).when(tcxExportFileService).export(eq(tcxActivity));
+
+		// Then
 		isReturningFileHTTP(get(EXPORT_AS_PATH, ACTIVITY_TCX_ID, SOURCE_TCX_XML), MediaType.APPLICATION_OCTET_STREAM);
 	}
 
 	@Test
 	@UsingDataSet(locations = "/controller/db-activity-gpx.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
 	public void exportAsGPX() throws Exception {
+		// Given
+		// When
+		doReturn(EMPTY).when(gpxExportFileService).export(eq(gpxActivity));
+
+		// Then
 		isReturningFileHTTP(get(EXPORT_AS_PATH, ACTIVITY_GPX_ID, SOURCE_GPX_XML), MediaType.APPLICATION_OCTET_STREAM);
 	}
 

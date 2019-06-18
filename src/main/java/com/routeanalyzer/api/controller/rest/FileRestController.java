@@ -1,7 +1,6 @@
 package com.routeanalyzer.api.controller.rest;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
+import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.file.upload.UploadFileService;
@@ -23,15 +22,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.routeanalyzer.api.common.CommonUtils.emptyResponse;
 import static com.routeanalyzer.api.common.CommonUtils.getFileExportResponse;
-import static com.routeanalyzer.api.common.CommonUtils.toBadRequestParams;
 import static com.routeanalyzer.api.common.Constants.BAD_TYPE_MESSAGE;
 import static com.routeanalyzer.api.common.Constants.GET_FILE_PATH;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
@@ -40,23 +37,27 @@ import static com.routeanalyzer.api.common.Constants.UPLOAD_FILE_PATH;
 import static com.routeanalyzer.api.common.ThrowingFunction.unchecked;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class FileRestController extends RestControllerBase {
-	
-	@Autowired
+
 	private ActivityMongoRepository mongoRepository;
-	@Autowired
 	private OriginalRouteAS3Service aS3Service;
-	@Autowired
 	private TcxUploadFileService tcxService;
-	@Autowired
 	private GpxUploadFileService gpxService;
 
-	public FileRestController() {
+	@Autowired
+	public FileRestController(ActivityMongoRepository mongoRepository, OriginalRouteAS3Service aS3Service,
+							  TcxUploadFileService tcxService, GpxUploadFileService gpxService) {
 		super(LoggerFactory.getLogger(FileRestController.class));
+		this.mongoRepository = mongoRepository;
+		this.aS3Service = aS3Service;
+		this.tcxService = tcxService;
+		this.gpxService = gpxService;
 	}
 
 	/**
@@ -77,7 +78,7 @@ public class FileRestController extends RestControllerBase {
 		return Try.of(() -> uploadTypeFile(type, multiPart))
 				.map(bodyResponse -> bodyResponse.map(createResponse).orElse(emptyResponse()))
 				.recover(RuntimeException.class, handleControllerExceptions)
-				.getOrElse(() -> toBadRequestParams());
+				.getOrElse(CommonUtils::toBadRequestParams);
 	}
 
 
@@ -102,7 +103,7 @@ public class FileRestController extends RestControllerBase {
 						.map(xml -> getFileExportResponse(xml, id, type))
 						.recover(RuntimeException.class, handleControllerExceptions)
 						.getOrElse(emptyResponse()))
-				.orElseGet(() -> toBadRequestParams());
+				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
 	private Optional<String> uploadTypeFile(String type, MultipartFile multipartFile) {
@@ -120,25 +121,24 @@ public class FileRestController extends RestControllerBase {
 										new RuntimeException(new IllegalArgumentException(BAD_TYPE_MESSAGE)))));
 	}
 
-	Function<MultipartFile, Optional<String>> uploadTcxFile = multipartFile ->
+	private Function<MultipartFile, Optional<String>> uploadTcxFile = multipartFile ->
 			upload(multipartFile, tcxService);
-	Function<MultipartFile, Optional<String>> uploadGpxFile = multipartFile ->
+	private Function<MultipartFile, Optional<String>> uploadGpxFile = multipartFile ->
 			upload(multipartFile, gpxService);
 
 	private Optional<String> upload(MultipartFile multiPart, UploadFileService service) {
-		Function<List<String>, Optional<String>> createJsonIds = ids -> ofNullable(ids).map(JsonUtils::toJson);
 		return ofNullable(multiPart)
 				.map(unchecked(MultipartFile::getBytes))
-				.flatMap(bytes -> ofNullable(multiPart)
+				.flatMap(bytes -> of(multiPart)
 						.map(service::upload)
 						.map(activities -> saveActivity(activities, bytes))
-						.flatMap(createJsonIds));
+						.map(JsonUtils::toJson));
 	}
 
 	/**
-	 * 
-	 * @param activities
-	 * @param arrayBytes
+	 * Save activity in Amazon Web Services AS3
+	 * @param activities: list of activities
+	 * @param arrayBytes: array of bytes
 	 * @return saved activity list
 	 */
 	private List<String> saveActivity(List<Activity> activities, byte[] arrayBytes) {
@@ -149,20 +149,22 @@ public class FileRestController extends RestControllerBase {
 						return activity;
 				}))
 				.map(Activity::getId)
-				.collect(Collectors.toList());
+				.collect(toList());
 	}
 
 	/**
-	 * 
-	 * @param nameFile
-	 * @return
-	 * @throws AmazonServiceException
-	 * @throws AmazonClientException
-	 * @throws IOException
+	 * Get activity stored in Amazon Web Services S3.
+	 * @param nameFile: name of the file in AWS S3
+	 * @return serialized activity
 	 */
-	private String getActivityAS3(String nameFile) throws AmazonClientException {
-		BufferedReader bufReader = aS3Service.getFile(nameFile);
-		return bufReader.lines().collect(Collectors.joining("\n"));
+	private String getActivityAS3(String nameFile) {
+		return ofNullable(nameFile)
+				.flatMap(aS3Service::getFile)
+				.map(InputStreamReader::new)
+				.map(BufferedReader::new)
+				.map(BufferedReader::lines)
+				.map(streamLines -> streamLines.collect(joining("\n")))
+				.orElse(null);
 	}
 
 }

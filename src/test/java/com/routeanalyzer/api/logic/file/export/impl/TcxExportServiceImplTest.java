@@ -1,6 +1,6 @@
 package com.routeanalyzer.api.logic.file.export.impl;
 
-import utils.TestUtils;
+import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.TCXService;
 import io.vavr.control.Try;
@@ -12,15 +12,15 @@ import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import utils.TestUtils;
 
 import javax.xml.bind.JAXBException;
 import java.nio.charset.StandardCharsets;
 
-import static com.routeanalyzer.api.common.JsonUtils.fromJson;
-import static utils.TestUtils.toRuntimeException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static utils.TestUtils.toRuntimeException;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class TcxExportServiceImplTest {
@@ -43,7 +43,7 @@ public class TcxExportServiceImplTest {
     public void setUp() {
         tcxXmlString = new String(TestUtils.getFileBytes(tcxXmlResource), StandardCharsets.UTF_8);
         String jsonActivityTcxStr = new String(TestUtils.getFileBytes(activityTcxResource), StandardCharsets.UTF_8);
-        activityTcxTest = fromJson(jsonActivityTcxStr, Activity.class);
+        activityTcxTest = JsonUtils.fromJson(jsonActivityTcxStr, Activity.class);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class TcxExportServiceImplTest {
         // When
         Try.of(() -> tcxExportService.export(null))
                 // Then
-                .onSuccess(tcxExportedFile -> assertThat(tcxExportedFile).isEmpty())
+                .onSuccess(tcxExportedFile -> assertThat(tcxExportedFile).isNull())
                 .onFailure(error -> assertThat(true).isFalse());
     }
 

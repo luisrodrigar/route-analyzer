@@ -8,6 +8,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import org.springframework.web.client.RestTemplate;
 
 import static com.routeanalyzer.api.common.Encrypter.decrypt;
+import static java.util.Optional.ofNullable;
 
 @Configuration
 @EnableMongoRepositories(basePackageClasses=ActivityMongoRepository.class)
@@ -33,14 +35,18 @@ public class CommonConfig {
     public AmazonS3 s3client() {
         ClientConfiguration config = new ClientConfiguration();
         config.setProtocol(Protocol.HTTP);
-        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(decrypt(encryptedAwsId), decrypt(encryptedAwsKey));
-        AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-                .withRegion(Regions.fromName(region))
-                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                .withClientConfiguration(config)
-                .build();
-
-        return s3Client;
+        return ofNullable(encryptedAwsId)
+                .filter(StringUtils::isNotEmpty)
+                .flatMap(notEmptyAwsId -> ofNullable(encryptedAwsKey)
+                        .filter(StringUtils::isNotEmpty)
+                        .map(notEmptyAwsKey ->
+                                new BasicAWSCredentials(decrypt(notEmptyAwsId), decrypt(notEmptyAwsKey))))
+                .map(awsCredentials -> AmazonS3ClientBuilder.standard()
+                        .withRegion(Regions.fromName(region))
+                        .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                        .withClientConfiguration(config)
+                        .build())
+                .orElse(null);
     }
 
     @Bean
