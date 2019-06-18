@@ -89,13 +89,13 @@ public class LapsOperationsImpTest {
         timeMillisLeft4 = 123486L;
 
         trackPointLeft1 = toTrackPoint(timeMillisLeft1, 3, "43.3602900", "-5.8447600", "120"
-                , "25.0", "12.0", new Integer(76));
+                , "25.0", "12.0", 76);
         trackPointLeft2 = toTrackPoint(timeMillisLeft2, 4, "43.352478", "-5.8501170", "120"
-                , "25.0", "12.0", new Integer(86));
+                , "25.0", "12.0", 86);
         trackPointLeft3 = toTrackPoint(timeMillisLeft3, 5, "44.3602900", "-6.8447600", "120"
-                , "25.0", "35.0", new Integer(90));
+                , "25.0", "35.0", 90);
         trackPointLeft4 = toTrackPoint(timeMillisLeft4, 6, "46.352478", "-4.8501170", "120"
-                , "25.0", "12.0", new Integer(95));
+                , "25.0", "12.0", 95);
     }
 
     private void createRightTrack() {
@@ -105,13 +105,13 @@ public class LapsOperationsImpTest {
         timeMillisRight4 = 123606L;
 
         trackPointRight1 = toTrackPoint(timeMillisRight1, 7, "42.3602900", "-3.8447600", "120"
-                , "50.0", "12.0", new Integer(100));
+                , "50.0", "12.0", 100);
         trackPointRight2 = toTrackPoint(timeMillisRight2, 8, "46.452478", "-6.9501170", "120"
-                , "50.0", "12.0", new Integer(107));
+                , "50.0", "12.0", 107);
         trackPointRight3 = toTrackPoint(timeMillisRight3, 9, "40.3602900", "-8.8447600", "120"
-                , "25.0", "12.0", new Integer(112));
+                , "25.0", "12.0", 112);
         trackPointRight4 = toTrackPoint(timeMillisRight4, 10, "40.352478", "-9.8501170", "120"
-                , "25.0", "22.0", new Integer(123));
+                , "25.0", "22.0", 123);
     }
 
     @Test

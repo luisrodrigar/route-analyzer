@@ -139,7 +139,7 @@ public class ActivityRestController extends RestControllerBase {
 						.map(indexStrings -> this.toListType(indexStrings, Integer::parseInt))
 						.map(index -> ofNullable(startTimeLaps)
 								.map(splitStringByComma)
-								.map(indexStrings -> this.toListType(indexStrings, Long::new))
+								.map(indexStrings -> this.toListType(indexStrings, Long::valueOf))
 								.map(datesList -> activityOperationsService
 										.removeLaps(activity, datesList, index))
 								.orElseGet(() -> activityOperationsService

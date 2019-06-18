@@ -205,7 +205,7 @@ public class LapsOperationsImpl implements LapsOperations {
 								.map(List::size)
 								.map(sizeNewLapTrackPoints -> sizeNewLapTrackPoints / sizeOfTrackPointsCalories )
 								.map(Math::round)
-								.map(Long::new)
+								.map(Long::valueOf)
 								.map(Long::intValue))
 						.map(calories -> {
 							newLap.setCalories(calories);

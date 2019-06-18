@@ -193,10 +193,6 @@
 				<version>${spring.version}</version>
 				<configuration>
 					<mainClass>com.routeanalyzer.api.RouteAnalyzerApplication</mainClass>
-					<forkMode>always</forkMode>
-					<argLine>--add-modules java.xml.bind</argLine>
-					<argLine>--add-modules java.activation</argLine>
-					<argLine>--add-opens=java.base/java.lang=ALL-UNNAMED --illegal-access=deny</argLine>
 				</configuration>
 
 				<executions>

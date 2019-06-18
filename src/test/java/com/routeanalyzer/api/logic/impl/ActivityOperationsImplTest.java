@@ -135,10 +135,8 @@ public class ActivityOperationsImplTest {
 								 String lng1, String lng2, String alt1, String alt2, String dist1, String dist2,
 								 String speed1, String speed2, int heartRate1, int heartRate2) {
 		List<TrackPoint> trackPoints = Lists.newArrayList();
-		trackPoints.add(toTrackPoint(timeMillisLap1, index1, latitude1, lng1, alt1
-				, dist1, speed1, new Integer(heartRate1)));
-		trackPoints.add(toTrackPoint(timeMillisLap2, index2, latitude2, lng2, alt2
-				, dist2, speed2, new Integer(heartRate2)));
+		trackPoints.add(toTrackPoint(timeMillisLap1, index1, latitude1, lng1, alt1, dist1, speed1, heartRate1));
+		trackPoints.add(toTrackPoint(timeMillisLap2, index2, latitude2, lng2, alt2, dist2, speed2, heartRate2));
 		lap.setTracks(trackPoints);
 	}
 
