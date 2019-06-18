@@ -36,11 +36,10 @@ public abstract class UploadFileService<T> {
         return ofNullable(multiPartFile)
                 .map(unchecked(MultipartFile::getInputStream))
                 .map(xmlService::readXML)
-                .map(Optional::ofNullable)
                 .map(this::toListActivities)
                 .orElseGet(Collections::emptyList);
     }
 
-    protected abstract List<Activity> toListActivities(Optional<T> optXmlType);
+    protected abstract List<Activity> toListActivities(T optXmlType);
 
 }

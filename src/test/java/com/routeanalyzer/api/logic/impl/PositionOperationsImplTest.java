@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class PositionOperationsImplTest {
 
-    public PositionOperations positionOperations;
+    private PositionOperations positionOperations;
 
     private Position positionDecimals;
     private Position positionInteger;
@@ -35,10 +35,10 @@ public class PositionOperationsImplTest {
         positionOperations = new PositionOperationsImpl();
         latDouble = toBigDecimal(6.7);
         lngDouble = toBigDecimal(0.005);
-        positionDecimals = toPosition(latDouble, lngDouble);
+        positionDecimals = toPosition(latDouble, lngDouble).orElse(null);
         latInteger = toBigDecimal("6");
         lngInteger = toBigDecimal("1");
-        positionInteger = toPosition(latInteger, lngInteger);
+        positionInteger = toPosition(latInteger, lngInteger).orElse(null);
         emptyPosition = Position.builder().build();
         oviedo = toPosition("43.3602900", "-5.8447600");
         madrid = toPosition("40.4165000", "-3.7025600");
