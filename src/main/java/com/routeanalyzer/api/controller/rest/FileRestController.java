@@ -126,6 +126,8 @@ public class FileRestController extends RestControllerBase {
 	private Function<MultipartFile, Optional<String>> uploadGpxFile = multipartFile ->
 			upload(multipartFile, gpxService);
 
+	// Adding the suppress warning annotation because the Optional map loose the specific T type in the list
+	@SuppressWarnings("unchecked")
 	private Optional<String> upload(MultipartFile multiPart, UploadFileService service) {
 		return ofNullable(multiPart)
 				.map(unchecked(MultipartFile::getBytes))

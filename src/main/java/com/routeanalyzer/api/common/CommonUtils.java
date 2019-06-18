@@ -98,7 +98,7 @@ public class CommonUtils {
 		return ofNullable(heartRate)
 				.map(heartRateXml ->
 						toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
-								new Integer(heartRateXml.getValue())))
+								Integer.valueOf(heartRateXml.getValue())))
 				.orElse(toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
 						null));
 	}
@@ -118,7 +118,7 @@ public class CommonUtils {
 										ofNullable(heartRate).map(heartRateXml -> toTrackPoint(localDateTime, index,
 												toPosition(positionXml.getLatitudeDegrees(),
 														positionXml.getLongitudeDegrees()),
-												alt, dist, null, new Integer(heartRateXml.getValue())))
+												alt, dist, null, Integer.valueOf(heartRateXml.getValue())))
 											.orElse(toTrackPoint(localDateTime, index,
 												toPosition(positionXml.getLatitudeDegrees(),
 														positionXml.getLongitudeDegrees()),

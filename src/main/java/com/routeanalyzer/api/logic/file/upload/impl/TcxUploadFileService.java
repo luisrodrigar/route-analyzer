@@ -102,7 +102,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                 of(eachLap)
                         .map(ActivityLapT::getAverageHeartRateBpm)
                         .map(HeartRateInBeatsPerMinuteT::getValue)
-                        .map(Double::new)
+                        .map(Double::valueOf)
                         .filter(MathUtils::isPositiveNonZero)
                         .ifPresent(lap::setAverageHearRate);
                 of(eachLap)
@@ -120,7 +120,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                 of(eachLap)
                         .map(ActivityLapT::getMaximumHeartRateBpm)
                         .map(HeartRateInBeatsPerMinuteT::getValue)
-                        .map(Integer::new)
+                        .map(Integer::valueOf)
                         .filter(MathUtils::isPositiveNonZero)
                         .ifPresent(lap::setMaximumHeartRate);
                 of(eachLap)
@@ -181,7 +181,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                 of(eachLap)
                         .map(CourseLapT::getAverageHeartRateBpm)
                         .map(HeartRateInBeatsPerMinuteT::getValue)
-                        .map(Double::new)
+                        .map(Double::valueOf)
                         .filter(MathUtils::isPositiveNonZero)
                         .ifPresent(lap::setAverageHearRate);
                 of(eachLap)
