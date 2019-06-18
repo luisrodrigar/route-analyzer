@@ -1,9 +1,11 @@
 package com.routeanalyzer.api.controller.rest;
 
 import com.routeanalyzer.api.common.CommonUtils;
+import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.controller.Response;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.ActivityOperations;
+import com.routeanalyzer.api.logic.file.export.ExportFileService;
 import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
 import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
 import com.routeanalyzer.api.model.Activity;
@@ -24,15 +26,16 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.CommonUtils.getFileExportResponse;
 import static com.routeanalyzer.api.common.CommonUtils.splitStringByDelimiter;
+import static com.routeanalyzer.api.common.CommonUtils.toJsonHeaders;
 import static com.routeanalyzer.api.common.Constants.COLORS_LAP_PATH;
 import static com.routeanalyzer.api.common.Constants.COLOR_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
@@ -46,24 +49,29 @@ import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static com.routeanalyzer.api.common.Constants.SPLIT_LAP_PATH;
 import static com.routeanalyzer.api.common.Constants.STARTED_HEX_CHAR;
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
+import static org.springframework.http.ResponseEntity.badRequest;
 import static org.springframework.http.ResponseEntity.notFound;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ActivityRestController extends RestControllerBase {
 
-	@Autowired
 	private ActivityMongoRepository mongoRepository;
-	@Autowired
 	private ActivityOperations activityOperationsService;
-	@Autowired
 	private TcxExportFileService tcxExportService;
-	@Autowired
 	private GpxExportFileService gpxExportService;
 
-	public ActivityRestController() {
+	@Autowired
+	public ActivityRestController(ActivityMongoRepository mongoRepository, ActivityOperations activityOperationsService,
+								  TcxExportFileService tcxExportService, GpxExportFileService gpxExportService) {
 		super(LoggerFactory.getLogger(ActivityRestController.class));
+		this.mongoRepository = mongoRepository;
+		this.activityOperationsService = activityOperationsService;
+		this.tcxExportService = tcxExportService;
+		this.gpxExportService = gpxExportService;
 	}
 
 	@GetMapping(value = GET_ACTIVITY_PATH, produces = "application/json;")
@@ -138,12 +146,12 @@ public class ActivityRestController extends RestControllerBase {
 										.removeLaps(activity, null, index)))
 						.map(mongoRepository::save))
 				.map(CommonUtils::toOKMessageResponse)
-				.orElseGet(() -> CommonUtils.toBadRequestParams());
+				.orElseGet(CommonUtils::toBadRequestParams);
 	}
 
 	@PutMapping(value = COLORS_LAP_PATH)
 	public @ResponseBody ResponseEntity<String> setColorLap(@PathVariable String id, @RequestParam String data) {
-        Supplier<AtomicInteger> atomicIntegerSupplier = () -> new AtomicInteger();
+        Supplier<AtomicInteger> atomicIntegerSupplier = AtomicInteger::new;
         Supplier<Response> okSupplier = () -> Response.builder()
 				.error(false)
 				.description("Lap's colors are updated.")
@@ -159,12 +167,12 @@ public class ActivityRestController extends RestControllerBase {
 		return getOptionalActivityById(id)
 				.flatMap(activity -> ofNullable(data)
 						.map(this::toLapList)
-						.flatMap(laps -> ofNullable(atomicIntegerSupplier)
+						.flatMap(laps -> of(atomicIntegerSupplier)
 								.map(Supplier::get)
 								.map(indexLap -> laps
                                         .stream()
 										.map(lapColor -> this.setColorLap(activity, lapColor, indexLap)))
-                                .map(lapStream -> lapStream.collect(Collectors.toList())))
+                                .map(lapStream -> lapStream.collect(toList())))
                         .map(laps -> activity))
                 .map(mongoRepository::save)
                 .map(activity -> okSupplier.get())
@@ -176,9 +184,11 @@ public class ActivityRestController extends RestControllerBase {
 		return ofNullable(listStrings)
 				.map(List::size)
 				.map(maxSizeDates -> IntStream.range(0, maxSizeDates))
-				.map(intStream -> intStream.mapToObj(Integer::new))
-				.map(indexes -> indexes.map(listStrings::get)
-						.map(convertTo).collect(Collectors.toList()))
+				.map(IntStream::boxed)
+				.flatMap(indexes -> of(indexes.map(listStrings::get))
+						.map(stringStream -> stringStream
+								.map(convertTo)
+								.collect(toList())))
 				.orElseGet(Collections::emptyList);
 	}
 
@@ -187,7 +197,7 @@ public class ActivityRestController extends RestControllerBase {
                 .filter(lapsStr::contains)
                 .map(lapsStr::split)
                 .map(Arrays::asList)
-                .orElseGet(() -> ofNullable(lapsStr)
+                .orElseGet(() -> of(lapsStr)
                         .map(Arrays::asList)
                         .orElseGet(Collections::emptyList));
     }
@@ -226,18 +236,27 @@ public class ActivityRestController extends RestControllerBase {
 	private ResponseEntity<String> exportByType(String type, Activity activity) {
 		switch (type.toLowerCase()) {
 			case SOURCE_TCX_XML:
-				return Try.of(() -> tcxExportService.export(activity))
-						.map(file -> getFileExportResponse(file, activity.getId(), SOURCE_TCX_XML))
-						.recover(RuntimeException.class, handleControllerExceptions)
-						.getOrElse(notFound().build());
+				return getExportedFileResponse(tcxExportService, activity, SOURCE_TCX_XML);
 			case SOURCE_GPX_XML:
-				return Try.of(() -> gpxExportService.export(activity))
-						.map(file -> getFileExportResponse(file, activity.getId(), SOURCE_GPX_XML))
-						.recover(RuntimeException.class, handleControllerExceptions)
-						.getOrElse(notFound().build());
+				return getExportedFileResponse(gpxExportService, activity, SOURCE_GPX_XML);
 			default:
 				return CommonUtils.toBadRequestParams();
 		}
+	}
+
+	private ResponseEntity<String> getExportedFileResponse(ExportFileService exportService, Activity activity,
+														   String sourceXml) {
+		return Try.of(() -> exportService.export(activity))
+				.map(file -> getFileExport(file, activity.getId(), sourceXml))
+				.recover(RuntimeException.class, handleControllerExceptions)
+				.getOrElse(notFound().build());
+	}
+
+	private ResponseEntity<String> getFileExport(String exportedFile, String id, String sourceXml) {
+		return ofNullable(exportedFile)
+				.map(file -> getFileExportResponse(file, id, sourceXml))
+				.orElseGet(() -> badRequest().headers(toJsonHeaders())
+						.body(JsonUtils.toJson(Response.builder().error(true).build())));
 	}
 
 }

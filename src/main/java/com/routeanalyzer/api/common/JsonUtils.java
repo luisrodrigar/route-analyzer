@@ -17,38 +17,41 @@ import java.time.format.DateTimeFormatter;
 
 @UtilityClass
 public class JsonUtils {
-    /**
-     * Json Parser
-     */
+
+    // Json Parser
+
+    private static Gson gsonLocalDateBuilder = new GsonBuilder()
+            .setPrettyPrinting()
+            .serializeNulls()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeJsonConverter())
+            .create();
 
     /**
-     * Get Gson with local date time as a date
-     * @return Gson object
-     */
-    public static Gson getGsonLocalDateTime() {
-        return new GsonBuilder().setPrettyPrinting().serializeNulls()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeJsonConverter()).create();
-    }
-
-    /**
-     *
-     * @param object
-     * @return
+     * Convert Object to String
+     * @param object: any object of any class to transform to String
+     * @return json document with the info of the object
      */
     public static String toJson(Object object) {
-        return getGsonLocalDateTime().toJson(object);
+        return gsonLocalDateBuilder.toJson(object);
     }
 
+    /**
+     * Convert String to any class specified in the param clazz
+     * @param jsonStr json document
+     * @param clazz class of the result of the method
+     * @param <T> output class type
+     * @return object with the info of the json document
+     */
     public static <T> T fromJson(String jsonStr, Class<T> clazz) {
-        return getGsonLocalDateTime().fromJson(jsonStr, clazz);
+        return gsonLocalDateBuilder.fromJson(jsonStr, clazz);
     }
 
     /**
      * Json serializer and deserializer for LocalDateTime
      */
-    class LocalDateTimeJsonConverter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
+    static class LocalDateTimeJsonConverter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
 
-        private static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
+        private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
 
         @Override
         public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)

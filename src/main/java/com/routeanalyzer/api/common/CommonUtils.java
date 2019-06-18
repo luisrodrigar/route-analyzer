@@ -22,12 +22,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
-import static com.routeanalyzer.api.common.JsonUtils.toJson;
+import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 import static org.springframework.http.ResponseEntity.badRequest;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
@@ -47,15 +47,9 @@ public class CommonUtils {
 				.orElse(null);
 	}
 
-	/**
-	 * Model operations
-	 */
+	// Model operations
 
-	/**
-	 *
-	 * Methods which generate a track point.
-	 *
-	 */
+	// Methods which generate a track point.
 
 	public static TrackPoint toTrackPoint(LocalDateTime dateTime, int index, Position position, String alt, String dist,
 										  String speed, Integer heartRate) {
@@ -63,9 +57,9 @@ public class CommonUtils {
 				.date(dateTime)
 				.index(index)
 				.position(position)
-				.altitudeMeters(MathUtils.toBigDecimal(alt).orElse(null))
-				.distanceMeters(MathUtils.toBigDecimal(dist).orElse(null))
-				.speed(MathUtils.toBigDecimal(speed).orElse(null))
+				.altitudeMeters(toBigDecimal(alt))
+				.distanceMeters(toBigDecimal(dist))
+				.speed(toBigDecimal(speed))
 				.heartRateBpm(heartRate)
 				.build();
 	}
@@ -133,19 +127,14 @@ public class CommonUtils {
 				).orElse(null);
 	}
 
-	/**
-	 *
-	 * Methods which generate a position.
-	 *
-	 */
+	// Methods which generate a position.
 
 	public static Position toPosition(String latParam, String lngParam) {
-		return toPosition(MathUtils.toBigDecimal(latParam).orElse(null),
-				MathUtils.toBigDecimal(lngParam).orElse(null));
+		return toPosition(toBigDecimal(latParam), toBigDecimal(lngParam));
 	}
 
 	public static Optional<Position> toOptPosition(String latParam, String lngParam) {
-		return toOptPosition(MathUtils.toBigDecimal(latParam), MathUtils.toBigDecimal(lngParam));
+		return toOptPosition(toBigDecimal(latParam), toBigDecimal(lngParam));
 	}
 
 	public static Position toPosition(Double lat, Double lng) {
@@ -159,13 +148,14 @@ public class CommonUtils {
 				.orElse(null);
 	}
 
-	public static Optional<Position> toOptPosition(Optional<BigDecimal> latParam, Optional<BigDecimal> lngParam) {
-		return latParam.flatMap(latitude -> lngParam.map(longitude -> new Position(latitude, longitude)));
+	private static Optional<Position> toOptPosition(BigDecimal latParam, BigDecimal lngParam) {
+		return ofNullable(latParam)
+				.flatMap(latitude -> ofNullable(lngParam)
+						.map(longitude -> new Position(latitude, longitude)));
 	}
 
-	/**
-	 * Response utils
-	 */
+
+	// Response utils
 
 	// Headers
 
@@ -175,22 +165,21 @@ public class CommonUtils {
 		return toHeaders(values);
 	}
 
-	private HttpHeaders toApplicationFileHeaders(String id, String fileType){
+	private static HttpHeaders toApplicationFileHeaders(String id, String fileType){
 		MultiValueMap<String, String> values = new LinkedMultiValueMap<>();
 		values.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
 		values.add("Content-Disposition", "attachment;filename=" + id + "_" + fileType + ".xml");
 		return toHeaders(values);
 	}
 
-	private HttpHeaders toHeaders(MultiValueMap values) {
+	private static HttpHeaders toHeaders(MultiValueMap<String, String> values) {
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.addAll(values);
 		return responseHeaders;
 	}
 
-	/**
-	 * Response Utils
- 	 */
+
+	// Response Utils
 
 	public static ResponseEntity<String> getFileExportResponse(String file, String id, String fileType) {
 		return ResponseEntity.ok().headers(toApplicationFileHeaders(id, fileType)).body(file);
@@ -215,22 +204,22 @@ public class CommonUtils {
 	}
 
 	public static ResponseEntity<String> emptyResponse() {
-		return status(HttpStatus.NOT_FOUND).body(toJson(Collections.emptyList()));
+		return status(HttpStatus.NOT_FOUND).body(JsonUtils.toJson(Collections.emptyList()));
 	}
 
-	/**
-	 * String utils
-	 */
-	public static List<String> splitStringByDelimiter(String str, String delimiter) {
-		return ofNullable(str)
-				.map(stringParam ->
-						Stream.of(stringParam.split(delimiter))
-								.filter(StringUtils::isNotEmpty)
-								.collect(Collectors.toList()))
+	// String utils
+
+	public static List<String> splitStringByDelimiter(String string, String delimiter) {
+		return ofNullable(string)
+				.map(__ -> string.split(delimiter))
+				.map(Stream::of)
+				.map(streamSlices -> streamSlices
+						.filter(StringUtils::isNotEmpty)
+						.collect(toList()))
 				.orElseGet(Collections::emptyList);
 	}
 
-	public static String toStringValue(Object value) {
+	private static String toStringValue(Object value) {
 		return ofNullable(value).map(String::valueOf).orElse(null);
 	}
 

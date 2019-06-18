@@ -44,7 +44,7 @@ public class DateUtils {
                 .flatMap(DateUtils::toLocalDateTime);
     }
 
-    public static Optional<LocalDateTime> toLocalDateTime(long timeMillis) {
+    public static Optional<LocalDateTime> toLocalDateTime(Long timeMillis) {
         return ofNullable(timeMillis)
                 .map(Instant::ofEpochMilli)
                 .flatMap(DateUtils::toLocalDateTime);

@@ -98,7 +98,7 @@ public class LapsOperationsImpl implements LapsOperations {
 										ofNullable(trackPointParam)
 												.map(googleMapsService::getCoordinatesCode)
 												.map(elevations::get)
-												.flatMap(MathUtils::toBigDecimal)
+												.map(MathUtils::toBigDecimal)
 												.ifPresent(trackPointParam::setAltitudeMeters))));
 	}
 
@@ -225,6 +225,7 @@ public class LapsOperationsImpl implements LapsOperations {
 													trackPoints.get(indexEachTrackPoint)).collect(Collectors.toList()))
 									.map(getSetterIndexTrackPoints::apply)
 									.map(setTrackPoints -> setTrackPoints.apply(newLap))
+									.map(Lap.class::cast)
 									.map(this::resetValues)
 									.map(newLapParam -> ofNullable(trackPoints)
 													.map(getCalculatorCalories::apply)

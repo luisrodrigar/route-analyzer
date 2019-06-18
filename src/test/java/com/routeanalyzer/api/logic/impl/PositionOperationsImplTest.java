@@ -36,8 +36,8 @@ public class PositionOperationsImplTest {
         latDouble = toBigDecimal(6.7);
         lngDouble = toBigDecimal(0.005);
         positionDecimals = toPosition(latDouble, lngDouble);
-        latInteger = toBigDecimal("6").orElse(null);
-        lngInteger = toBigDecimal("1").orElse(null);
+        latInteger = toBigDecimal("6");
+        lngInteger = toBigDecimal("1");
         positionInteger = toPosition(latInteger, lngInteger);
         emptyPosition = Position.builder().build();
         oviedo = toPosition("43.3602900", "-5.8447600");
