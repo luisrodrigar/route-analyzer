@@ -36,7 +36,6 @@ import javax.xml.bind.JAXBElement;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -62,16 +61,16 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                     && positionT.getLongitudeDegrees() == positionToCompare.getLongitudeDegrees().doubleValue();
 
     /**
-     *
-     * @param optXmlType
-     * @return
+     * Get the list of activities
+     * @param tcxType: class which represents the info inside of a xml document (tcx)
+     * @return list of activities which contains the xml document.
      */
     @Override
-    protected List<Activity> toListActivities(Optional<TrainingCenterDatabaseT> optXmlType) {
-        return optXmlType
+    protected List<Activity> toListActivities(TrainingCenterDatabaseT tcxType) {
+        return ofNullable(tcxType)
                 .map(TrainingCenterDatabaseT::getActivities)
                 .map(this::toActivities)
-                .orElseGet(() -> optXmlType
+                .orElseGet(() -> ofNullable(tcxType)
                         .map(TrainingCenterDatabaseT::getCourses)
                         .map(this::toActivities)
                         .orElseGet(Collections::emptyList));
@@ -143,19 +142,18 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                         .ifPresent(extensionsT -> setExtensions(extensionsT, lap));
                 of(eachLap)
                         .map(ActivityLapT::getTrack)
-                        .ifPresent(trackTS -> trackTS.stream()
-                                .forEach(trackT -> trackT.getTrackpoint().stream().forEach(trackPointT ->
-                                        of(trackPointT)
-                                                .map(TrackpointT::getPosition)
-                                                .flatMap(positionT -> of(indexTrackPoint)
-                                                        .map(AtomicInteger::incrementAndGet)
-                                                        .map(indexTrackPointParam ->
-                                                                toTrackPoint(trackPointT, indexTrackPointParam))
-                                                        .map(trackPoint -> {
-                                                            setExtensions(trackPointT, trackPoint);
-                                                            return trackPoint;
-                                                        }))
-                                                .ifPresent(lap::addTrack))));
+                        .ifPresent(trackTS -> trackTS.forEach(trackT -> trackT.getTrackpoint().forEach(trackPointT ->
+                                of(trackPointT)
+                                        .map(TrackpointT::getPosition)
+                                        .flatMap(positionT -> of(indexTrackPoint)
+                                                .map(AtomicInteger::incrementAndGet)
+                                                .map(indexTrackPointParam ->
+                                                        toTrackPoint(trackPointT, indexTrackPointParam))
+                                                .map(trackPoint -> {
+                                                    setExtensions(trackPointT, trackPoint);
+                                                    return trackPoint;
+                                                }))
+                                        .ifPresent(lap::addTrack))));
                 // Calculate values not informed of a lap.
                 lapsOperationsService.calculateLapValues(lap);
                 activity.addLap(lap);
@@ -271,7 +269,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                         .filter(Objects::nonNull)
                         .map(MathUtils::toBigDecimal)
                         .findFirst()
-                        .ifPresent(speed -> modelTrackPoint.setSpeed(speed))
+                        .ifPresent(modelTrackPoint::setSpeed)
                 );
     }
 }

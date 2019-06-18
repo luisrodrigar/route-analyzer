@@ -130,7 +130,7 @@ public class CommonUtils {
 	// Methods which generate a position.
 
 	public static Position toPosition(String latParam, String lngParam) {
-		return toPosition(toBigDecimal(latParam), toBigDecimal(lngParam));
+		return toPosition(toBigDecimal(latParam), toBigDecimal(lngParam)).orElse(null);
 	}
 
 	public static Optional<Position> toOptPosition(String latParam, String lngParam) {
@@ -141,11 +141,10 @@ public class CommonUtils {
 		return toPosition(toStringValue(lat), toStringValue(lng));
 	}
 
-	public static Position toPosition(BigDecimal latParam, BigDecimal lngParam) {
+	public static Optional<Position> toPosition(BigDecimal latParam, BigDecimal lngParam) {
 		return ofNullable(latParam)
 				.flatMap(latitude -> ofNullable(lngParam)
-						.map(longitude -> new Position(latitude, longitude)))
-				.orElse(null);
+						.map(longitude -> new Position(latitude, longitude)));
 	}
 
 	private static Optional<Position> toOptPosition(BigDecimal latParam, BigDecimal lngParam) {
