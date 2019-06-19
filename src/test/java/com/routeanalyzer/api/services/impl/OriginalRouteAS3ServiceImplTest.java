@@ -113,7 +113,7 @@ public class OriginalRouteAS3ServiceImplTest {
     @TestConfiguration
     @Profile("test-as3")
     static class OriginalRouteS3ContextConfiguration {
-        @Bean
+        @Bean(destroyMethod = "shutdown")
         public AmazonS3 amazonS3() {
             AmazonS3 amazonS3 = AmazonS3ClientBuilder
                     .standard()

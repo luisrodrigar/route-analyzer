@@ -15,6 +15,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Optional;
+
 import static com.routeanalyzer.api.common.Encrypter.decrypt;
 import static java.util.Optional.ofNullable;
 
@@ -33,20 +35,27 @@ public class CommonConfig {
 
     @Bean
     public AmazonS3 s3client() {
-        ClientConfiguration config = new ClientConfiguration();
-        config.setProtocol(Protocol.HTTP);
+        return createCredentials(encryptedAwsId, encryptedAwsKey)
+                .map(this::createAmazonS3HTTPProtocol)
+                .orElse(null);
+    }
+
+    private Optional<BasicAWSCredentials> createCredentials(String encryptedAwsId, String encryptedAwsKey) {
         return ofNullable(encryptedAwsId)
                 .filter(StringUtils::isNotEmpty)
-                .flatMap(notEmptyAwsId -> ofNullable(encryptedAwsKey)
+                .flatMap(__ -> ofNullable(encryptedAwsKey)
                         .filter(StringUtils::isNotEmpty)
-                        .map(notEmptyAwsKey ->
-                                new BasicAWSCredentials(decrypt(notEmptyAwsId), decrypt(notEmptyAwsKey))))
-                .map(awsCredentials -> AmazonS3ClientBuilder.standard()
-                        .withRegion(Regions.fromName(region))
-                        .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                        .withClientConfiguration(config)
-                        .build())
-                .orElse(null);
+                        .map(___ -> new BasicAWSCredentials(decrypt(encryptedAwsId), decrypt(encryptedAwsKey))));
+    }
+
+    private AmazonS3 createAmazonS3HTTPProtocol(BasicAWSCredentials awsCredentials) {
+        ClientConfiguration config = new ClientConfiguration();
+        config.setProtocol(Protocol.HTTP);
+        return AmazonS3ClientBuilder.standard()
+                .withRegion(Regions.fromName(region))
+                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                .withClientConfiguration(config)
+                .build();
     }
 
     @Bean
