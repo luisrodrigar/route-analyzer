@@ -9,11 +9,9 @@ import com.routeanalyzer.api.logic.file.export.ExportFileService;
 import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
 import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
 import com.routeanalyzer.api.model.Activity;
-import com.routeanalyzer.api.model.Lap;
 import io.vavr.control.Try;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,32 +21,26 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.CommonUtils.getFileExportResponse;
 import static com.routeanalyzer.api.common.CommonUtils.splitStringByDelimiter;
+import static com.routeanalyzer.api.common.CommonUtils.toBadRequestResponse;
 import static com.routeanalyzer.api.common.CommonUtils.toJsonHeaders;
 import static com.routeanalyzer.api.common.Constants.COLORS_LAP_PATH;
-import static com.routeanalyzer.api.common.Constants.COLOR_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.EXPORT_AS_PATH;
 import static com.routeanalyzer.api.common.Constants.GET_ACTIVITY_PATH;
 import static com.routeanalyzer.api.common.Constants.JOIN_LAPS_PATH;
-import static com.routeanalyzer.api.common.Constants.LAP_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.REMOVE_LAP_PATH;
 import static com.routeanalyzer.api.common.Constants.REMOVE_POINT_PATH;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static com.routeanalyzer.api.common.Constants.SPLIT_LAP_PATH;
-import static com.routeanalyzer.api.common.Constants.STARTED_HEX_CHAR;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -56,23 +48,14 @@ import static org.springframework.http.ResponseEntity.badRequest;
 import static org.springframework.http.ResponseEntity.notFound;
 
 @RestController
+@RequiredArgsConstructor
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ActivityRestController extends RestControllerBase {
 
-	private ActivityMongoRepository mongoRepository;
-	private ActivityOperations activityOperationsService;
-	private TcxExportFileService tcxExportService;
-	private GpxExportFileService gpxExportService;
-
-	@Autowired
-	public ActivityRestController(ActivityMongoRepository mongoRepository, ActivityOperations activityOperationsService,
-								  TcxExportFileService tcxExportService, GpxExportFileService gpxExportService) {
-		super(LoggerFactory.getLogger(ActivityRestController.class));
-		this.mongoRepository = mongoRepository;
-		this.activityOperationsService = activityOperationsService;
-		this.tcxExportService = tcxExportService;
-		this.gpxExportService = gpxExportService;
-	}
+	private final ActivityMongoRepository mongoRepository;
+	private final ActivityOperations activityOperationsService;
+	private final TcxExportFileService tcxExportService;
+	private final GpxExportFileService gpxExportService;
 
 	@GetMapping(value = GET_ACTIVITY_PATH, produces = "application/json;")
 	public @ResponseBody ResponseEntity<String> getActivityById(@PathVariable String id) {
@@ -151,33 +134,17 @@ public class ActivityRestController extends RestControllerBase {
 
 	@PutMapping(value = COLORS_LAP_PATH)
 	public @ResponseBody ResponseEntity<String> setColorLap(@PathVariable String id, @RequestParam String data) {
-        Supplier<AtomicInteger> atomicIntegerSupplier = AtomicInteger::new;
-        Supplier<Response> okSupplier = () -> Response.builder()
-				.error(false)
-				.description("Lap's colors are updated.")
-				.errorMessage(null)
-				.exception(null)
-				.build();
-        Supplier<Response> badRequestSupplier = () -> Response.builder()
+        Response badResponse = Response.builder()
 				.error(true)
 				.description("Not being possible to update lap's colors.")
 				.errorMessage(null)
 				.exception(null)
 				.build();
 		return getOptionalActivityById(id)
-				.flatMap(activity -> ofNullable(data)
-						.map(this::toLapList)
-						.flatMap(laps -> of(atomicIntegerSupplier)
-								.map(Supplier::get)
-								.map(indexLap -> laps
-                                        .stream()
-										.map(lapColor -> this.setColorLap(activity, lapColor, indexLap)))
-                                .map(lapStream -> lapStream.collect(toList())))
-                        .map(laps -> activity))
-                .map(mongoRepository::save)
-                .map(activity -> okSupplier.get())
-                .map(CommonUtils::toOKMessageResponse)
-                .orElseGet(() -> CommonUtils.toBadRequestResponse(badRequestSupplier.get()));
+				.map(activity -> activityOperationsService.setColorsGetActivity(activity, data))
+				.map(mongoRepository::save)
+				.map(CommonUtils::toOKMessageResponse)
+				.orElseGet(() -> toBadRequestResponse(badResponse));
 	}
 
 	private <T> List<T> toListType(List<String> listStrings, Function<String, T> convertTo) {
@@ -191,41 +158,6 @@ public class ActivityRestController extends RestControllerBase {
 								.collect(toList())))
 				.orElseGet(Collections::emptyList);
 	}
-
-    private List<String> toLapList(String lapsStr) {
-        return ofNullable(LAP_DELIMITER)
-                .filter(lapsStr::contains)
-                .map(lapsStr::split)
-                .map(Arrays::asList)
-                .orElseGet(() -> of(lapsStr)
-                        .map(Arrays::asList)
-                        .orElseGet(Collections::emptyList));
-    }
-
-    private Lap setColorLap(Activity activity, String lapColor, AtomicInteger indexLap) {
-        Function<String, String> addHexPrefix = color -> STARTED_HEX_CHAR + color;
-        // [color(hex)-lightColor(hex)]@[...]... number without #
-        return ofNullable(COLOR_DELIMITER)
-                .map(lapColor::split)
-                .flatMap(colorsArray -> ofNullable(colorsArray[0])
-                        .map(addHexPrefix)
-                        .flatMap(hexColor -> ofNullable(colorsArray[1])
-                                .map(addHexPrefix)
-                                .flatMap(hexLightColor -> ofNullable(activity)
-                                        .map(Activity::getLaps)
-                                        .flatMap(lapsParam -> ofNullable(indexLap)
-                                                .map(AtomicInteger::getAndIncrement)
-                                                .map(lapsParam::get)
-                                                .map(lapParamColor -> {
-                                                    lapParamColor.setColor(hexColor);
-                                                    lapParamColor.setLightColor(hexLightColor);
-                                                    return lapParamColor;
-                                                })
-                                        )
-                                )
-                        )
-                ).orElse(null);
-    }
 
 	private Optional<Activity> getOptionalActivityById(String id) {
 		return ofNullable(id)

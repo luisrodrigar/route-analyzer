@@ -9,7 +9,7 @@ import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
-import com.routeanalyzer.api.services.googlemaps.GoogleMapsServiceImpl;
+import com.routeanalyzer.api.services.googlemaps.GoogleMapsAPIService;
 import io.vavr.control.Try;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class LapsOperationsImpTest {
     @Mock
     private TrackPointOperations trackPointOperations;
     @Mock
-    private GoogleMapsServiceImpl googleMapsService;
+    private GoogleMapsAPIService googleMapsService;
     @InjectMocks
     private LapsOperationsImpl lapsOperations;
 

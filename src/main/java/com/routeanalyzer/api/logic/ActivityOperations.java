@@ -4,6 +4,7 @@ import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Position;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public interface ActivityOperations {
 
@@ -87,5 +88,13 @@ public interface ActivityOperations {
 	 * @return index of a track point
 	 */
 	int indexOfTrackPoint(Activity activity, Integer indexLap, Position position, Long time, Integer index);
+
+	/**
+	 * Set regular and light color to each activity's lap
+	 * @param activity activity where the colors want to apply
+	 * @param dataColors separated each color lap by ',' regular and light color lap separated by '#'
+	 * @return activity with the colors applied
+	 */
+	Activity setColorsGetActivity(Activity activity, String dataColors);
 
 }

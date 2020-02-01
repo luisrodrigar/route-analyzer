@@ -21,6 +21,14 @@ public class TestUtils {
 
 	public static final String ACTIVITY_GPX_ID = "5ace8cd14c147400048aa6b0";
 	public static final String ACTIVITY_TCX_ID = "5ace8caf4c147400048aa6af";
+	public static final String ACTIVITY_TCX_1_ID = "9aab30a74e13840004822bcb";
+	public static final String ACTIVITY_TCX_2_ID = "5f1b82a74e138400048bb60a";
+	public static final String ACTIVITY_TCX_3_ID = "1b1b82a74e13840004822c1a";
+	public static final String ACTIVITY_TCX_4_ID = "000b82a74e1384000481b10a";
+	public static final String ACTIVITY_TCX_5_ID = "2b1b82a74aab840004822c1e";
+	public static final String ACTIVITY_TCX_6_ID = "cacb82a74aa1230004822c6a";
+	public static final String DOESNT_EXIST_ID = "DOESN'T EXIST THIS ID";
+	public static final String NEITHER_EXIST_ID = "NEITHER EXIST THIS ID";
 
 	public static Supplier<Activity> createUnknownActivity = () -> Activity.builder().build();
 

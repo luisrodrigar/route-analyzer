@@ -51,9 +51,9 @@ import static java.util.Optional.ofNullable;
 public class TcxUploadFileService extends UploadFileService<TrainingCenterDatabaseT> {
 
     @Autowired
-    public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperationsService,
-                                LapsOperations lapsOperationsService) {
-        super(tcxService, activityOperationsService, lapsOperationsService);
+    public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperationsImpl,
+                                LapsOperations lapsOperationsImpl) {
+        super(tcxService, activityOperationsImpl, lapsOperationsImpl);
     }
 
     private Function<PositionT, Predicate<Position>> getIsThisPosition = positionT -> positionToCompare ->
