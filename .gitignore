@@ -25,4 +25,4 @@ bin/
 .idea
 route-analyzer.iml
 
-/src/test/resources/mongodb/mongo-volume/
+/src/test/resources/mongodb/mongo-volume/*
