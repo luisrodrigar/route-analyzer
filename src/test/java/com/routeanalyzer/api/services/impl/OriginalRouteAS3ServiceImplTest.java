@@ -4,6 +4,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.routeanalyzer.api.it.config.S3AWSTestConfig;
 import io.vavr.control.Try;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -35,14 +36,14 @@ import static org.testcontainers.containers.localstack.LocalStackContainer.Servi
 @ActiveProfiles("test-as3")
 @ContextConfiguration(classes = {
         OriginalRouteAS3ServiceImpl.class,
-        OriginalRouteAS3ServiceImplTest.OriginalRouteS3ContextConfiguration.class
+        S3AWSTestConfig.class
 })
 @TestPropertySource(properties = {
-        "jsa.s3.bucket=route-analyzer-bucket-test"
+        "aws.s3-bucket=route-analyzer-bucket-test"
 })
 public class OriginalRouteAS3ServiceImplTest {
 
-    @Value("${jsa.s3.bucket}")
+    @Value("${aws.s3-bucket}")
     private String bucketName;
 
     @ClassRule
@@ -108,26 +109,5 @@ public class OriginalRouteAS3ServiceImplTest {
         assertThat(bufferedReader).isNotEmpty();
         assertThat(Try.of(() -> toByteArray(bufferedReader.get())).getOrElse(() -> null))
                 .isEqualTo(bytes);
-    }
-
-    @TestConfiguration
-    @Profile("test-as3")
-    static class OriginalRouteS3ContextConfiguration {
-        @Bean(destroyMethod = "shutdown")
-        public AmazonS3 amazonS3() {
-            AmazonS3 amazonS3 = AmazonS3ClientBuilder
-                    .standard()
-                    .withEndpointConfiguration(
-                            localStack.getEndpointConfiguration(S3)
-                    )
-                    .withCredentials(localStack.getDefaultCredentialsProvider())
-                    .withPathStyleAccessEnabled(true)
-                    .disableChunkedEncoding()
-                    .enablePathStyleAccess()
-                    .build();
-            amazonS3.createBucket("route-analyzer-bucket-test");
-            return amazonS3;
-        }
-
     }
 }

@@ -9,14 +9,18 @@ import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -24,18 +28,16 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.CommonUtils.toValueOrNull;
+import static com.routeanalyzer.api.common.Constants.LAP_DELIMITER;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.Arrays.asList;
 
 @Service
+@RequiredArgsConstructor
 public class ActivityOperationsImpl implements ActivityOperations {
 
-	private LapsOperations lapsOperationsService;
-
-	@Autowired
-	public ActivityOperationsImpl(LapsOperations lapsOperations) {
-		this.lapsOperationsService = lapsOperations;
-	}
+	private final LapsOperations lapsOperationsService;
 
 	@Override
 	public Activity removePoint(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint) {
@@ -147,25 +149,21 @@ public class ActivityOperationsImpl implements ActivityOperations {
 													laps.remove(lapRightParam);
 													return lapRightParam;
 												})
-												.flatMap(lapRightParam -> ofNullable(
-														lapsOperationsService.joinLaps(lapLeftParam, lapRightParam))
-														.map(newLap -> {
-															ofNullable(resultIndexes)
-																.map(toLeftIndex)
-																.ifPresent(leftIndex -> laps.add(leftIndex, newLap));
-															return newLap;
-														})
-														.map(newLap ->  {
-															ofNullable(resultIndexes)
-																.map(toRightIndex)
-																.ifPresent(rightIndex ->
-																		decreaseIndexFollowingLaps(rightIndex, laps));
-															return activity;
-														})
-												)
-										)
-								)
-				).orElse(null);
+												.map(lapRightParam -> lapsOperationsService.joinLaps(lapLeftParam, lapRightParam))
+												.map(newLap -> {
+													ofNullable(resultIndexes)
+															.map(toLeftIndex)
+															.ifPresent(leftIndex -> laps.add(leftIndex, newLap));
+													return newLap;
+												})
+												.map(newLap ->  {
+													ofNullable(resultIndexes)
+															.map(toRightIndex)
+															.ifPresent(rightIndex ->
+																	decreaseIndexFollowingLaps(rightIndex, laps));
+													return activity;
+												}))))
+				.orElse(null);
 	}
 
 	@Override
@@ -211,6 +209,18 @@ public class ActivityOperationsImpl implements ActivityOperations {
 						.map(lap -> lapsOperationsService.getTrackPoint(lap, position, time, index)))
 				.flatMap(indexOfTrackPoint)
 				.orElse(-1);
+	}
+
+	@Override
+	public Activity setColorsGetActivity(Activity activity, String dataColors) {
+		// [color1(hex)-lightColor1(hex)]@[color2(hex)-lightColor2(hex)]@[...]...
+		AtomicInteger indexLap = new AtomicInteger();
+		ofNullable(activity)
+				.map(Activity::getLaps)
+				.ifPresent(laps -> asList(dataColors.split(LAP_DELIMITER)).stream()
+						.forEach(lapColors -> lapsOperationsService
+								.setColorLap(laps.get(indexLap.getAndIncrement()), lapColors)));
+		return activity;
 	}
 
 	private Activity removeLap(Activity activity, Integer indexLap) {

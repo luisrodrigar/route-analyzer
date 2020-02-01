@@ -2,6 +2,9 @@ package com.routeanalyzer.api.services.googlemaps;
 
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.services.googlemaps.model.GoggleMapsAPIResponse;
+import com.routeanalyzer.api.services.googlemaps.model.GoogleMapsAPIPosition;
+import com.routeanalyzer.api.services.googlemaps.model.GoogleMapsAPIResult;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,22 +20,23 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.of;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static java.util.stream.Collectors.toMap;
-import static java.util.function.Function.identity;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleMapsServiceImplTest {
 
     @Mock
     private RestTemplate restTemplate;
+    @Mock
+    private GoogleMapsAPIProperties properties;
 
     @InjectMocks
-    private GoogleMapsServiceImpl elevationService;
+    private GoogleMapsAPIService elevationService;
 
     @Test
     public void getAltitudeTest() {
@@ -46,31 +50,31 @@ public class GoogleMapsServiceImplTest {
         String elevation1 = "450.31";
         String elevation2 = "340.31";
         String elevation3 = "560.31";
-        GMPosition gmPosition1 = GMPosition.builder()
+        GoogleMapsAPIPosition gmPosition1 = GoogleMapsAPIPosition.builder()
                 .lat(latitude1)
                 .lng(longitude1)
                 .build();
-        GMPosition gmPosition2 = GMPosition.builder()
+        GoogleMapsAPIPosition gmPosition2 = GoogleMapsAPIPosition.builder()
                 .lat(latitude2)
                 .lng(longitude2)
                 .build();
-        GMPosition gmPosition3 = GMPosition.builder()
+        GoogleMapsAPIPosition gmPosition3 = GoogleMapsAPIPosition.builder()
                 .lat(latitude3)
                 .lng(longitude3)
                 .build();
-        GMResult gmResult1 = GMResult.builder()
+        GoogleMapsAPIResult gmResult1 = GoogleMapsAPIResult.builder()
                 .location(gmPosition1)
                 .elevation(Double.parseDouble(elevation1))
                 .build();
-        GMResult gmResult2 = GMResult.builder()
+        GoogleMapsAPIResult gmResult2 = GoogleMapsAPIResult.builder()
                 .location(gmPosition2)
                 .elevation(Double.parseDouble(elevation2))
                 .build();
-        GMResult gmResult3 = GMResult.builder()
+        GoogleMapsAPIResult gmResult3 = GoogleMapsAPIResult.builder()
                 .location(gmPosition3)
                 .elevation(Double.parseDouble(elevation3))
                 .build();
-        GMResponse gmResponse = GMResponse.builder()
+        GoggleMapsAPIResponse gmResponse = GoggleMapsAPIResponse.builder()
                 .results(of(gmResult1, gmResult2, gmResult3).collect(Collectors.toList()))
                 .status("OK")
                 .build();
@@ -82,7 +86,7 @@ public class GoogleMapsServiceImplTest {
         }).collect(toMap(data -> data[0], data -> data[1]));
 
         // When
-        doReturn(gmResponse).when(restTemplate).getForObject(anyString(), eq(GMResponse.class));
+        doReturn(gmResponse).when(restTemplate).getForObject(anyString(), eq(GoggleMapsAPIResponse.class));
         Map<String, String> mapResults = elevationService.getAltitude("anyPosition");
 
         // Then
@@ -94,7 +98,7 @@ public class GoogleMapsServiceImplTest {
     @Test
     public void getAltitudeFailServiceTest() {
         // Given
-        GMResponse gmResponse = GMResponse.builder()
+        GoggleMapsAPIResponse gmResponse = GoggleMapsAPIResponse.builder()
                 .results(Collections.emptyList())
                 .status("KO")
                 .build();
@@ -103,7 +107,7 @@ public class GoogleMapsServiceImplTest {
         }).collect(toMap(data -> data[0], data -> data[1]));
 
         // When
-        doReturn(gmResponse).when(restTemplate).getForObject(anyString(), eq(GMResponse.class));
+        doReturn(gmResponse).when(restTemplate).getForObject(anyString(), eq(GoggleMapsAPIResponse.class));
         Map<String, String> mapResults = elevationService.getAltitude("anyPosition");
 
         // Then

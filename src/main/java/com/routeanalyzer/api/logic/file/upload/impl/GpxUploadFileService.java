@@ -33,9 +33,9 @@ import static java.util.Optional.ofNullable;
 public class GpxUploadFileService extends UploadFileService<GpxType> {
 
     @Autowired
-    public GpxUploadFileService(GPXService gpxService, ActivityOperations activityOperationsService,
-                                LapsOperations lapsOperationsService) {
-        super(gpxService, activityOperationsService, lapsOperationsService);
+    public GpxUploadFileService(GPXService gpxService, ActivityOperations activityOperationsImpl,
+                                LapsOperations lapsOperationsImpl) {
+        super(gpxService, activityOperationsImpl, lapsOperationsImpl);
     }
 
     /**

@@ -8,6 +8,7 @@ import com.routeanalyzer.api.logic.PositionOperations;
 import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,14 +18,10 @@ import static com.routeanalyzer.api.common.DateUtils.toTimeMillis;
 import static java.util.Optional.ofNullable;
 
 @Service
+@RequiredArgsConstructor
 public class TrackPointOperationsImpl implements TrackPointOperations {
 
-	private PositionOperations positionUtilsService;
-
-	@Autowired
-	public TrackPointOperationsImpl(PositionOperations positionUtils) {
-		this.positionUtilsService = positionUtils;
-	}
+	private final PositionOperations positionUtilsService;
 
 	@Override
 	public boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index) {

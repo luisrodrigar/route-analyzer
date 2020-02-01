@@ -38,7 +38,7 @@ public class MockMvcTestController {
 
 	/**
 	 * HTTP POST with a file in the body uploadFile(...) test methods
-	 * 
+	 *
 	 */
 	protected void setPostFileBuilder(String path) {
 		builder = MockMvcRequestBuilders.multipart(path);
@@ -50,7 +50,7 @@ public class MockMvcTestController {
 
 	/**
 	 * HTTP POST call Method checks if it is thrown the following exception.
-	 * 
+	 *
 	 * @param file:
 	 *            file with the information
 	 * @param xmlType:
@@ -75,7 +75,7 @@ public class MockMvcTestController {
 
 	/**
 	 * HTTP POST call Method checks if it is generated the following exception.
-	 * 
+	 *
 	 * @param file
 	 * @param xmlType:
 	 *            type of the file which is uploading
@@ -137,7 +137,7 @@ public class MockMvcTestController {
 				.andExpect(jsonPath(descriptionField, is(descriptionError)))
 				.andExpect(jsonPath(exceptionField, equalTo(JsonUtils.toJson(exceptionError))));
 	}
-	
+
 	/**
 	 * HTTP GET call Method checks if it is generated the following error.
 	 *
@@ -171,7 +171,7 @@ public class MockMvcTestController {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(content().json(JsonUtils.toJson(activity)));
 	}
-	
+
 	/**
 	 *
 	 * @param requestBuilder:

@@ -1,5 +1,6 @@
 package com.routeanalyzer.api.logic;
 
+import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
@@ -97,5 +98,13 @@ public interface LapsOperations {
 	 * @param lap
 	 */
 	void calculateAggregateValuesLap(Lap lap);
+
+	/**
+	 * Applied the colors to the activity's lap
+	 * @param lap lap to apply the colors
+	 * @param dataColor light and regular color
+	 * @return Lap with the colors applied
+	 */
+	Lap setColorLap(Lap lap, String dataColor);
 
 }

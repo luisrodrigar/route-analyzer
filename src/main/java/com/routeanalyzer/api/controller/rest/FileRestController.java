@@ -9,6 +9,7 @@ import com.routeanalyzer.api.logic.file.upload.impl.TcxUploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.OriginalRouteAS3Service;
 import io.vavr.control.Try;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,23 +43,14 @@ import static java.util.stream.Collectors.toList;
 import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
+@RequiredArgsConstructor
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class FileRestController extends RestControllerBase {
 
-	private ActivityMongoRepository mongoRepository;
-	private OriginalRouteAS3Service aS3Service;
-	private TcxUploadFileService tcxService;
-	private GpxUploadFileService gpxService;
-
-	@Autowired
-	public FileRestController(ActivityMongoRepository mongoRepository, OriginalRouteAS3Service aS3Service,
-							  TcxUploadFileService tcxService, GpxUploadFileService gpxService) {
-		super(LoggerFactory.getLogger(FileRestController.class));
-		this.mongoRepository = mongoRepository;
-		this.aS3Service = aS3Service;
-		this.tcxService = tcxService;
-		this.gpxService = gpxService;
-	}
+	private final ActivityMongoRepository mongoRepository;
+	private final OriginalRouteAS3Service aS3Service;
+	private final TcxUploadFileService tcxService;
+	private final GpxUploadFileService gpxService;
 
 	/**
 	 * Upload xml file: tcx or gpx to activity object. It allows to process the
@@ -112,22 +104,19 @@ public class FileRestController extends RestControllerBase {
 				.flatMap(typeLowerCase -> of(typeLowerCase)
 						.filter(SOURCE_TCX_XML::equalsIgnoreCase)
 						.flatMap(__ -> of(multipartFile)
-								.map(uploadTcxFile))
+								.map(uploadFile.apply(tcxService)))
 						.orElseGet(() -> of(typeLowerCase)
 								.filter(SOURCE_GPX_XML::equalsIgnoreCase)
 								.flatMap(__ -> of(multipartFile)
-										.map(uploadGpxFile))
+										.map(uploadFile.apply(gpxService)))
 								.orElseThrow( () ->
 										new RuntimeException(new IllegalArgumentException(BAD_TYPE_MESSAGE)))));
 	}
 
-	private Function<MultipartFile, Optional<String>> uploadTcxFile = multipartFile ->
-			upload(multipartFile, tcxService);
-	private Function<MultipartFile, Optional<String>> uploadGpxFile = multipartFile ->
-			upload(multipartFile, gpxService);
+	private Function<UploadFileService, Function<MultipartFile, Optional<String>>> uploadFile = serviceImpl ->
+			multipartFile -> upload(multipartFile, serviceImpl);
 
 	// Adding the suppress warning annotation because the Optional map loose the specific T type in the list
-	@SuppressWarnings("unchecked")
 	private Optional<String> upload(MultipartFile multiPart, UploadFileService service) {
 		return ofNullable(multiPart)
 				.map(unchecked(MultipartFile::getBytes))
