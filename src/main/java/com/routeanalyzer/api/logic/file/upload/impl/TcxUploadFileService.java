@@ -66,7 +66,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
      * @return list of activities which contains the xml document.
      */
     @Override
-    protected List<Activity> toListActivities(TrainingCenterDatabaseT tcxType) {
+    public List<Activity> toListActivities(TrainingCenterDatabaseT tcxType) {
         return ofNullable(tcxType)
                 .map(TrainingCenterDatabaseT::getActivities)
                 .map(this::toActivities)

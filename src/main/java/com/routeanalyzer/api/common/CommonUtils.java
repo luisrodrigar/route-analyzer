@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -164,11 +165,9 @@ public class CommonUtils {
 		return toHeaders(values);
 	}
 
-	private static HttpHeaders toApplicationFileHeaders(String id, String fileType){
-		MultiValueMap<String, String> values = new LinkedMultiValueMap<>();
-		values.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
-		values.add("Content-Disposition", "attachment;filename=" + id + "_" + fileType + ".xml");
-		return toHeaders(values);
+	public static void setExportHeaders(HttpServletResponse response, String id, String fileType) {
+		response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE);
+		response.addHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + id + "_" + fileType + ".xml");
 	}
 
 	private static HttpHeaders toHeaders(MultiValueMap<String, String> values) {
@@ -179,10 +178,6 @@ public class CommonUtils {
 
 
 	// Response Utils
-
-	public static ResponseEntity<String> getFileExportResponse(String file, String id, String fileType) {
-		return ResponseEntity.ok().headers(toApplicationFileHeaders(id, fileType)).body(file);
-	}
 
 	public static ResponseEntity<String> toBadRequestParams() {
 		Response errorValue = Response.builder()

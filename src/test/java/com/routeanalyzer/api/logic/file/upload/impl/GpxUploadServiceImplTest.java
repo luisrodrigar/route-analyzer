@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static utils.TestUtils.toRuntimeException;
+import static java.util.Collections.emptyList;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class GpxUploadServiceImplTest {
@@ -59,7 +60,7 @@ public class GpxUploadServiceImplTest {
 
     @Before
     public void setUp() throws Exception {
-        gpxObject = gpxService.readXML(gpxXmlResource.getInputStream());
+        gpxObject = gpxService.readXML(gpxXmlResource.getInputStream()).get();
         String jsonActivityGpxStr = new String(TestUtils.getFileBytes(activityGpxResource), StandardCharsets.UTF_8);
         activityGpxTest = JsonUtils.fromJson(jsonActivityGpxStr, Activity.class);
     }
@@ -70,7 +71,8 @@ public class GpxUploadServiceImplTest {
         MultipartFile multipart = new MockMultipartFile("file", gpxXmlResource.getInputStream());
         // When
         doReturn(gpxObject).when(gpxService).readXML(Mockito.any());
-        List<Activity> result = gpxUploadService.upload(multipart);
+        List<Activity> result = gpxUploadService.upload(multipart)
+                .map(gpxUploadService::toListActivities).getOrElse(emptyList());
         // Then
         assertThat(result).isEqualTo(Arrays.asList(activityGpxTest));
     }
@@ -82,7 +84,8 @@ public class GpxUploadServiceImplTest {
         Exception jaxbException = new JAXBException("Problems with xml.");
         // When
         doThrow(toRuntimeException(jaxbException)).when(gpxService).readXML(Mockito.any());
-        Try<List<Activity>> result = Try.of(() -> gpxUploadService.upload(multipart));
+        Try<List<Activity>> result = gpxUploadService.upload(multipart)
+                .map(gpxUploadService::toListActivities);
         // Then
         result.onSuccess((success) -> assertThat(true).isTrue())
                 .onFailure(error -> {

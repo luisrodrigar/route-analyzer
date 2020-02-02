@@ -1,10 +1,9 @@
 package com.routeanalyzer.api.services.impl;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.routeanalyzer.api.it.config.S3AWSTestConfig;
+import com.routeanalyzer.api.services.aws.OriginalActivityS3Service;
 import io.vavr.control.Try;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -12,10 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -35,8 +31,7 @@ import static org.testcontainers.containers.localstack.LocalStackContainer.Servi
 @RunWith(SpringJUnit4ClassRunner.class)
 @ActiveProfiles("test-as3")
 @ContextConfiguration(classes = {
-        OriginalRouteAS3ServiceImpl.class,
-        S3AWSTestConfig.class
+        OriginalActivityS3Service.class
 })
 @TestPropertySource(properties = {
         "aws.s3-bucket=route-analyzer-bucket-test"
@@ -50,7 +45,7 @@ public class OriginalRouteAS3ServiceImplTest {
     public static LocalStackContainer localStack = new LocalStackContainer().withServices(S3);
 
     @Autowired
-    private OriginalRouteAS3ServiceImpl originalRouteAS3Service;
+    private OriginalActivityS3Service originalRouteAS3Service;
 
     @SpyBean
     private AmazonS3 amazonS3;
