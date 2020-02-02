@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
+import static java.util.Objects.nonNull;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
@@ -44,64 +45,69 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
      * @return a list with the activities of the xml document (gpx).
      */
     @Override
-    protected List<Activity> toListActivities(GpxType gpx) {
+    public List<Activity> toListActivities(GpxType gpx) {
+        return ofNullable(gpx)
+                .filter(__ -> nonNull(gpx.getTrk()))
+                .map(this::toDataList)
+                .orElseGet(Collections::emptyList);
+    }
+
+    private List<Activity> toDataList(GpxType gpxType) {
         AtomicInteger indexLap = new AtomicInteger();
         AtomicInteger indexTrackPoint = new AtomicInteger();
-        return ofNullable(gpx)
-                .map(GpxType::getTrk)
-                .map(tracks -> tracks.stream().map(track -> {
-                    Optional<TrkType> optTrkType = ofNullable(track);
-                    Activity activity = new Activity();
-                    // Source xml type, in this case gpx.
-                    activity.setSourceXmlType(SOURCE_GPX_XML);
-                    // Set the the date
-                    ofNullable(gpx.getMetadata())
-                            .ifPresent(metadataType -> ofNullable(metadataType.getTime())
-                                    .map(xmlGregorianCalendar -> of(indexLap)
-                                            .map(AtomicInteger::get)
-                                            .map(indexLapParam -> xmlGregorianCalendar)
-                                            .orElseGet(() -> optTrkType.map(TrkType::getTrkseg)
-                                                    .map(CommonUtils::getFirstElement)
-                                                    .map(TrksegType::getTrkpt)
-                                                    .map(CommonUtils::getFirstElement)
-                                                    .map(WptType::getTime)
-                                                    .orElse(null)))
-                                    .flatMap(DateUtils::toLocalDateTime)
-                                    .ifPresent(activity::setDate));
-                    // Device
-                    ofNullable(gpx.getCreator())
-                            .ifPresent(activity::setDevice);
-                    // Name
-                    optTrkType.map(TrkType::getName).map(String::trim).ifPresent(activity::setName);
-                    optTrkType.map(TrkType::getTrkseg).ifPresent(trkSegTypes ->
-                        trkSegTypes.forEach(trkSegType -> {
-                            Lap lap = Lap.builder().build();
-                            // Lap start time
-                            ofNullable(trkSegType).map(TrksegType::getTrkpt)
-                                    .map(CommonUtils::getFirstElement)
-                                    .map(WptType::getTime)
-                                    .flatMap(DateUtils::toLocalDateTime)
-                                    .ifPresent(lap::setStartTime);
-                            // Index
-                            of(indexLap).map(AtomicInteger::incrementAndGet)
-                                    .ifPresent(lap::setIndex);
-                            // Set all the track point in lap object
-                            setTrackPoints(lap, trkSegType, indexTrackPoint);
-                            // calculating lap values
-                            lapsOperationsService.calculateLapValues(lap);
-                            // adding lap
-                            activity.addLap(lap);
-                        }));
-                    // calculating distance speed values
-                    activityOperationsService.calculateDistanceSpeedValues(activity);
-                    // adding activity
-                    return activity;
-                }).collect(Collectors.toList())
-        ).orElseGet(Collections::emptyList);
+        return gpxType.getTrk().stream().map(track -> {
+            Optional<TrkType> optTrkType = ofNullable(track);
+            Activity activity = new Activity();
+            // Source xml type, in this case gpx.
+            activity.setSourceXmlType(SOURCE_GPX_XML);
+            // Set the the date
+            ofNullable(gpxType.getMetadata())
+                    .ifPresent(metadataType -> ofNullable(metadataType.getTime())
+                            .map(xmlGregorianCalendar -> of(indexLap)
+                                    .map(AtomicInteger::get)
+                                    .map(indexLapParam -> xmlGregorianCalendar)
+                                    .orElseGet(() -> optTrkType.map(TrkType::getTrkseg)
+                                            .map(CommonUtils::getFirstElement)
+                                            .map(TrksegType::getTrkpt)
+                                            .map(CommonUtils::getFirstElement)
+                                            .map(WptType::getTime)
+                                            .orElse(null)))
+                            .flatMap(DateUtils::toLocalDateTime)
+                            .ifPresent(activity::setDate));
+            // Device
+            ofNullable(gpxType.getCreator()).ifPresent(activity::setDevice);
+            // Name
+            optTrkType.map(TrkType::getName).map(String::trim).ifPresent(activity::setName);
+            optTrkType.map(TrkType::getTrkseg)
+                    .ifPresent(trkSegTypes ->
+                            trkSegTypes.forEach(trkSegType -> {
+                                Lap lap = Lap.builder().build();
+                                // Lap start time
+                                ofNullable(trkSegType).map(TrksegType::getTrkpt)
+                                        .map(CommonUtils::getFirstElement)
+                                        .map(WptType::getTime)
+                                        .flatMap(DateUtils::toLocalDateTime)
+                                        .ifPresent(lap::setStartTime);
+                                // Index
+                                of(indexLap).map(AtomicInteger::incrementAndGet)
+                                        .ifPresent(lap::setIndex);
+                                // Set all the track point in lap object
+                                setTrackPoints(lap, trkSegType, indexTrackPoint);
+                                // calculating lap values
+                                lapsOperationsService.calculateLapValues(lap);
+                                // adding lap
+                                activity.addLap(lap);
+                            }));
+            // calculating distance speed values
+            activityOperationsService.calculateDistanceSpeedValues(activity);
+            // adding activity
+            return activity;
+        }).collect(Collectors.toList());
     }
 
     private void setTrackPoints(Lap lap, TrksegType trkSetType, AtomicInteger indexTrackPoint) {
-        ofNullable(trkSetType).map(TrksegType::getTrkpt)
+        ofNullable(trkSetType)
+                .map(TrksegType::getTrkpt)
                 .ifPresent(trkPtList -> trkPtList.forEach(eachTrackPoint -> ofNullable(eachTrackPoint)
                         .ifPresent(wptType -> CommonUtils.toPosition(wptType.getLat(), wptType.getLon())
                             .flatMap(position -> ofNullable(eachTrackPoint.getTime())

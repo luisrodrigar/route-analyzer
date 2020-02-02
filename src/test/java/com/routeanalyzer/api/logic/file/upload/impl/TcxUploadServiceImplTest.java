@@ -25,12 +25,14 @@ import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static utils.TestUtils.toRuntimeException;
+import static java.util.Collections.emptyList;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class TcxUploadServiceImplTest {
@@ -59,7 +61,7 @@ public class TcxUploadServiceImplTest {
     public void setUp() throws Exception {
         String jsonActivityTcxStr = new String(TestUtils.getFileBytes(activityTcxResource), StandardCharsets.UTF_8);
         activityTcxTest = JsonUtils.fromJson(jsonActivityTcxStr, Activity.class);
-        tcxObject = tcxService.readXML(tcxXmlResource.getInputStream());
+        tcxObject = tcxService.readXML(tcxXmlResource.getInputStream()).getOrElse(() -> null);
     }
 
     @Test
@@ -68,7 +70,8 @@ public class TcxUploadServiceImplTest {
         MultipartFile multipart = new MockMultipartFile("file", tcxXmlResource.getInputStream());
         // When
         doReturn(tcxObject).when(tcxService).readXML(Mockito.any());
-        List<Activity> result = tcxUploadService.upload(multipart);
+        List<Activity> result =
+                tcxUploadService.upload(multipart).map(tcxUploadService::toListActivities).getOrElse(emptyList());
         // Then
         assertThat(result).isEqualTo(Arrays.asList(activityTcxTest));
     }

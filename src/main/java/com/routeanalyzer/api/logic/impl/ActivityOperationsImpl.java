@@ -3,20 +3,23 @@ package com.routeanalyzer.api.logic.impl;
 import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
+import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
+import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.services.OriginalActivityRepository;
+import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,18 +29,25 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.routeanalyzer.api.common.CommonUtils.toValueOrNull;
 import static com.routeanalyzer.api.common.Constants.LAP_DELIMITER;
+import static java.lang.String.format;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static java.util.Collections.emptyList;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ActivityOperationsImpl implements ActivityOperations {
 
 	private final LapsOperations lapsOperationsService;
+	private final ActivityMongoRepository activityRepository;
+	private final OriginalActivityRepository aS3Service;
 
 	@Override
 	public Activity removePoint(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint) {
@@ -221,6 +231,43 @@ public class ActivityOperationsImpl implements ActivityOperations {
 						.forEach(lapColors -> lapsOperationsService
 								.setColorLap(laps.get(indexLap.getAndIncrement()), lapColors)));
 		return activity;
+	}
+
+	@Override
+	public List<String> uploadAndSave(MultipartFile multiPartFile, UploadFileService fileService) {
+		return upload(multiPartFile, fileService)
+				.flatMap(activities -> save(multiPartFile, activities))
+				.orElse(emptyList());
+	}
+
+	@SuppressWarnings("unchecked")
+	public Optional<List<Activity>> upload(MultipartFile multiPart, UploadFileService service) {
+		return (Optional<List<Activity>>) service.upload(multiPart)
+				.toJavaOptional()
+				.map(service::toListActivities);
+	}
+
+	public Optional<List<String>> save(MultipartFile multipartFile, List<Activity> activities) {
+		return Try.of(() -> activityRepository.saveAll(activities))
+				.onFailure(err -> log.error("Error trying to save all activities in database"))
+				.toJavaOptional()
+				.map(__ -> activities.stream()
+						.flatMap(activity -> uploadFileToS3Bucket(activity, multipartFile)
+								.map(Activity::getId)
+								.toJavaStream())
+						.collect(toList()));
+	}
+
+	private Try<Activity> uploadFileToS3Bucket(Activity activity, MultipartFile multipartFile) {
+		return Try.of(() -> multipartFile.getBytes())
+				.onFailure(err -> log.error("Error trying to convert the file to bytes", err))
+				.flatMap(arrayBytes -> Try.run(() -> aS3Service.uploadFile(arrayBytes, getIdNameExtension(activity)))
+						.onFailure(err -> log.error("Error trying to upload to S3Bucket.", err))
+						.map(__ -> activity));
+	}
+
+	private String getIdNameExtension(Activity activity) {
+		return format("%s.%s", activity.getId(), activity.getSourceXmlType());
 	}
 
 	private Activity removeLap(Activity activity, Integer indexLap) {

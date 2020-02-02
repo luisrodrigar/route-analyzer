@@ -22,10 +22,9 @@ public abstract class ExportFileService<T> {
      * @return String object with the data in the specific xml type.
      */
     public String export(Activity act) {
-        return ofNullable(act)
-                .flatMap(this::convertToXmlObjects)
-                .map(xmlService::createXML)
-                .orElse(null);
+        return convertToXmlObjects(act)
+                .map(xmlFile -> xmlService.createXML(xmlFile).get())
+                .orElseThrow(() -> new IllegalArgumentException("Not possible to convert activity to xml."));
     }
 
     public abstract Optional<JAXBElement<T>> convertToXmlObjects(Activity activity);

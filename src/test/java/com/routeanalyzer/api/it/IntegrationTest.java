@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.testcontainers.containers.DockerComposeContainer;
 
 import java.io.File;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -27,17 +28,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class IntegrationTest {
 
+    private static final String DOCKER_COMPOSE_MONGO_DB = "src/test/resources/mongodb/docker-compose.yml";
+    protected static final String MONGO_CONTAINER_NAME = "mongodb";
+    protected static final int MONGO_PORT = 27017;
+
     @Autowired
     protected MockMvc mockMvc;
 
-    protected MockMultipartHttpServletRequestBuilder builder;
-    protected static final int MONGO_PORT = 27017;
-
-    private static final String DOCKER_COMPOSE_MONGO_DB = "src/test/resources/mongodb/docker-compose.yml";
-
     @ClassRule
     public static DockerComposeContainer mongoDbContainer =
-            new DockerComposeContainer(new File(DOCKER_COMPOSE_MONGO_DB));
+            new DockerComposeContainer(new File(DOCKER_COMPOSE_MONGO_DB))
+                    .withExposedService(MONGO_CONTAINER_NAME, MONGO_PORT);
+
+    protected MockMultipartHttpServletRequestBuilder builder;
 
     /**
      * HTTP POST with a file in the body uploadFile(...) test methods
@@ -92,7 +95,7 @@ public class IntegrationTest {
         String errorField = "$.error";
         String descriptionField = "$.description";
         mockMvc.perform(builder.file(file).param(typeField, xmlType)).andExpect(expectedResponse)
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath(errorField, is(true))).andExpect(jsonPath(descriptionField, is(descriptionError)));
     }
 
@@ -171,8 +174,21 @@ public class IntegrationTest {
      */
     protected void isReturningActivityHTTP(RequestBuilder requestBuilder, Activity activity) throws Exception {
         mockMvc.perform(requestBuilder).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(JsonUtils.toJson(activity)));
+    }
+
+    /**
+     *
+     * @param requestBuilder:
+     *            to build the request
+     * @param ids: activity's ids list
+     * @throws Exception: exception if occurs something
+     */
+    protected void isReturningJsonArrayIdsHTTP(RequestBuilder requestBuilder, List<String> ids) throws Exception {
+        mockMvc.perform(requestBuilder).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(JsonUtils.toJson(ids)));
     }
 
     /**

@@ -9,7 +9,7 @@ import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
 import com.routeanalyzer.api.logic.file.upload.impl.TcxUploadFileService;
 import com.routeanalyzer.api.model.Activity;
-import com.routeanalyzer.api.services.OriginalRouteAS3Service;
+import com.routeanalyzer.api.services.OriginalActivityRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,7 +69,7 @@ public class FileRestControllerTest extends MockMvcTestController {
 	@Autowired
 	protected ApplicationContext applicationContext;
 	@Autowired
-	private OriginalRouteAS3Service aS3Service;
+	private OriginalActivityRepository aS3Service;
 	@Autowired
 	private TcxUploadFileService tcxUploadFileService;
 	@Autowired

@@ -44,7 +44,7 @@ import static utils.TestUtils.NEITHER_EXIST_ID;
 import static utils.TestUtils.toActivity;
 
 @RunWith(SpringRunner.class)
-@TestPropertySource("/test.properties")
+@TestPropertySource("classpath:test.properties")
 public class ActivityRestControllerTest extends IntegrationTest {
 
     private static final String ERROR_RESPONSE = "Activity was not found or other params are not valid.";

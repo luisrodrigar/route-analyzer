@@ -1,10 +1,13 @@
 package com.routeanalyzer.api.logic;
 
+import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Position;
+import io.vavr.control.Try;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Optional;
 
 public interface ActivityOperations {
 
@@ -96,5 +99,14 @@ public interface ActivityOperations {
 	 * @return activity with the colors applied
 	 */
 	Activity setColorsGetActivity(Activity activity, String dataColors);
+
+	/**
+	 * Parser and transform the xml file to data model List
+	 * Upload the xml file to AWS S3 Bucket and save the activities in database
+	 * @param multiPartFile : xml file contains the activity data
+	 * @param fileService : file service to use
+	 * @return stored activity ids
+	 */
+	List<String> uploadAndSave(MultipartFile multiPartFile, UploadFileService fileService);
 
 }
