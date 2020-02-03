@@ -16,7 +16,6 @@ import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SerializationUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,16 +28,15 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
-import static com.routeanalyzer.api.common.CommonUtils.toValueOrNull;
 import static com.routeanalyzer.api.common.Constants.LAP_DELIMITER;
+import static com.routeanalyzer.api.common.MathUtils.sortingPositiveValues;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static java.util.Collections.emptyList;
 
 @Slf4j
 @Service
@@ -50,18 +48,15 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	private final OriginalActivityRepository aS3Service;
 
 	@Override
-	public Activity removePoint(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint) {
+	public Activity removePoint(Activity act, String lat, String lng, Long timeInMillis, Integer indexTrackPoint) {
 	    Function<Position, Integer> getLapIndex = position ->
-                indexOfALap(act, position, toValueOrNull(timeInMillis, Long::parseLong),
-                        toValueOrNull(indexTrackPoint, Integer::parseInt));
+                indexOfALap(act, position, timeInMillis, indexTrackPoint);
 		return CommonUtils.toOptPosition(lat, lng)
 				.flatMap(position -> of(position)
 						.map(getLapIndex)
                         .flatMap(indexLap -> of(indexLap)
                                 .map(indexLapParam ->
-                                        indexOfTrackPoint(act, indexLapParam, position,
-                                                toValueOrNull(timeInMillis, Long::parseLong),
-                                                toValueOrNull(indexTrackPoint, Integer::parseInt)))
+                                        indexOfTrackPoint(act, indexLapParam, position, timeInMillis, indexTrackPoint))
                                 .map(indexTrack -> of(indexTrack)
                                         .flatMap(indexTrackParam -> of(indexLap)
 												.map(act.getLaps()::get)
@@ -77,10 +72,9 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	}
 
 	@Override
-	public Activity splitLap(Activity activity, String lat, String lng, String timeInMillis, String indexTrackPoint) {
+	public Activity splitLap(Activity activity, String lat, String lng, Long timeInMillis, Integer indexTrackPoint) {
 		Function<Position, Integer> getLapIndex = position ->
-				indexOfALap(activity, position, toValueOrNull(timeInMillis, Long::parseLong),
-						toValueOrNull(indexTrackPoint, Integer::parseInt));
+				indexOfALap(activity, position, timeInMillis, indexTrackPoint);
 		return CommonUtils.toOptPosition(lat, lng)
 				.flatMap(position -> ofNullable(activity)
 						.map(Activity::getLaps)
@@ -89,8 +83,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 							.flatMap(indexLap -> of(indexLap)
 									.map(indexLapParam ->
 											indexOfTrackPoint(activity, indexLapParam, position,
-													toValueOrNull(timeInMillis, Long::parseLong),
-													toValueOrNull(indexTrackPoint, Integer::parseInt)))
+													timeInMillis, indexTrackPoint))
 									.flatMap(indexPosition -> of(indexPosition)
 											.filter(MathUtils::isPositiveNonZero)
 											.flatMap(indexTrackParam -> of(indexLap)
@@ -137,43 +130,20 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	 * 5th: decrease the index of the laps in the index right and from now on
 	 *
 	 * @param activity activity which contains all the data
-	 * @param indexLeft index lap located in the left side (just before the right lap)
-	 * @param indexRight index lap located in the right side (just after the right lap)
+	 * @param index1 lap index 1 to join
+	 * @param index2 lap index 2 to join
 	 * @return activity with the joined laps
 	 */
 	@Override
-	public Activity joinLaps(Activity activity, String indexLeft, String indexRight) {
-		Function<Integer[], Integer> toLeftIndex = indexes -> indexes[0];
-		Function<Integer[], Integer> toRightIndex = indexes -> indexes[1];
-		return getResultIndexLaps(indexLeft, indexRight)
-				.flatMap(resultIndexes -> ofNullable(activity)
-						.map(Activity::getLaps)
-						.flatMap(laps -> ofNullable(resultIndexes)
-										.map(toLeftIndex)
-										.map(laps::get)
-										.flatMap(lapLeftParam -> ofNullable(resultIndexes)
-												.map(toRightIndex)
-												.map(laps::get)
-												.map(lapRightParam -> {
-													laps.remove(lapLeftParam);
-													laps.remove(lapRightParam);
-													return lapRightParam;
-												})
-												.map(lapRightParam -> lapsOperationsService.joinLaps(lapLeftParam, lapRightParam))
-												.map(newLap -> {
-													ofNullable(resultIndexes)
-															.map(toLeftIndex)
-															.ifPresent(leftIndex -> laps.add(leftIndex, newLap));
-													return newLap;
-												})
-												.map(newLap ->  {
-													ofNullable(resultIndexes)
-															.map(toRightIndex)
-															.ifPresent(rightIndex ->
-																	decreaseIndexFollowingLaps(rightIndex, laps));
-													return activity;
-												}))))
-				.orElse(null);
+	public Activity joinLaps(Activity activity, Integer index1, Integer index2) {
+		List<Integer> sortedIndexes = sortingPositiveValues(index1, index2);
+		Lap indexLeftLap = activity.getLaps().get(sortedIndexes.get(0));
+		Lap indexRightLap = activity.getLaps().get(sortedIndexes.get(1));
+		Lap joinedLap = lapsOperationsService.joinLaps(indexLeftLap, indexRightLap);
+		activity.getLaps().removeAll(asList(indexLeftLap, indexRightLap));
+		activity.getLaps().add(sortedIndexes.get(0), joinedLap);
+		decreaseIndexFollowingLaps(sortedIndexes.get(1), activity.getLaps());
+		return activity;
 	}
 
 	@Override
@@ -318,15 +288,6 @@ public class ActivityOperationsImpl implements ActivityOperations {
 				.orElse(activity);
 	}
 
-	private Optional<Integer[]> getResultIndexLaps(String index1, String index2) {
-		return ofNullable(index1)
-				.filter(StringUtils::isNumeric)
-				.map(Integer::parseInt)
-				.flatMap(indexLeftParam -> ofNullable(index2)
-						.filter(StringUtils::isNumeric)
-						.map(Integer::parseInt)
-						.map((indexRightParam) -> MathUtils.sortingPositiveValues(indexLeftParam, indexRightParam)));
-	}
 
 
 

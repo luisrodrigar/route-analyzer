@@ -1,34 +1,34 @@
 package com.routeanalyzer.api.controller;
 
-import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
 import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.exception.ActivityNotFoundException;
+import com.routeanalyzer.api.model.exception.ColorsNotAssignedException;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Collections;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.IntStream;
 
+import static com.google.common.base.Predicates.not;
 import static com.routeanalyzer.api.common.CommonUtils.setExportHeaders;
-import static com.routeanalyzer.api.common.CommonUtils.splitStringByDelimiter;
-import static com.routeanalyzer.api.common.CommonUtils.toBadRequestResponse;
-import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
+import static com.routeanalyzer.api.common.CommonUtils.toListOfType;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static io.vavr.API.$;
@@ -36,9 +36,9 @@ import static io.vavr.API.Case;
 import static io.vavr.API.Match;
 import static io.vavr.Predicates.is;
 import static java.util.Optional.of;
-import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toList;
 
+@Slf4j
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/activity")
@@ -51,100 +51,83 @@ public class ActivityRestController {
 	private final GpxExportFileService gpxExportService;
 
 	@GetMapping(value = "/{id}")
-	public Activity getActivityById(@PathVariable String id) {
+	public Activity getActivityById(@PathVariable @NotBlank String id) {
 		return getActivity(id);
 	}
 
 	@GetMapping(value = "/{id}/export/{type}")
-	public String exportAs(@PathVariable final String id, @PathVariable final String type,
-						   HttpServletResponse response) {
-		setExportHeaders(response, id, type);
-		return exportByType(type, getActivity(id));
-
+	public String exportAs(@PathVariable @Pattern(regexp = "^[a-f\\d]{24}$") final String id,
+						   @PathVariable @Pattern(regexp = "gpx|tcx", message = "Message type should be gpx or tcx.")
+						   final String type, final HttpServletResponse response) {
+		return of(getActivity(id))
+				.map(activity -> {
+					String exportFile = exportByType(type, activity);
+					setExportHeaders(response, id, type);
+					return exportFile;
+				})
+				.orElse(null);
 	}
 
 	@PutMapping(value = "/{id}/remove/point")
-	public @ResponseBody ResponseEntity<String> removePoint(@PathVariable String id, @RequestParam String lat,
-			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
+	public Activity removePoint(@PathVariable @Pattern(regexp = "^[a-f\\d]{24}$") final String id,
+								@RequestParam @Pattern(regexp = "^([0-9.-]+).+?([0-9.-]+)$",
+										message = "Latitude parameter not valid") final String lat,
+								@RequestParam @Pattern(regexp = "^([0-9.-]+).+?([0-9.-]+)$",
+										message = "Longitude parameter not valid") final String lng,
+								@RequestParam @Min(0L) final Long timeInMillis,
+								@RequestParam @Min(0) final Integer index) {
 		return of(getActivity(id))
-				.flatMap(activity -> ofNullable(lat)
-						.filter(StringUtils::isNotEmpty)
-						.flatMap(latitude -> ofNullable(lng)
-								.filter(StringUtils::isNotEmpty)
-								.map(longitude -> activityOperationsService
-										.removePoint(activity, latitude, longitude, timeInMillis, index))
-								.map(mongoRepository::save)
-								.map(CommonUtils::toOKMessageResponse)))
-				.orElseGet(CommonUtils::toBadRequestParams);
+				.map(activity -> activityOperationsService.removePoint(activity, lat, lng, timeInMillis, index))
+				.map(mongoRepository::save)
+				.orElse(null);
 	}
 
 	@PutMapping(value = "/{id}/join/laps")
-	public @ResponseBody ResponseEntity<String> joinLaps(@PathVariable String id,
-			@RequestParam(name = "index1") String indexLeft, @RequestParam(name = "index2") String indexRight) {
-		return ofNullable(id)
-				.filter(StringUtils::isNotEmpty)
-				.flatMap(mongoRepository::findById)
+	public Activity joinLaps(@PathVariable @Pattern(regexp = "^[a-f\\d]{24}$") final String id,
+							 @RequestParam(name = "index1") @NotNull @Min(0) final Integer indexLeft,
+							 @RequestParam(name = "index2") @NotNull @Min(0) final Integer indexRight) {
+		return of(getActivity(id))
 				.map(activity -> activityOperationsService.joinLaps(activity, indexLeft, indexRight))
 				.map(mongoRepository::save)
-				.map(CommonUtils::toOKMessageResponse)
-				.orElseGet(CommonUtils::toBadRequestParams);
+				.orElse(null);
 	}
 
 	@PutMapping(value = "/{id}/split/lap")
-	public @ResponseBody ResponseEntity<String> splitLap(@PathVariable String id, @RequestParam String lat,
-			@RequestParam String lng, @RequestParam String timeInMillis, @RequestParam String index) {
+	public Activity splitLap(@PathVariable @Pattern(regexp = "^[a-f\\d]{24}$") String id,
+							 @RequestParam @Pattern(regexp = "^([0-9.-]+).+?([0-9.-]+)$",
+									 message = "Latitude parameter not valid") String lat,
+							 @RequestParam @Pattern(regexp = "^([0-9.-]+).+?([0-9.-]+)$",
+									 message = "Longitude parameter not valid") String lng,
+							 @RequestParam @Min(0L) Long timeInMillis,
+							 @RequestParam @Min(0) Integer index) {
 		return of(getActivity(id))
 				.map(activity -> activityOperationsService.splitLap(activity, lat, lng, timeInMillis, index))
 				.map(mongoRepository::save)
-				.map(CommonUtils::toOKMessageResponse)
-				.orElseGet(CommonUtils::toBadRequestParams);
+				.orElse(null);
 	}
 
 	@PutMapping(value = "/{id}/remove/laps")
-	public @ResponseBody ResponseEntity<String> removeLaps(@PathVariable String id,
-			@RequestParam(name = "date") String startTimeLaps, @RequestParam(name = "index") String indexLaps) {
-	    Function<String, List<String>> splitStringByComma = string -> splitStringByDelimiter(string, COMMA_DELIMITER);
+	public Activity removeLaps(@PathVariable  @Pattern(regexp = "^[a-f\\d]{24}$") String id,
+							   @RequestParam(name = "date") @Size(min = 1) List<String> startTimeLaps,
+							   @RequestParam(name = "index") @Size(min = 1) List<String> indexLaps) {
+		List<Integer> indexes = toListOfType(indexLaps, Integer::parseInt);
 	    return of(getActivity(id))
-				.flatMap(activity -> ofNullable(indexLaps)
-						.map(splitStringByComma)
-						.map(indexStrings -> this.toListType(indexStrings, Integer::parseInt))
-						.map(index -> ofNullable(startTimeLaps)
-								.map(splitStringByComma)
-								.map(indexStrings -> this.toListType(indexStrings, Long::valueOf))
-								.map(datesList -> activityOperationsService
-										.removeLaps(activity, datesList, index))
-								.orElseGet(() -> activityOperationsService
-										.removeLaps(activity, null, index)))
-						.map(mongoRepository::save))
-				.map(CommonUtils::toOKMessageResponse)
-				.orElseGet(CommonUtils::toBadRequestParams);
+				.map(activity -> of(toListOfType(startTimeLaps, Long::valueOf))
+						.filter(not(List::isEmpty))
+						.map(dates -> activityOperationsService.removeLaps(activity, dates, indexes))
+						.orElseGet(() -> activityOperationsService.removeLaps(activity, null, indexes)))
+				.map(mongoRepository::save)
+				.orElse(null);
 	}
 
 	@PutMapping(value = "/{id}/color/laps")
-	public @ResponseBody ResponseEntity<String> setColorLap(@PathVariable String id, @RequestParam String data) {
-        Response badResponse = Response.builder()
-				.error(true)
-				.description("Not being possible to update lap's colors.")
-				.errorMessage(null)
-				.exception(null)
-				.build();
+	public Activity setColorLap(@PathVariable @Pattern(regexp = "^[a-f\\d]{24}$") final String id,
+								@RequestParam @Pattern(regexp = "^([a-f\\d]{6}-[a-f\\d]{6})((@([a-f\\d]{6}-[a-f\\d]{6}))*)")
+								final String data) {
 		return of(getActivity(id))
 				.map(activity -> activityOperationsService.setColorsGetActivity(activity, data))
 				.map(mongoRepository::save)
-				.map(CommonUtils::toOKMessageResponse)
-				.orElseGet(() -> toBadRequestResponse(badResponse));
-	}
-
-	private <T> List<T> toListType(List<String> listStrings, Function<String, T> convertTo) {
-		return ofNullable(listStrings)
-				.map(List::size)
-				.map(maxSizeDates -> IntStream.range(0, maxSizeDates))
-				.map(IntStream::boxed)
-				.flatMap(indexes -> of(indexes.map(listStrings::get))
-						.map(stringStream -> stringStream
-								.map(convertTo)
-								.collect(toList())))
-				.orElseGet(Collections::emptyList);
+				.orElseThrow(() -> new ColorsNotAssignedException(id));
 	}
 
 	private Activity getActivity(String id) {

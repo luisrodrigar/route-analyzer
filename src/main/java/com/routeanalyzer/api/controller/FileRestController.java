@@ -54,7 +54,8 @@ public class FileRestController {
 	 *         why it failed.
 	 */
 	@PostMapping("/upload")
-	public List<String> uploadFile(@RequestParam("file") MultipartFile multiPart, @RequestParam("type") String type) {
+	public List<String> uploadFile(@RequestParam("file") MultipartFile multiPart,
+								   @RequestParam("type") String type) {
 		return uploadTypeFile(type, multiPart)
 				.orElseThrow(() -> new IllegalArgumentException(BAD_TYPE_MESSAGE));
 	}

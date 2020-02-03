@@ -6,6 +6,7 @@ import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.api.xml.tcx.PositionT;
 import com.routeanalyzer.api.xml.tcx.TrackpointT;
+import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
@@ -23,10 +24,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.http.ResponseEntity.badRequest;
@@ -159,58 +162,24 @@ public class CommonUtils {
 
 	// Headers
 
-	public static HttpHeaders toJsonHeaders(){
-		MultiValueMap<String, String> values = new LinkedMultiValueMap<>();
-		values.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
-		return toHeaders(values);
-	}
-
 	public static void setExportHeaders(HttpServletResponse response, String id, String fileType) {
 		response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE);
 		response.addHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + id + "_" + fileType + ".xml");
 	}
 
-	private static HttpHeaders toHeaders(MultiValueMap<String, String> values) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.addAll(values);
-		return responseHeaders;
-	}
-
 
 	// Response Utils
 
-	public static ResponseEntity<String> toBadRequestParams() {
-		Response errorValue = Response.builder()
-				.error(true)
-				.description(BAD_REQUEST_MESSAGE)
-				.errorMessage(null)
-				.exception(null)
-				.build();
-		return badRequest().headers(toJsonHeaders()).body(JsonUtils.toJson(errorValue));
-	}
-
-	public static ResponseEntity<String> toBadRequestResponse(Object response) {
-		return badRequest().headers(toJsonHeaders()).body(JsonUtils.toJson(response));
-	}
-
-	public static ResponseEntity<String> toOKMessageResponse(Object response) {
-		return ok().headers(toJsonHeaders()).body(JsonUtils.toJson(response));
-	}
-
-	public static ResponseEntity<String> emptyResponse() {
-		return status(HttpStatus.NOT_FOUND).body(JsonUtils.toJson(Collections.emptyList()));
-	}
-
 	// String utils
 
-	public static List<String> splitStringByDelimiter(String string, String delimiter) {
-		return ofNullable(string)
-				.map(__ -> string.split(delimiter))
-				.map(Stream::of)
-				.map(streamSlices -> streamSlices
-						.filter(StringUtils::isNotEmpty)
-						.collect(toList()))
-				.orElseGet(Collections::emptyList);
+	public static <T> List<T> toListOfType(List<String> listStrings, Function<String, T> convertTo) {
+		Function<String, T> checkConvertTo = str ->  Try.of(() -> convertTo.apply(str))
+				.getOrElseThrow(() -> new IllegalArgumentException(format("Could not be " +
+						"convert string: %s to type", str)));
+		return IntStream.range(0, listStrings.size())
+				.boxed()
+				.map(index -> checkConvertTo.apply(listStrings.get(index)))
+				.collect(toList());
 	}
 
 	private static String toStringValue(Object value) {

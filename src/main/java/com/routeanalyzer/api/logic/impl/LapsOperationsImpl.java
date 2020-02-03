@@ -230,10 +230,9 @@ public class LapsOperationsImpl implements LapsOperations {
 				.map(newLap -> {
 					newLap.setIndex(newLapIndex);
 					getOptLapField(lap, Lap::getTracks)
-							.ifPresent(trackPoints -> ofNullable(
-									MathUtils.sortingPositiveValues(initTrackPointIndex, endTrackPointIndex))
-									.filter(ArrayUtils::isNotEmpty)
-									.map(indexes -> IntStream.range(indexes[0], indexes[1])
+							.ifPresent(trackPoints -> of(MathUtils.sortingPositiveValues(initTrackPointIndex,
+									endTrackPointIndex))
+									.map(indexes -> IntStream.range(indexes.get(0), indexes.get(1))
 											.mapToObj(indexEachTrackPoint ->
 													trackPoints.get(indexEachTrackPoint)).collect(Collectors.toList()))
 									.map(getSetterIndexTrackPoints::apply)

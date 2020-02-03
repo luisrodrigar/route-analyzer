@@ -31,7 +31,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static utils.TestUtils.toRuntimeException;
 import static java.util.Collections.emptyList;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -83,7 +82,7 @@ public class GpxUploadServiceImplTest {
         MultipartFile multipart = new MockMultipartFile("file", gpxXmlResource.getInputStream());
         Exception jaxbException = new JAXBException("Problems with xml.");
         // When
-        doThrow(toRuntimeException(jaxbException)).when(gpxService).readXML(Mockito.any());
+        doThrow(jaxbException).when(gpxService).readXML(Mockito.any());
         Try<List<Activity>> result = gpxUploadService.upload(multipart)
                 .map(gpxUploadService::toListActivities);
         // Then

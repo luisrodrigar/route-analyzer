@@ -320,7 +320,7 @@ public class ActivityOperationsImplTest {
 				.build();
 		// When
 		doReturn(joinedLap).when(lapsOperations).joinLaps(eq(lap2), eq(lap3));
-		Activity result = activityOperations.joinLaps(activity, "1", "2");
+		Activity result = activityOperations.joinLaps(activity, 1, 2);
 		// Then
 		verify(lapsOperations).joinLaps(eq(lap2), eq(lap3));
 		assertThat(result).isNotNull();
@@ -349,7 +349,7 @@ public class ActivityOperationsImplTest {
 				.build();
 		// When
 		doReturn(joinedLap).when(lapsOperations).joinLaps(eq(lap2), eq(lap3));
-		Activity result = activityOperations.joinLaps(activity, "2", "1");
+		Activity result = activityOperations.joinLaps(activity, 2, 1);
 		// Then
 		verify(lapsOperations).joinLaps(eq(lap2), eq(lap3));
 		assertThat(result).isNotNull();
@@ -363,15 +363,15 @@ public class ActivityOperationsImplTest {
 
 	@Test
 	public void joinLapsNullIndexLeftTest() {
-		joinLaps(null, "2");
+		joinLaps(null, 2);
 	}
 
 	@Test
 	public void joinLapsNullIndexRightTest() {
-		joinLaps("1", null);
+		joinLaps(1, null);
 	}
 
-	private void joinLaps(String indexLeft, String indexRight) {
+	private void joinLaps(Integer indexLeft, Integer indexRight) {
 		// Given
 		laps.add(lap1);
 		laps.add(lap2);
@@ -396,7 +396,7 @@ public class ActivityOperationsImplTest {
 		// Given
 		activity = null;
 		// When
-		Activity result = activityOperations.joinLaps(activity, "1", "2");
+		Activity result = activityOperations.joinLaps(activity, 1, 2);
 		// Then
 		verify(lapsOperations, times(0)).joinLaps(any(), any());
 		assertThat(result).isNull();
@@ -535,7 +535,7 @@ public class ActivityOperationsImplTest {
         doReturn(lap3.getTracks().get(1)).when(lapsOperations)
                 .getTrackPoint(eq(lap3), eq(position), eq(timeMillisLap32), eq(index32));
         Activity act = activityOperations.removePoint(activity, "46.452478", "-6.9501170",
-                String.valueOf(timeMillisLap32), String.valueOf(index32));
+                timeMillisLap32, index32);
 
         // Then
 		verify(lapsOperations).getTrackPoint(any(), any(), any(), any());
@@ -569,7 +569,7 @@ public class ActivityOperationsImplTest {
         doReturn(lap3OneTrackPoint.getTracks().get(0)).when(lapsOperations)
                 .getTrackPoint(eq(lap3OneTrackPoint), eq(position), eq(timeMillisLap31), eq(index31));
         Activity act = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
-                String.valueOf(timeMillisLap31), String.valueOf(index31));
+                timeMillisLap31, index31);
 
         // Then
 		verify(lapsOperations).getTrackPoint(any(), any(), any(), any());
@@ -594,7 +594,7 @@ public class ActivityOperationsImplTest {
                 .build();
         // When
         Activity act = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
-                String.valueOf(timeMillisLap31), String.valueOf(index31));
+                timeMillisLap31, index31);
 
         // Then
 		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
@@ -625,7 +625,7 @@ public class ActivityOperationsImplTest {
         doReturn(lap3OneTrackPoint.getTracks().get(0)).when(lapsOperations)
                 .getTrackPoint(eq(lap3OneTrackPoint), eq(position), isNull(), eq(index31));
         Activity act = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
-                null, String.valueOf(index31));
+                null, index31);
 
         // Then
 		verify(lapsOperations).getTrackPoint(any(), any(), isNull(), any());
@@ -661,7 +661,7 @@ public class ActivityOperationsImplTest {
         doReturn(lap2.getTracks().get(0)).when(lapsOperations)
                 .getTrackPoint(eq(lap2), eq(position), eq(timeMillisLap21), isNull());
         Activity act = activityOperations.removePoint(activity, "44.3602900",  "-6.8447600",
-                String.valueOf(timeMillisLap21), null);
+                timeMillisLap21, null);
 
         // Then
 		verify(lapsOperations).getTrackPoint(any(), any(), any(), isNull());
@@ -725,7 +725,7 @@ public class ActivityOperationsImplTest {
 		doReturn(lap3OneTrackPoint).when(lapsOperations).createSplitLap(eq(lap1), eq(0), eq(index21), eq(lap1.getIndex()));
 		doReturn(lap2).when(lapsOperations).createSplitLap(eq(lap1), eq(index21), eq(lap1.getTracks().size()), eq(lap1.getIndex() + 1));
 		Activity act = activityOperations.splitLap(activity, "44.3602900", "-6.8447600",
-				String.valueOf(timeMillisLap21), String.valueOf(index21));
+				timeMillisLap21, index21);
 
 		// Then
 		verify(lapsOperations, times(1)).fulfillCriteriaPositionTime(any(), any(), any(), any());
@@ -745,7 +745,7 @@ public class ActivityOperationsImplTest {
 		// Given activity null
 		// When
 		Activity act = activityOperations.splitLap(null, "44.3602900", "-6.8447600",
-				String.valueOf(timeMillisLap21), String.valueOf(index21));
+				timeMillisLap21, index21);
 
 		// Then
 		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
@@ -764,8 +764,7 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toLocalDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity act = activityOperations.splitLap(activity, null, "-6.8447600",
-				String.valueOf(timeMillisLap21), String.valueOf(index21));
+		Activity act = activityOperations.splitLap(activity, null, "-6.8447600", timeMillisLap21, index21);
 
 		// Then
 		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
@@ -785,7 +784,7 @@ public class ActivityOperationsImplTest {
 				.build();
 		// When
 		Activity act = activityOperations.splitLap(activity, "44.3602900", null,
-				String.valueOf(timeMillisLap21), String.valueOf(index21));
+				timeMillisLap21, index21);
 
 		// Then
 		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
