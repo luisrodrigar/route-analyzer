@@ -3,7 +3,9 @@ package com.routeanalyzer.api.it;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,13 +13,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.testcontainers.containers.DockerComposeContainer;
 import utils.TestUtils;
 
+import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.routeanalyzer.api.common.Constants.ACTIVITY_NOT_FOUND;
+import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
 import static com.routeanalyzer.api.common.Constants.COLORS_LAP_PATH;
 import static com.routeanalyzer.api.common.Constants.EXPORT_AS_PATH;
 import static com.routeanalyzer.api.common.Constants.GET_ACTIVITY_PATH;
@@ -39,15 +45,21 @@ import static utils.TestUtils.ACTIVITY_TCX_4_ID;
 import static utils.TestUtils.ACTIVITY_TCX_5_ID;
 import static utils.TestUtils.ACTIVITY_TCX_6_ID;
 import static utils.TestUtils.ACTIVITY_TCX_ID;
-import static utils.TestUtils.DOESNT_EXIST_ID;
-import static utils.TestUtils.NEITHER_EXIST_ID;
+import static utils.TestUtils.NOT_EXIST_1_ID;
+import static utils.TestUtils.NOT_EXIST_2_ID;
 import static utils.TestUtils.toActivity;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test.properties")
 public class ActivityRestControllerTest extends IntegrationTest {
 
-    private static final String ERROR_RESPONSE = "Activity was not found or other params are not valid.";
+    @ClassRule
+    public static DockerComposeContainer mongoDbContainer =
+            new DockerComposeContainer(new File(DOCKER_COMPOSE_MONGO_DB))
+                    .withExposedService(MONGO_CONTAINER_NAME, MONGO_PORT);
+
+    @Autowired
+    private ActivityMongoRepository activityMongoRepository;
 
     @Value("classpath:utils/json-activity-tcx.json")
     private Resource tcxJsonResource;
@@ -67,9 +79,6 @@ public class ActivityRestControllerTest extends IntegrationTest {
     private Resource removeLapsTcxJsonResource;
 
     private Activity gpxActivity, tcxActivity;
-
-    @Autowired
-    private ActivityMongoRepository activityMongoRepository;
 
     @Before
     public void setUp() {
@@ -91,17 +100,17 @@ public class ActivityRestControllerTest extends IntegrationTest {
 
     @Test
     public void getActivityDataBaseEmptyTest() throws Exception {
-        isGenerateErrorHTTP(get(GET_ACTIVITY_PATH, DOESNT_EXIST_ID), status().isBadRequest(),
-                ERROR_RESPONSE,true);
-        isGenerateErrorHTTP(get(GET_ACTIVITY_PATH, NEITHER_EXIST_ID), status().isBadRequest(),
-                ERROR_RESPONSE, true);
+        isGenerateErrorHTTP(get(GET_ACTIVITY_PATH, NOT_EXIST_1_ID), status().isNotFound(),
+                ACTIVITY_NOT_FOUND,true);
+        isGenerateErrorHTTP(get(GET_ACTIVITY_PATH, NOT_EXIST_2_ID), status().isNotFound(),
+                ACTIVITY_NOT_FOUND, true);
     }
 
     @Test
     public void exportAsUnknownXmlTest() throws Exception {
         String unknownXmlType = "kml";
         isGenerateErrorHTTP(get(EXPORT_AS_PATH, ACTIVITY_GPX_ID, unknownXmlType), status().isBadRequest(),
-                ERROR_RESPONSE, true);
+                BAD_REQUEST_MESSAGE, true);
     }
 
     @Test
@@ -131,19 +140,19 @@ public class ActivityRestControllerTest extends IntegrationTest {
     public void removePointNonexistentActivityTest() throws Exception {
         String latitudePointToDelete = "42.6131970", longitudePointToDelete = "-6.5732170",
                 timeInMillisPointToDelete = "1519737373000", indexPointToDelete = "1";
-        isGenerateErrorHTTP(put(REMOVE_POINT_PATH, DOESNT_EXIST_ID)
+        isGenerateErrorHTTP(put(REMOVE_POINT_PATH, NOT_EXIST_1_ID)
                 .param("lat", latitudePointToDelete)
                 .param("lng", longitudePointToDelete)
                 .param("timeInMillis", timeInMillisPointToDelete)
-                .param("index", indexPointToDelete), status().isBadRequest(), ERROR_RESPONSE, true);
+                .param("index", indexPointToDelete), status().isNotFound(), ACTIVITY_NOT_FOUND, true);
     }
 
     @Test
     public void removeLapNonExistentActivityTest() throws Exception {
-        isGenerateErrorHTTP(put(REMOVE_LAP_PATH, DOESNT_EXIST_ID)
+        isGenerateErrorHTTP(put(REMOVE_LAP_PATH, NOT_EXIST_1_ID)
                         .param("date", "1519737390000")
                         .param("index", "2"),
-                status().isBadRequest(), ERROR_RESPONSE, true);
+                status().isNotFound(), ACTIVITY_NOT_FOUND, true);
     }
 
     @Test
@@ -209,7 +218,7 @@ public class ActivityRestControllerTest extends IntegrationTest {
         isGenerateErrorHTTP(put(JOIN_LAPS_PATH, ACTIVITY_TCX_ID)
                         .param("index1", EMPTY)
                         .param("index2", EMPTY),
-                status().isBadRequest(), ERROR_RESPONSE, true);
+                status().isBadRequest(), BAD_REQUEST_MESSAGE, true);
     }
 
     @Test
@@ -218,9 +227,9 @@ public class ActivityRestControllerTest extends IntegrationTest {
         String index1 = "1";
         String index2 = "2";
         // When
-        isGenerateErrorHTTP(put(JOIN_LAPS_PATH, DOESNT_EXIST_ID)
+        isGenerateErrorHTTP(put(JOIN_LAPS_PATH, NOT_EXIST_1_ID)
                 .param("index1", index1)
-                .param("index2", index2), status().isBadRequest(), ERROR_RESPONSE, true);
+                .param("index2", index2), status().isNotFound(), ACTIVITY_NOT_FOUND, true);
     }
 
     @Test
@@ -254,19 +263,19 @@ public class ActivityRestControllerTest extends IntegrationTest {
         String index = "3";
         // When
         // Then
-        isGenerateErrorHTTP(put(SPLIT_LAP_PATH, DOESNT_EXIST_ID)
+        isGenerateErrorHTTP(put(SPLIT_LAP_PATH, NOT_EXIST_1_ID)
                         .param("lat", lat)
                         .param("lng", lng)
                         .param("timeInMillis", timeMillis)
                         .param("index", index),
-                status().isBadRequest(), ERROR_RESPONSE, true);
+                status().isNotFound(), ACTIVITY_NOT_FOUND, true);
     }
 
     @Test
     public void setColorLapsTest() throws Exception {
         // Given
         Activity lapColorsActivity = toActivity(lapColorsTcxJsonResource).get();
-        String data = "primero-primero2@segundo-segundo2";
+        String data = "abc012-0a1b2c@123abc-0e9d8c";
 
         Optional<Activity> beforeTestCase = activityMongoRepository.findById(ACTIVITY_TCX_6_ID);
         List<String> beforeColors = beforeTestCase.get().getLaps().stream()
@@ -300,10 +309,9 @@ public class ActivityRestControllerTest extends IntegrationTest {
 
     @Test
     public void setColorLapsNonexistentActivityTest() throws Exception {
-        String data = "primero-primero2@segundo-segundo2",
-                description = "Not being possible to update lap's colors.";
-        isGenerateErrorHTTP(put(COLORS_LAP_PATH, DOESNT_EXIST_ID)
-                .param("data", data), status().isBadRequest(), description, true);
+        String data = "abc012-0a1b2c@123abc-0e9d8c";
+        isGenerateErrorHTTP(put(COLORS_LAP_PATH, NOT_EXIST_1_ID)
+                .param("data", data), status().isNotFound(), ACTIVITY_NOT_FOUND, true);
     }
 
 

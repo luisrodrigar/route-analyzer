@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static utils.TestUtils.toRuntimeException;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class GpxExportServiceImplTest {
@@ -69,7 +68,7 @@ public class GpxExportServiceImplTest {
         // Given
         Exception jaxbException = new JAXBException("Problems with the xml");
         // When
-        doThrow(toRuntimeException(jaxbException)).when(gpxService).createXML(any());
+        doThrow(jaxbException).when(gpxService).createXML(any());
         Try.of(() -> gpxExportService.export(activityGpxTest))
                 .onSuccess(gpxExportedFile -> assertThat(true).isFalse())
                 .onFailure(error -> {

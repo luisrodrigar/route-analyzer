@@ -15,16 +15,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Example;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.xml.sax.SAXParseException;
 import utils.TestUtils;
@@ -57,13 +52,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static utils.TestUtils.getFileBytes;
 import static utils.TestUtils.toActivity;
-import static utils.TestUtils.toRuntimeException;
 import static utils.TestUtils.toS3ObjectInputStream;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ActiveProfiles("test-mongodb")
-@EnableAutoConfiguration(exclude = { MongoAutoConfiguration.class, MongoDataAutoConfiguration.class,
-		MongoRepositoriesAutoConfiguration.class })
 public class FileRestControllerTest extends MockMvcTestController {
 
 	@Autowired
@@ -168,7 +159,7 @@ public class FileRestControllerTest extends MockMvcTestController {
 	public void uploadFileThrowJAXBExceptionTest() throws Exception {
 		// Given
 		String exceptionDescription = "Syntax error while trying to parse the file.";
-		Exception exception = toRuntimeException(new JAXBException(exceptionDescription));
+		Exception exception = new JAXBException(exceptionDescription);
 		setPostFileBuilder(UPLOAD_FILE_PATH);
 		// When
 		doThrow(exception).when(gpxUploadFileService).upload(eq(exceptionJAXBFile));
@@ -181,7 +172,7 @@ public class FileRestControllerTest extends MockMvcTestController {
 	public void uploadFileThrowSAXExceptionTest() throws Exception {
 		// Given
 		String exceptionDescription = "Syntax error while trying to parse the file.";
-		Exception exception = toRuntimeException(new SAXParseException(exceptionDescription, null));
+		Exception exception = new SAXParseException(exceptionDescription, null);
 		setPostFileBuilder(UPLOAD_FILE_PATH);
 		// When
 		doThrow(exception).when(tcxUploadFileService).upload(eq(exceptionSAXFile));

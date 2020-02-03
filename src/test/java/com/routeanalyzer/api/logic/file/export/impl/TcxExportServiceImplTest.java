@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static utils.TestUtils.toRuntimeException;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class TcxExportServiceImplTest {
@@ -70,7 +69,7 @@ public class TcxExportServiceImplTest {
         // Given
         Exception jaxbException = new JAXBException("Problems with xml.");
         // When
-        doThrow(toRuntimeException(jaxbException)).when(tcxService).createXML(any());
+        doThrow(jaxbException).when(tcxService).createXML(any());
         Try.of(() -> tcxExportService.export(activityTcxTest))
                 // Then
                 .onSuccess(tcxExportedFile -> assertThat(true).isFalse())

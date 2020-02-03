@@ -29,7 +29,7 @@ public interface ActivityOperations {
 	 *            order of creation
 	 * @return activity or null if there was any error.
 	 */
-	Activity removePoint(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint);
+	Activity removePoint(Activity act, String lat, String lng, Long timeInMillis, Integer indexTrackPoint);
 	
 	/**
 	 * Split a lap into two laps with one track point as the divider.
@@ -47,16 +47,16 @@ public interface ActivityOperations {
 	 *            of the track point which will be the divider
 	 * @return activity with the new laps.
 	 */
-	Activity splitLap(Activity activity, String lat, String lng, String timeInMillis, String indexTrackPoint);
+	Activity splitLap(Activity activity, String lat, String lng, Long timeInMillis, Integer indexTrackPoint);
 
 	/**
 	 * Join two laps, the result is one lap with the mixed values
 	 * @param activity
-	 * @param indexLeft
-	 * @param indexRight
+	 * @param index1
+	 * @param index2
 	 * @return
 	 */
-	Activity joinLaps(Activity activity, String indexLeft, String indexRight);
+	Activity joinLaps(Activity activity, Integer index1, Integer index2);
 
 	/**
 	 * Delete a lap from an activity

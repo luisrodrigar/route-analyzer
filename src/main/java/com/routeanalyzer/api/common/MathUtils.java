@@ -5,8 +5,12 @@ import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 @UtilityClass
@@ -63,21 +67,20 @@ public class MathUtils {
         return heartRate.getValue() > 0;
     }
 
-    public static Integer[] sortingPositiveValues(Integer indexLeft, Integer indexRight) {
-        return ofNullable(indexLeft)
-                .filter(MathUtils::isPositiveOrZero)
-                .flatMap(indexLeftParam -> ofNullable(indexRight)
-                        .filter(MathUtils::isPositiveOrZero)
-                        .filter(indexRightParam -> indexLeft.compareTo(indexRight) > 0)
-                        .map(indexRightParam -> swappingValues(indexLeft, indexRight)))
-                .orElseGet(() -> new Integer[]{indexLeft, indexRight});
+    public static List<Integer> sortingPositiveValues(Integer indexLeft, Integer indexRight) {
+        return of(indexLeft)
+                .filter(__ -> isPositiveOrZero(indexLeft))
+                .filter(__ -> isPositiveOrZero(indexRight))
+                .map(__ -> indexLeft.compareTo(indexRight) > 0
+                        ? swapValues(indexLeft, indexRight) : asList(indexLeft, indexRight))
+                .orElse(emptyList());
     }
 
-    private static Integer[] swappingValues(Integer smallerNumber, Integer biggerNumber) {
+    private static List<Integer> swapValues(Integer smallerNumber, Integer biggerNumber) {
         smallerNumber = smallerNumber + biggerNumber;
         biggerNumber = smallerNumber - biggerNumber;
         smallerNumber = smallerNumber - biggerNumber;
-        return new Integer[]{smallerNumber, biggerNumber};
+        return asList(smallerNumber, biggerNumber);
     }
 
     public static double metersBetweenCoordinates(double latP1, double lngP1, double latP2, double lngP2) {

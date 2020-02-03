@@ -25,14 +25,12 @@ import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static utils.TestUtils.toRuntimeException;
-import static java.util.Collections.emptyList;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class TcxUploadServiceImplTest {
@@ -82,7 +80,7 @@ public class TcxUploadServiceImplTest {
         MultipartFile multipart = new MockMultipartFile("file", tcxXmlResource.getInputStream());
         Exception jaxbException = new JAXBException("Error parser");
         // When
-        doThrow(toRuntimeException(jaxbException)).when(tcxService).readXML(Mockito.any());
+        doThrow(jaxbException).when(tcxService).readXML(Mockito.any());
         // Then
         Try.of(() -> tcxUploadService.upload(multipart))
                 .onSuccess((success) -> assertThat(true).isFalse())

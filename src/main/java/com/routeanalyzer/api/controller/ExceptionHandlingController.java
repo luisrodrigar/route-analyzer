@@ -3,6 +3,7 @@ package com.routeanalyzer.api.controller;
 import com.amazonaws.AmazonClientException;
 import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.model.exception.ActivityNotFoundException;
+import com.routeanalyzer.api.model.exception.ColorsNotAssignedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,12 +12,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.xml.sax.SAXParseException;
 
+import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 
 import static com.routeanalyzer.api.common.Constants.ACTIVITY_NOT_FOUND;
 import static com.routeanalyzer.api.common.Constants.AMAZON_CLIENT_EXCEPTION_MESSAGE;
 import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.COLORS_ASSIGNED_EXCEPTION;
 import static com.routeanalyzer.api.common.Constants.IO_EXCEPTION_MESSAGE;
 import static com.routeanalyzer.api.common.Constants.JAXB_EXCEPTION_MESSAGE;
 import static com.routeanalyzer.api.common.Constants.SAX_PARSE_EXCEPTION_MESSAGE;
@@ -71,6 +74,22 @@ public class ExceptionHandlingController {
     Response handleActivityNotFoundException(final Exception exception) {
         log.warn("Params error happened: ", exception);
         return createErrorBody(true, ACTIVITY_NOT_FOUND, exception);
+    }
+
+    @ResponseBody
+    @ExceptionHandler(ColorsNotAssignedException.class)
+    @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
+    Response handleColorsNotAssignedException(final Exception exception) {
+        log.warn("Params error happened: ", exception);
+        return createErrorBody(true, COLORS_ASSIGNED_EXCEPTION, exception);
+    }
+
+    @ResponseBody
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    Response handleConstraintViolationException(final Exception exception) {
+        log.warn("Params error happened: ", exception);
+        return createErrorBody(true, BAD_REQUEST_MESSAGE, exception);
     }
 
     private Response createErrorBody(boolean isError, String description, Exception exception) {

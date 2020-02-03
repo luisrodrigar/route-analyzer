@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.it;
 
-import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.internal.SkipMd5CheckStrategy;
@@ -9,34 +8,28 @@ import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.OriginalActivityRepository;
 import io.vavr.control.Try;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.util.TestPropertyValues;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MvcResult;
+import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
-import org.xml.sax.SAXParseException;
-import utils.TestUtils;
 
-import javax.xml.bind.JAXBException;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -49,28 +42,32 @@ import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static com.routeanalyzer.api.common.Constants.UPLOAD_FILE_PATH;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.MediaType.APPLICATION_XML;
+import static org.springframework.http.MediaType.APPLICATION_XML_VALUE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
-import static utils.TestUtils.ACTIVITY_GPX_ID;
-import static utils.TestUtils.ACTIVITY_TCX_ID;
 import static utils.TestUtils.getFileBytes;
-import static utils.TestUtils.toActivity;
-import static utils.TestUtils.toS3ObjectInputStream;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test.properties")
 public class FileRestControllerTest extends IntegrationTest {
 
-    private static final String APPLICATION_XML_STR = APPLICATION_XML.toString();
+    private static final String CORUNA_XML_FILE = "coruna.gpx.xml";
+    private static final String OVIEDO_XML_FILE = "oviedo.tcx.xml";
+    private static final String GPX_ID_XML = "0123456789";
+    private static final String TCX_ID_XML = "9876543210";
 
     @ClassRule
     public static LocalStackContainer localStackS3 = new LocalStackContainer().withServices(S3);
 
-    @Autowired
-    private ActivityMongoRepository activityMongoRepository;
+    @ClassRule
+    public static DockerComposeContainer mongoDbContainer =
+            new DockerComposeContainer(new File(DOCKER_COMPOSE_MONGO_DB))
+                    .withExposedService(MONGO_CONTAINER_NAME, MONGO_PORT);
+
+    @Value("${aws.s3-bucket}")
+    private String bucketName;
 
     @Value("classpath:controller/xml-input-fake-1.json")
     private Resource unknownResource;
@@ -79,20 +76,16 @@ public class FileRestControllerTest extends IntegrationTest {
     @Value("classpath:controller/oviedo.tcx.xml")
     private Resource tcxXmlResource;
 
-    @Value("${aws.s3-bucket}")
-    private String bucketName;
-
     private MockMultipartFile gpxXmlFile;
     private MockMultipartFile tcxXmlFile;
     private MockMultipartFile unknownXmlFile;
-
-    private static final String GPX_ID_XML = "0123456789";
-    private static final String TCX_ID_XML = "9876543210";
 
     @Autowired
     private AmazonS3 amazonS3;
     @Autowired
     private OriginalActivityRepository originalActivityRepository;
+    @Autowired
+    private ActivityMongoRepository activityMongoRepository;
 
     @Before
     public void setUp() {
@@ -119,11 +112,11 @@ public class FileRestControllerTest extends IntegrationTest {
 
     private void loadMultiPartFiles() {
         String fileName = "file";
-        gpxXmlFile = new MockMultipartFile(fileName, "coruna.gpx.xml", APPLICATION_XML_STR,
+        gpxXmlFile = new MockMultipartFile(fileName, CORUNA_XML_FILE, APPLICATION_XML_VALUE,
                 getFileBytes(gpxXmlResource));
-        tcxXmlFile = new MockMultipartFile(fileName, "oviedo.tcx.xml", APPLICATION_XML_STR,
+        tcxXmlFile = new MockMultipartFile(fileName, OVIEDO_XML_FILE, APPLICATION_XML_VALUE,
                 getFileBytes(tcxXmlResource));
-        unknownXmlFile = new MockMultipartFile(fileName, "", APPLICATION_XML_STR,
+        unknownXmlFile = new MockMultipartFile(fileName, "", APPLICATION_XML_VALUE,
                 getFileBytes(unknownResource));
     }
 

@@ -2,7 +2,6 @@ package com.routeanalyzer.api.it;
 
 import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.model.Activity;
-import org.junit.ClassRule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,9 +12,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.testcontainers.containers.DockerComposeContainer;
 
-import java.io.File;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -28,17 +25,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class IntegrationTest {
 
-    private static final String DOCKER_COMPOSE_MONGO_DB = "src/test/resources/mongodb/docker-compose.yml";
+    protected static final String DOCKER_COMPOSE_MONGO_DB = "src/test/resources/mongodb/docker-compose.yml";
     protected static final String MONGO_CONTAINER_NAME = "mongodb";
     protected static final int MONGO_PORT = 27017;
 
     @Autowired
     protected MockMvc mockMvc;
-
-    @ClassRule
-    public static DockerComposeContainer mongoDbContainer =
-            new DockerComposeContainer(new File(DOCKER_COMPOSE_MONGO_DB))
-                    .withExposedService(MONGO_CONTAINER_NAME, MONGO_PORT);
 
     protected MockMultipartHttpServletRequestBuilder builder;
 
@@ -116,7 +108,7 @@ public class IntegrationTest {
                                        String descriptionError, boolean isError) throws Exception {
         String errorField = "$.error", descriptionField = "$.description";
         mockMvc.perform(requestBuilder).andExpect(expectedResponse)
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath(errorField, is(isError)))
                 .andExpect(jsonPath(descriptionField, is(descriptionError)));
     }

@@ -14,8 +14,8 @@
       "averageSpeed": 2.6801723874025747,
       "averageHearRate": 97.42857142857143,
       "maximumHeartRate": 103,
-      "color":"#primero",
-      "lightColor":"#primero2",
+      "color":"#abc012",
+      "lightColor":"#0a1b2c",
       "tracks": [
         {
           "date": "2018-02-27T14:16:13+01:00",
@@ -64,8 +64,8 @@
       "averageSpeed": 6.717731656189975,
       "averageHearRate": 120.0,
       "maximumHeartRate":  120,
-      "color":"#segundo",
-      "lightColor":"#segundo2",
+      "color":"#123abc",
+      "lightColor":"#0e9d8c",
       "tracks": [
         {
           "date": "2018-02-27T14:17:30+01:00",
