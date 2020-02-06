@@ -8,10 +8,9 @@ import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.OriginalActivityRepository;
 import io.vavr.control.Try;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,8 +60,8 @@ public class FileRestControllerTest extends IntegrationTest {
     @ClassRule
     public static LocalStackContainer localStackS3 = new LocalStackContainer().withServices(S3);
 
-    @ClassRule
-    public static DockerComposeContainer mongoDbContainer =
+    @Rule
+    public DockerComposeContainer mongoDbContainer =
             new DockerComposeContainer(new File(DOCKER_COMPOSE_MONGO_DB))
                     .withExposedService(MONGO_CONTAINER_NAME, MONGO_PORT);
 

@@ -1,15 +1,17 @@
 package com.routeanalyzer.api.services.googlemaps;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 
-@Value
+@Data
 @ConstructorBinding
 @RequiredArgsConstructor
 @ConfigurationProperties(prefix = "google-maps-api")
-public class GoogleMapsAPIProperties {
-    private final String elevationUrlEndpoint;
+public class GoogleMapsApiProperties {
+    private final String elevationHost;
+    private final String elevationEndpoint;
+    private final String elevationProtocol;
     private final String apiKey;
 }

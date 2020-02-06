@@ -1,17 +1,23 @@
 package com.routeanalyzer.api.services.googlemaps;
 
+import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
-import com.routeanalyzer.api.services.googlemaps.model.GoggleMapsAPIResponse;
-import com.routeanalyzer.api.services.googlemaps.model.GoogleMapsAPIPosition;
-import com.routeanalyzer.api.services.googlemaps.model.GoogleMapsAPIResult;
+import io.vavr.control.Try;
+import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -20,100 +26,102 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Stream.of;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import static org.springframework.cloud.contract.wiremock.WireMockSpring.options;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class GoogleMapsServiceImplTest {
+public class GoogleMapsApiServiceTest {
 
-    @Mock
-    private RestTemplate restTemplate;
-    @Mock
-    private GoogleMapsAPIProperties properties;
+    private static final String LOCALHOST_HOST_NAME = "localhost";
+    private static final String ELEVATION_ENDPOINT = "/maps/api/elevation/json?locations=%s&key=%s";
+    private static final String API_KEY = "BIzeSu0Etz13LA1c031BFUeuNsRZ1xO4uYiM0fB";
+    private static final String ELEVATION_STUBBING_RESPONSE = "stubbing-googlemaps-elevations-response.json";
+    private static final String ELEVATION_STUBBING_ERROR_RESPONSE = "stubbing-googlemaps-elevations-error.json";
+    private static final String POSITIONS = "7.3212,1.3419|4.3212,2.3419|3.6012,0.3419";
+    private static final String POSITIONS_URL_ENCODED = "7.3212,1.3419%7C4.3212,2.3419%7C3.6012,0.3419";
+    private static final String DATA_RESOURCE = "expected/result-googlemaps-elevations-map.json";
+    private static final String ERROR_DATA_RESOURCE = "expected/result-googlemaps-elevations" +
+            "-error.json";
+
+    @Rule
+    public WireMockClassRule googleApiWireMock = new WireMockClassRule(options()
+            .dynamicPort()
+            .bindAddress(LOCALHOST_HOST_NAME));
 
     @InjectMocks
-    private GoogleMapsAPIService elevationService;
+    private GoogleMapsApiService elevationService;
+    @Mock
+    private GoogleMapsApiProperties elevationsProperties;
+    @Spy
+    private RestTemplate restTemplate;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    private void mockElevationProperties() {
+        when(elevationsProperties.getElevationHost()).thenReturn(getGoogleMapsElevationUrl());
+        when(elevationsProperties.getElevationEndpoint()).thenReturn("/maps/api/elevation/json");
+        when(elevationsProperties.getElevationProtocol()).thenReturn("http");
+        when(elevationsProperties.getApiKey()).thenReturn(API_KEY);
+    }
+
+    @Before
+    public void setUp() {
+        mockElevationProperties();
+    }
+
+    private String getGoogleMapsElevationUrl() {
+        return format("%s:%d", LOCALHOST_HOST_NAME, googleApiWireMock.port());
+    }
+
+    private String getEndpoint(String positions) {
+        return format(ELEVATION_ENDPOINT, positions, API_KEY);
+    }
 
     @Test
-    public void getAltitudeTest() {
+    public void getAltitudeTest() throws Exception {
         // Given
-        double latitude1 = 7.3212;
-        double longitude1 = 1.3419;
-        double latitude2 = 4.3212;
-        double longitude2 = 2.3419;
-        double latitude3 = 3.6012;
-        double longitude3 = 0.3419;
-        String elevation1 = "450.31";
-        String elevation2 = "340.31";
-        String elevation3 = "560.31";
-        GoogleMapsAPIPosition gmPosition1 = GoogleMapsAPIPosition.builder()
-                .lat(latitude1)
-                .lng(longitude1)
-                .build();
-        GoogleMapsAPIPosition gmPosition2 = GoogleMapsAPIPosition.builder()
-                .lat(latitude2)
-                .lng(longitude2)
-                .build();
-        GoogleMapsAPIPosition gmPosition3 = GoogleMapsAPIPosition.builder()
-                .lat(latitude3)
-                .lng(longitude3)
-                .build();
-        GoogleMapsAPIResult gmResult1 = GoogleMapsAPIResult.builder()
-                .location(gmPosition1)
-                .elevation(Double.parseDouble(elevation1))
-                .build();
-        GoogleMapsAPIResult gmResult2 = GoogleMapsAPIResult.builder()
-                .location(gmPosition2)
-                .elevation(Double.parseDouble(elevation2))
-                .build();
-        GoogleMapsAPIResult gmResult3 = GoogleMapsAPIResult.builder()
-                .location(gmPosition3)
-                .elevation(Double.parseDouble(elevation3))
-                .build();
-        GoggleMapsAPIResponse gmResponse = GoggleMapsAPIResponse.builder()
-                .results(of(gmResult1, gmResult2, gmResult3).collect(Collectors.toList()))
-                .status("OK")
-                .build();
-        Map<String, String> expectedResult = of(new String[][] {
-                { (latitude1 + "," + longitude1), elevation1 },
-                { (latitude2 + "," + longitude2), elevation2 },
-                { (latitude3 + "," + longitude3), elevation3 },
-                { "status", "OK"}
-        }).collect(toMap(data -> data[0], data -> data[1]));
-
+        stubFor(get(urlEqualTo(getEndpoint(POSITIONS_URL_ENCODED)))
+                .willReturn(ok()
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBodyFile(ELEVATION_STUBBING_RESPONSE)));
+        Map expectedResult = Try.of(() -> GoogleMapsApiServiceTest.class.getClassLoader().getResourceAsStream(DATA_RESOURCE))
+                .flatMap(inputStream -> Try.of(() -> IOUtils.toByteArray(inputStream)))
+                .flatMap(byteArray -> Try.of(() -> objectMapper.readValue(byteArray, Map.class)))
+                .get();
         // When
-        doReturn(gmResponse).when(restTemplate).getForObject(anyString(), eq(GoggleMapsAPIResponse.class));
-        Map<String, String> mapResults = elevationService.getAltitude("anyPosition");
+        Map<String, String> mapResults = elevationService.getAltitude(POSITIONS);
 
         // Then
-        assertThat(mapResults).isNotNull();
         assertThat(mapResults).isNotEmpty();
         assertThat(mapResults).isEqualTo(expectedResult);
     }
 
     @Test
-    public void getAltitudeFailServiceTest() {
+    public void getAltitudeFailServiceTest() throws Exception {
         // Given
-        GoggleMapsAPIResponse gmResponse = GoggleMapsAPIResponse.builder()
-                .results(Collections.emptyList())
-                .status("KO")
-                .build();
-        Map<String, String> expectedResult = of(new String[][] {
-                { "status", "KO"}
-        }).collect(toMap(data -> data[0], data -> data[1]));
+        stubFor(get(urlEqualTo(getEndpoint(POSITIONS_URL_ENCODED)))
+                .willReturn(ok()
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBodyFile(ELEVATION_STUBBING_ERROR_RESPONSE)));
+        Map errorResult = Try.of(() -> GoogleMapsApiServiceTest.class
+                .getClassLoader().getResourceAsStream(ERROR_DATA_RESOURCE))
+                .flatMap(inputStream -> Try.of(() -> IOUtils.toByteArray(inputStream)))
+                .flatMap(byteArray -> Try.of(() -> objectMapper.readValue(byteArray, Map.class)))
+                .get();
 
         // When
-        doReturn(gmResponse).when(restTemplate).getForObject(anyString(), eq(GoggleMapsAPIResponse.class));
-        Map<String, String> mapResults = elevationService.getAltitude("anyPosition");
+        Map<String, String> mapResults = elevationService.getAltitude(POSITIONS);
 
         // Then
         assertThat(mapResults).isNotNull();
         assertThat(mapResults).isNotEmpty();
-        assertThat(mapResults).isEqualTo(expectedResult);
+        assertThat(mapResults).isEqualTo(errorResult);
     }
 
     @Test
@@ -197,7 +205,7 @@ public class GoogleMapsServiceImplTest {
         Assertions.assertThat(elevationCode).isEqualTo("5.63654,1.3456|5.63654,1.3456|5.63654,1.3456");
     }
 
-    @Test
+    @org.junit.Test
     public void createPositionsRequestSomeTrackPointNotHavePositionTest() {
         // Given
         BigDecimal latitude = new BigDecimal("5.63654");

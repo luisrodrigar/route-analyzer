@@ -1,7 +1,7 @@
 package com.routeanalyzer.api.config;
 
 import com.routeanalyzer.api.database.ActivityMongoRepository;
-import com.routeanalyzer.api.services.googlemaps.GoogleMapsAPIProperties;
+import com.routeanalyzer.api.services.googlemaps.GoogleMapsApiProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +15,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @Configuration
 @EnableSwagger2
-@EnableConfigurationProperties({GoogleMapsAPIProperties.class})
+@EnableConfigurationProperties({GoogleMapsApiProperties.class})
 @EnableMongoRepositories(basePackageClasses=ActivityMongoRepository.class)
 public class RouteAnalyzerConfiguration {
 

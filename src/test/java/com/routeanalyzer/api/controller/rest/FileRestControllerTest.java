@@ -2,9 +2,6 @@ package com.routeanalyzer.api.controller.rest;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.lordofthejars.nosqlunit.annotation.ShouldMatchDataSet;
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
 import com.routeanalyzer.api.logic.file.upload.impl.TcxUploadFileService;
@@ -118,8 +115,8 @@ public class FileRestControllerTest extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/controller/db-activity-gpx.json")
+//	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+//	@ShouldMatchDataSet(location = "/controller/db-activity-gpx.json")
 	public void uploadGPXFileTest() throws Exception {
 		// Given
 		setPostFileBuilder(UPLOAD_FILE_PATH);
@@ -131,8 +128,8 @@ public class FileRestControllerTest extends MockMvcTestController {
 	}
 
 	@Test
-	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
-	@ShouldMatchDataSet(location = "/controller/db-activity-tcx.json")
+//	@UsingDataSet(locations = "/controller/db-empty-data.json", loadStrategy = LoadStrategyEnum.CLEAN_INSERT)
+//	@ShouldMatchDataSet(location = "/controller/db-activity-tcx.json")
 	public void uploadTCXFileTest() throws Exception {
 		// Given
 		setPostFileBuilder(UPLOAD_FILE_PATH);
