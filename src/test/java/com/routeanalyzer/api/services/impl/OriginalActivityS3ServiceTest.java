@@ -89,7 +89,7 @@ public class OriginalActivityS3ServiceTest {
         // Given the global var fileName
         // When
         S3Object s3Object = new S3Object();
-        s3Object.setObjectContent();
+//        s3Object.setObjectContent();
         when(amazonS3.getObject(eq(new GetObjectRequest(eq(BUCKET_TEST_NAME), eq(fileName))))).thenReturn(bytes);
         Optional<S3ObjectInputStream> bufferedReader = originalActivityS3Service.getFile(fileName);
 
