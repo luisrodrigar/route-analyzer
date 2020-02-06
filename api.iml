@@ -86,9 +86,6 @@
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-s3:1.11.283" level="project" />
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-kms:1.11.283" level="project" />
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-core:1.11.283" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpclient:4.5.10" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpcore:4.4.12" level="project" />
-    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.13" level="project" />
     <orderEntry type="library" name="Maven: software.amazon.ion:ion-java:1.0.2" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.10.1" level="project" />
     <orderEntry type="library" name="Maven: joda-time:joda-time:2.10.5" level="project" />
@@ -146,22 +143,15 @@
     <orderEntry type="library" name="Maven: org.springframework:spring-jcl:5.2.2.RELEASE" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.springframework:spring-test:5.2.2.RELEASE" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.xmlunit:xmlunit-core:2.6.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.springframework.cloud:spring-cloud-contract-wiremock:2.1.4.RELEASE" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.tomakehurst:wiremock-standalone:2.20.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpclient:4.5.10" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpcore:4.4.12" level="project" />
+    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.13" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.mockito:mockito-core:3.1.0" level="project" />
     <orderEntry type="library" name="Maven: net.bytebuddy:byte-buddy:1.10.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: net.bytebuddy:byte-buddy-agent:1.10.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.objenesis:objenesis:2.6" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: com.github.fakemongo:fongo:2.2.0-RC1" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.mozilla:rhino:1.7.7.1" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: com.vividsolutions:jts:1.13" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: de.grundid.opendatalab:geojson-jackson:1.2" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: com.lordofthejars:nosqlunit-mongodb:1.0.0-rc.5" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: com.lordofthejars:nosqlunit-core:1.0.0-rc.5" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: javax.inject:javax.inject:1" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: com.googlecode.lambdaj:lambdaj:2.3.3" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: cglib:cglib-nodep:2.2" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.codehaus.jackson:jackson-mapper-asl:1.8.8" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.codehaus.jackson:jackson-core-asl:1.8.8" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-library:2.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: cloud.localstack:localstack-utils:0.1.22" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: net.java.dev.jna:jna:4.5.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jvnet.winp:winp:1.23" level="project" />

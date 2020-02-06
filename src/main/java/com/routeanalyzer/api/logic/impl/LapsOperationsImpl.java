@@ -4,20 +4,17 @@ import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.logic.TrackPointOperations;
-import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
-import com.routeanalyzer.api.services.googlemaps.GoogleMapsAPIService;
+import com.routeanalyzer.api.services.googlemaps.GoogleMapsApiService;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -25,7 +22,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -47,7 +43,7 @@ import static java.util.Arrays.asList;
 @RequiredArgsConstructor
 public class LapsOperationsImpl implements LapsOperations {
 
-	private final GoogleMapsAPIService googleMapsService;
+	private final GoogleMapsApiService googleMapsService;
 	private final TrackPointOperations trackPointOperationsService;
 
 	@Override

@@ -1,9 +1,7 @@
 package com.routeanalyzer.api.controller.rest;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.model.Activity;
-import org.junit.Rule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,7 +14,6 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static com.lordofthejars.nosqlunit.mongodb.MongoDbRule.MongoDbRuleBuilder.newMongoDbRule;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -27,9 +24,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test-controller")
 public class MockMvcTestController {
-
-	@Rule
-	public MongoDbRule mongoDbRule = newMongoDbRule().defaultSpringMongoDb("routeanalyzer-test");
 
 	@Autowired
 	protected MockMvc mockMvc;
