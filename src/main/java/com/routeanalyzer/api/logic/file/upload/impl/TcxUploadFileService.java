@@ -90,7 +90,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                     .ifPresent(activity::setDevice);
             of(eachActivity)
                     .map(ActivityT::getId)
-                    .flatMap(DateUtils::toLocalDateTime)
+                    .flatMap(DateUtils::toZonedDateTime)
                     .ifPresent(activity::setDate);
             of(eachActivity)
                     .map(ActivityT::getSport)
@@ -124,7 +124,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                         .ifPresent(lap::setMaximumHeartRate);
                 of(eachLap)
                         .map(ActivityLapT::getStartTime)
-                        .flatMap(DateUtils::toLocalDateTime)
+                        .flatMap(DateUtils::toZonedDateTime)
                         .ifPresent(lap::setStartTime);
                 of(indexLap)
                         .map(AtomicInteger::incrementAndGet)

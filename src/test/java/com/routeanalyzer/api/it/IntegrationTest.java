@@ -167,7 +167,7 @@ public class IntegrationTest {
     protected void isReturningActivityHTTP(RequestBuilder requestBuilder, Activity activity) throws Exception {
         mockMvc.perform(requestBuilder).andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().json(JsonUtils.toJson(activity)));
+                .andExpect(content().json(JsonUtils.toJson(activity).getOrNull()));
     }
 
     /**
@@ -180,7 +180,7 @@ public class IntegrationTest {
     protected void isReturningJsonArrayIdsHTTP(RequestBuilder requestBuilder, List<String> ids) throws Exception {
         mockMvc.perform(requestBuilder).andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().json(JsonUtils.toJson(ids)));
+                .andExpect(content().json(JsonUtils.toJson(ids).getOrNull()));
     }
 
     /**

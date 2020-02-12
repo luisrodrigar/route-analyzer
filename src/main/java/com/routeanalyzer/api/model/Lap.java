@@ -1,5 +1,6 @@
 package com.routeanalyzer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +10,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -19,11 +21,12 @@ import java.util.Objects;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Lap implements Comparable<Lap>, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private LocalDateTime startTime;
+	private ZonedDateTime startTime;
 	// Field in cases when startTime field is not informed.
 	private Integer index;
 	private Double totalTimeSeconds;
@@ -36,7 +39,7 @@ public class Lap implements Comparable<Lap>, Serializable {
 	@Builder.Default
 	private List<TrackPoint> tracks = Lists.newArrayList();
 
-	public Lap(LocalDateTime startTime, Double totalTimeSeconds, Double distanceMeters, Double maximumSpeed,
+	public Lap(ZonedDateTime startTime, Double totalTimeSeconds, Double distanceMeters, Double maximumSpeed,
 			   Integer calories, Double averageSpeed, Double averageHearRate, Integer maximumHeartRate,
 			   String intensity, String triggerMethod) {
 		super();

@@ -58,8 +58,9 @@ public class TcxUploadServiceImplTest {
     @Before
     public void setUp() throws Exception {
         String jsonActivityTcxStr = new String(TestUtils.getFileBytes(activityTcxResource), StandardCharsets.UTF_8);
-        activityTcxTest = JsonUtils.fromJson(jsonActivityTcxStr, Activity.class);
-        tcxObject = tcxService.readXML(tcxXmlResource.getInputStream()).getOrElse(() -> null);
+        activityTcxTest = JsonUtils.fromJson(jsonActivityTcxStr, Activity.class)
+                .getOrNull();
+        tcxObject = tcxService.readXML(tcxXmlResource.getInputStream()).getOrNull();
     }
 
     @Test
@@ -67,28 +68,32 @@ public class TcxUploadServiceImplTest {
         // Given
         MultipartFile multipart = new MockMultipartFile("file", tcxXmlResource.getInputStream());
         // When
-        doReturn(tcxObject).when(tcxService).readXML(Mockito.any());
-        List<Activity> result =
-                tcxUploadService.upload(multipart).map(tcxUploadService::toListActivities).getOrElse(emptyList());
+        doReturn(Try.success(tcxObject)).when(tcxService).readXML(Mockito.any());
+        TrainingCenterDatabaseT result = tcxUploadService.upload(multipart).get();
         // Then
-        assertThat(result).isEqualTo(Arrays.asList(activityTcxTest));
+        assertThat(result).isEqualTo(tcxObject);
     }
 
-    @Test
+    @Test(expected = JAXBException.class)
     public void uploadThrowExceptionTest() throws IOException {
         // Given
         MultipartFile multipart = new MockMultipartFile("file", tcxXmlResource.getInputStream());
         Exception jaxbException = new JAXBException("Error parser");
         // When
-        doThrow(jaxbException).when(tcxService).readXML(Mockito.any());
+        doReturn(Try.failure(jaxbException)).when(tcxService).readXML(Mockito.any());
         // Then
-        Try.of(() -> tcxUploadService.upload(multipart))
-                .onSuccess((success) -> assertThat(true).isFalse())
-                .onFailure((error) -> {
-                    assertThat(error).isInstanceOf(RuntimeException.class);
-                    RuntimeException runExc = (RuntimeException) error;
-                    assertThat(runExc.getCause()).isInstanceOf(JAXBException.class);
-                });
+        tcxUploadService.upload(multipart).get();
+    }
+
+    @Test
+    public void xmlToModelTest() throws IOException {
+        // Given
+
+        // When
+        List<Activity> result = tcxUploadService.toListActivities(tcxObject);
+
+        // Then
+        assertThat(result).isEqualTo(Arrays.asList(activityTcxTest));
     }
 
 }

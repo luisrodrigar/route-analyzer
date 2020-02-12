@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -42,7 +43,7 @@ public class TcxExportServiceImplTest {
     public void setUp() {
         tcxXmlString = new String(TestUtils.getFileBytes(tcxXmlResource), StandardCharsets.UTF_8);
         String jsonActivityTcxStr = new String(TestUtils.getFileBytes(activityTcxResource), StandardCharsets.UTF_8);
-        activityTcxTest = JsonUtils.fromJson(jsonActivityTcxStr, Activity.class);
+        activityTcxTest = JsonUtils.fromJson(jsonActivityTcxStr, Activity.class).getOrNull();
     }
 
     @Test
@@ -55,31 +56,19 @@ public class TcxExportServiceImplTest {
                 .onFailure(error -> assertThat(true).isFalse());
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void exportActivityNull() {
         // When
-        Try.of(() -> tcxExportService.export(null))
-                // Then
-                .onSuccess(tcxExportedFile -> assertThat(tcxExportedFile).isNull())
-                .onFailure(error -> assertThat(true).isFalse());
+        tcxExportService.export(null);
     }
 
-    @Test
+    @Test(expected = JAXBException.class)
     public void exportActivityThrowRuntimeException() {
         // Given
         Exception jaxbException = new JAXBException("Problems with xml.");
         // When
-        doThrow(jaxbException).when(tcxService).createXML(any());
-        Try.of(() -> tcxExportService.export(activityTcxTest))
-                // Then
-                .onSuccess(tcxExportedFile -> assertThat(true).isFalse())
-                .onFailure(error -> {
-                    assertThat(error).isInstanceOf(RuntimeException.class);
-                    RuntimeException runtimeException = (RuntimeException) error;
-                    assertThat(runtimeException.getCause()).isInstanceOf(JAXBException.class);
-                    assertThat(runtimeException.getCause().getMessage())
-                            .isEqualTo("Problems with xml.");
-                });
+        doReturn(Try.failure(jaxbException)).when(tcxService).createXML(any());
+        tcxExportService.export(activityTcxTest);
     }
 
 

@@ -72,7 +72,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                                             .map(CommonUtils::getFirstElement)
                                             .map(WptType::getTime)
                                             .orElse(null)))
-                            .flatMap(DateUtils::toLocalDateTime)
+                            .flatMap(DateUtils::toZonedDateTime)
                             .ifPresent(activity::setDate));
             // Device
             ofNullable(gpxType.getCreator()).ifPresent(activity::setDevice);
@@ -86,7 +86,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                                 ofNullable(trkSegType).map(TrksegType::getTrkpt)
                                         .map(CommonUtils::getFirstElement)
                                         .map(WptType::getTime)
-                                        .flatMap(DateUtils::toLocalDateTime)
+                                        .flatMap(DateUtils::toZonedDateTime)
                                         .ifPresent(lap::setStartTime);
                                 // Index
                                 of(indexLap).map(AtomicInteger::incrementAndGet)
@@ -111,7 +111,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                 .ifPresent(trkPtList -> trkPtList.forEach(eachTrackPoint -> ofNullable(eachTrackPoint)
                         .ifPresent(wptType -> CommonUtils.toPosition(wptType.getLat(), wptType.getLon())
                             .flatMap(position -> ofNullable(eachTrackPoint.getTime())
-                                    .flatMap(DateUtils::toLocalDateTime)
+                                    .flatMap(DateUtils::toZonedDateTime)
                                     .flatMap(time -> ofNullable(eachTrackPoint.getEle())
                                             .map(String::valueOf)
                                             .flatMap(elevation -> ofNullable(indexTrackPoint)

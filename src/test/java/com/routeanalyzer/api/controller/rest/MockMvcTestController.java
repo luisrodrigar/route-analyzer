@@ -62,7 +62,7 @@ public class MockMvcTestController {
 		String descriptionField = "$.description";
 		String exceptionField = "$.exception";
 		mockMvc.perform(builder.file(file).param(typeField, xmlType)).andExpect(expectedResponse)
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath(errorField, is(true))).andExpect(jsonPath(descriptionField, is(descriptionError)))
 				.andExpect(jsonPath(exceptionField, is(JsonUtils.toJson(descriptionException))));
 	}
@@ -83,7 +83,7 @@ public class MockMvcTestController {
 		String errorField = "$.error";
 		String descriptionField = "$.description";
 		mockMvc.perform(builder.file(file).param(typeField, xmlType)).andExpect(expectedResponse)
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath(errorField, is(true))).andExpect(jsonPath(descriptionField, is(descriptionError)));
 	}
 
@@ -104,7 +104,7 @@ public class MockMvcTestController {
 			String descriptionError, boolean isError) throws Exception {
 		String errorField = "$.error", descriptionField = "$.description";
 		mockMvc.perform(requestBuilder).andExpect(expectedResponse)
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath(errorField, is(isError)))
 				.andExpect(jsonPath(descriptionField, is(descriptionError)));
 	}
@@ -126,7 +126,7 @@ public class MockMvcTestController {
 			String descriptionError, Exception exceptionError) throws Exception {
 		String errorField = "$.error", descriptionField = "$.description", exceptionField = "$.exception";
 		mockMvc.perform(requestBuilder).andExpect(expectedResponse)
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath(errorField, is(true)))
 				.andExpect(jsonPath(descriptionField, is(descriptionError)))
 				.andExpect(jsonPath(exceptionField, equalTo(JsonUtils.toJson(exceptionError))));
@@ -147,7 +147,7 @@ public class MockMvcTestController {
 			String descriptionError) throws Exception {
 		String errorField = "$.error", descriptionField = "$.description";
 		mockMvc.perform(requestBuilder).andExpect(expectedResponse)
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath(errorField, is(true)))
 				.andExpect(jsonPath(descriptionField, is(descriptionError)));
 	}
@@ -162,8 +162,8 @@ public class MockMvcTestController {
 	 */
 	protected void isReturningActivityHTTP(RequestBuilder requestBuilder, Activity activity) throws Exception {
 		mockMvc.perform(requestBuilder).andExpect(status().isOk())
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
-				.andExpect(content().json(JsonUtils.toJson(activity)));
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().json(JsonUtils.toJson(activity).getOrNull()));
 	}
 
 	/**

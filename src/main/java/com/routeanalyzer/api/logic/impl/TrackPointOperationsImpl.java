@@ -1,7 +1,5 @@
 package com.routeanalyzer.api.logic.impl;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.PositionOperations;
@@ -9,12 +7,15 @@ import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.function.Function;
 
 import static com.routeanalyzer.api.common.DateUtils.toTimeMillis;
+import static io.vavr.Predicates.is;
 import static java.util.Optional.ofNullable;
 
 @Service
@@ -37,7 +38,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 				).orElse(false);
 		// Time Millis
 		boolean isTimeMillis = isEqualsValueTrack(track, TrackPoint::getDate,
-				(localDateTime) -> toTimeMillis((LocalDateTime) localDateTime).orElse(null), timeInMillis);
+				(localDateTime) -> toTimeMillis((ZonedDateTime) localDateTime).orElse(null), timeInMillis);
 		// Index
 		boolean isIndex = isEqualsValueTrack(track, TrackPoint::getIndex,
 				(indexParam) -> ((Integer) indexParam).longValue(), index.longValue());
@@ -94,7 +95,8 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 		return ofNullable(track)
 				.map(methodGetter)
 				.map(transformMethod)
-				.filter(Predicates.equalTo(expectedValue)).isPresent();
+				.filter(is(expectedValue))
+				.isPresent();
 	}
 
 }

@@ -16,7 +16,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @Configuration
 @EnableSwagger2
 @EnableConfigurationProperties({GoogleMapsApiProperties.class})
-@EnableMongoRepositories(basePackageClasses=ActivityMongoRepository.class)
 public class RouteAnalyzerConfiguration {
 
     @Bean

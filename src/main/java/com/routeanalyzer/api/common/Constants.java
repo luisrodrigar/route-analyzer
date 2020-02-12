@@ -37,6 +37,7 @@ public class Constants {
     public static final String BAD_TYPE_MESSAGE = "Xml file type not found";
     public static final String ACTIVITY_NOT_FOUND = "Activity not could be found";
     public static final String COLORS_ASSIGNED_EXCEPTION = "Not colors assigned to activity's laps";
+    public static final String OPERATION_NOT_EXECUTED = "Operation not executed.";
 
     public static final String KEY_TO_ENCRYPT = "route-analyzer-k";
     public static final String INIT_VECTOR = "RandomInitVector";
