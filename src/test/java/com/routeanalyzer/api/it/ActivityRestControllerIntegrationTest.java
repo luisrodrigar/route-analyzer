@@ -51,7 +51,7 @@ import static utils.TestUtils.toActivity;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test.properties")
-public class ActivityRestControllerTest extends IntegrationTest {
+public class ActivityRestControllerIntegrationTest extends IntegrationTest {
 
     @ClassRule
     public static DockerComposeContainer mongoDbContainer =
@@ -82,8 +82,8 @@ public class ActivityRestControllerTest extends IntegrationTest {
 
     @Before
     public void setUp() {
-        gpxActivity = toActivity(gpxJsonResource).get();
-        tcxActivity = toActivity(tcxJsonResource).get();
+        gpxActivity = toActivity(gpxJsonResource);
+        tcxActivity = toActivity(tcxJsonResource);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class ActivityRestControllerTest extends IntegrationTest {
 
         Optional<Activity> beforeTestCase = activityMongoRepository.findById(ACTIVITY_TCX_1_ID);
 
-        Activity resultRemovedPoint = toActivity(removePointTcxJsonResource).get();
+        Activity resultRemovedPoint = toActivity(removePointTcxJsonResource);
 
         // When
         isReturningActivityHTTP(put(REMOVE_POINT_PATH, ACTIVITY_TCX_1_ID)
@@ -158,7 +158,7 @@ public class ActivityRestControllerTest extends IntegrationTest {
     @Test
     public void removeLapActivityTest() throws Exception {
         // Given
-        Activity removeLapActivity = toActivity(removeLapTcxJsonResource).get();
+        Activity removeLapActivity = toActivity(removeLapTcxJsonResource);
         String timeMillis = "1519737373000";
         String index = "1";
 
@@ -182,7 +182,7 @@ public class ActivityRestControllerTest extends IntegrationTest {
         int index1 = 1;
         int index2 = 2;
 
-        Activity lapsRemovedActivity = toActivity(removeLapsTcxJsonResource).get();
+        Activity lapsRemovedActivity = toActivity(removeLapsTcxJsonResource);
 
         Optional<Activity> beforeTestCase = activityMongoRepository.findById(ACTIVITY_TCX_3_ID);
 
@@ -198,7 +198,7 @@ public class ActivityRestControllerTest extends IntegrationTest {
     @Test
     public void joinLapsTest() throws Exception {
         // Given
-        Activity joinLapsActivity = toActivity(joinLapsTcxJsonResource).get();
+        Activity joinLapsActivity = toActivity(joinLapsTcxJsonResource);
         String index1 = "0";
         String index2 = "1";
 
@@ -235,7 +235,7 @@ public class ActivityRestControllerTest extends IntegrationTest {
     @Test
     public void splitLapTest() throws Exception {
         // Given
-        Activity splitActivity = TestUtils.toActivity(splitTcxJsonResource).get();
+        Activity splitActivity = TestUtils.toActivity(splitTcxJsonResource);
         String lat = "42.6132170";
         String lng = "-6.5733730";
         String timeMillis = "1519737378000";
@@ -274,7 +274,7 @@ public class ActivityRestControllerTest extends IntegrationTest {
     @Test
     public void setColorLapsTest() throws Exception {
         // Given
-        Activity lapColorsActivity = toActivity(lapColorsTcxJsonResource).get();
+        Activity lapColorsActivity = toActivity(lapColorsTcxJsonResource);
         String data = "abc012-0a1b2c@123abc-0e9d8c";
 
         Optional<Activity> beforeTestCase = activityMongoRepository.findById(ACTIVITY_TCX_6_ID);

@@ -68,7 +68,7 @@ public class MathUtils {
     }
 
     public static List<Integer> sortingPositiveValues(Integer indexLeft, Integer indexRight) {
-        return of(indexLeft)
+        return ofNullable(indexLeft)
                 .filter(__ -> isPositiveOrZero(indexLeft))
                 .filter(__ -> isPositiveOrZero(indexRight))
                 .map(__ -> indexLeft.compareTo(indexRight) > 0
@@ -81,6 +81,12 @@ public class MathUtils {
         biggerNumber = smallerNumber - biggerNumber;
         smallerNumber = smallerNumber - biggerNumber;
         return asList(smallerNumber, biggerNumber);
+    }
+
+    public static double metersBetweenCoordinates(BigDecimal latP1, BigDecimal lngP1, BigDecimal latP2,
+                                                  BigDecimal lngP2) {
+        return metersBetweenCoordinates(degrees2Radians(latP1), degrees2Radians(lngP1), degrees2Radians(latP2),
+                degrees2Radians(lngP2));
     }
 
     public static double metersBetweenCoordinates(double latP1, double lngP1, double latP2, double lngP2) {

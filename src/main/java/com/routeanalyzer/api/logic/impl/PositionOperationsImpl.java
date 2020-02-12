@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.routeanalyzer.api.common.MathUtils.metersBetweenCoordinates;
+import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
 @Service
@@ -30,32 +30,28 @@ public class PositionOperationsImpl implements PositionOperations {
     @Override
     public Double calculateDistance(Position origin, Position end) {
         return ofNullable(origin)
-                .map(Position::getLatitudeDegrees)
-                .map(MathUtils::degrees2Radians)
-                .flatMap(latitudeOrigin -> ofNullable(origin)
-                        .map(Position::getLongitudeDegrees)
-                        .map(MathUtils::degrees2Radians)
-                        .flatMap(longitudeOrigin -> ofNullable(end)
-                                .map(Position::getLatitudeDegrees)
-                                .map(MathUtils::degrees2Radians)
-                                .flatMap(latitudeEnd -> ofNullable(end)
-                                        .map(Position::getLongitudeDegrees)
-                                        .map(MathUtils::degrees2Radians)
-                                        .map(longitudeEnd ->
-                                                metersBetweenCoordinates(latitudeOrigin, longitudeOrigin,
-                                                        latitudeEnd, longitudeEnd)))))
+                .filter(isCoordinatesNotNull)
+                .flatMap(__ -> ofNullable(end)
+                        .filter(isCoordinatesNotNull)
+                        .map(___ -> metersBetweenPositions(origin, end)))
                 .orElse(null);
     }
 
+    private double metersBetweenPositions(Position origin, Position end) {
+        return MathUtils.metersBetweenCoordinates(origin.getLatitudeDegrees(), origin.getLongitudeDegrees(),
+                end.getLatitudeDegrees(), end.getLongitudeDegrees());
+    }
+
+    private Predicate<Position> isCoordinatesNotNull = position -> nonNull(position.getLatitudeDegrees())
+            && nonNull(position.getLongitudeDegrees());
+
     private Predicate<Position> isSameCoordinate(BigDecimal coordinateDegrees,
                                                  Function<Position, BigDecimal> coordinateGetter) {
-        return positionParam ->
-                ofNullable(coordinateDegrees)
-                        .flatMap(coordinateDegreesExpected -> ofNullable(positionParam)
-                                .map(coordinateGetter)
-                                .map(currentCoordinatePosition ->
-                                        currentCoordinatePosition.equals(coordinateDegreesExpected)))
-                        .orElse(false);
+        return positionParam -> ofNullable(coordinateDegrees)
+                .flatMap(coordinateDegreesExpected -> ofNullable(positionParam)
+                        .map(coordinateGetter)
+                        .map(currentCoordinatePosition -> currentCoordinatePosition.equals(coordinateDegreesExpected)))
+                .orElse(false);
     }
 
 }

@@ -3,9 +3,10 @@ package com.routeanalyzer.api.logic.impl;
 import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
-import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
+import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
+import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
 import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
@@ -30,10 +31,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.Constants.LAP_DELIMITER;
+import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
+import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static com.routeanalyzer.api.common.MathUtils.sortingPositiveValues;
+import static io.vavr.API.$;
+import static io.vavr.API.Case;
+import static io.vavr.API.Match;
+import static io.vavr.Predicates.is;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -44,8 +50,9 @@ import static java.util.stream.Collectors.toList;
 public class ActivityOperationsImpl implements ActivityOperations {
 
 	private final LapsOperations lapsOperationsService;
-	private final ActivityMongoRepository activityRepository;
 	private final OriginalActivityRepository aS3Service;
+	private final TcxExportFileService tcxExportService;
+	private final GpxExportFileService gpxExportService;
 
 	@Override
 	public Activity removePoint(Activity act, String lat, String lng, Long timeInMillis, Integer indexTrackPoint) {
@@ -136,6 +143,8 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	 */
 	@Override
 	public Activity joinLaps(Activity activity, Integer index1, Integer index2) {
+		ofNullable(activity)
+				.orElseThrow(() -> new IllegalArgumentException("Activity"));
 		List<Integer> sortedIndexes = sortingPositiveValues(index1, index2);
 		Lap indexLeftLap = activity.getLaps().get(sortedIndexes.get(0));
 		Lap indexRightLap = activity.getLaps().get(sortedIndexes.get(1));
@@ -204,40 +213,34 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	}
 
 	@Override
-	public List<String> uploadAndSave(MultipartFile multiPartFile, UploadFileService fileService) {
-		return upload(multiPartFile, fileService)
-				.flatMap(activities -> save(multiPartFile, activities))
-				.orElse(emptyList());
+	public String exportByType(String type, Activity activity) {
+		return Match(type.toLowerCase()).option(
+				Case($(is(SOURCE_TCX_XML)), tcxFile -> tcxExportService.export(activity)),
+				Case($(is(SOURCE_GPX_XML)), gpxFile -> gpxExportService.export(activity)))
+				.getOrElseThrow(() -> new IllegalArgumentException("Bad type file."));
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
-	public Optional<List<Activity>> upload(MultipartFile multiPart, UploadFileService service) {
+	public Optional<List<Activity>> upload(final MultipartFile multiPart, final UploadFileService service) {
 		return (Optional<List<Activity>>) service.upload(multiPart)
 				.toJavaOptional()
 				.map(service::toListActivities);
 	}
 
-	public Optional<List<String>> save(MultipartFile multipartFile, List<Activity> activities) {
-		return Try.of(() -> activityRepository.saveAll(activities))
-				.onFailure(err -> log.error("Error trying to save all activities in database"))
-				.toJavaOptional()
-				.map(__ -> activities.stream()
-						.flatMap(activity -> uploadFileToS3Bucket(activity, multipartFile)
-								.map(Activity::getId)
-								.toJavaStream())
-						.collect(toList()));
-	}
-
-	private Try<Activity> uploadFileToS3Bucket(Activity activity, MultipartFile multipartFile) {
-		return Try.of(() -> multipartFile.getBytes())
-				.onFailure(err -> log.error("Error trying to convert the file to bytes", err))
-				.flatMap(arrayBytes -> Try.run(() -> aS3Service.uploadFile(arrayBytes, getIdNameExtension(activity)))
-						.onFailure(err -> log.error("Error trying to upload to S3Bucket.", err))
-						.map(__ -> activity));
-	}
-
-	private String getIdNameExtension(Activity activity) {
-		return format("%s.%s", activity.getId(), activity.getSourceXmlType());
+	@Override
+	public List<Activity> pushToS3(final List<Activity> activities, final MultipartFile multiPart) {
+		return activities.stream()
+				.flatMap(activity -> Try.of(() -> multiPart.getBytes())
+						.onFailure(err -> log.error("Error trying to convert the file to bytes", err))
+						.flatMap(arrayBytes -> Try
+								.run(() -> aS3Service
+										.uploadFile(arrayBytes,
+												format("%s.%s", activity.getId(), activity.getSourceXmlType())))
+								.onFailure(err -> log.error("Error trying to upload to S3Bucket.", err))
+								.map(__ -> activity))
+						.toJavaStream())
+				.collect(toList());
 	}
 
 	private Activity removeLap(Activity activity, Integer indexLap) {

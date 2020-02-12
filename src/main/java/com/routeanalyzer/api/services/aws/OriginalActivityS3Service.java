@@ -34,12 +34,12 @@ public class OriginalActivityS3Service implements OriginalActivityRepository {
 		log.info("Uploading a new file to S3 from a file, name of the file: " + fileName + "\n");
 		ofNullable(byteArray)
 				.map(this::getMetadata)
-				.flatMap(metadata -> of(byteArray)
-						.map(ByteArrayInputStream::new)
-						.map(byteArrayIn -> new PutObjectRequest(awsProperties.getS3Bucket(), fileName, byteArrayIn,
-								metadata)))
+				.map(metadata -> new PutObjectRequest(awsProperties.getS3Bucket(),
+						fileName, new ByteArrayInputStream(byteArray),
+						metadata))
 				.ifPresent(putObject -> Try.run(() -> s3Client.putObject(putObject))
-						.onFailure(error -> log.error(error.getMessage(), error)));
+						.onFailure(error -> log.error("Error trying to upload the object to s3 bucket: {} ",
+								awsProperties.getS3Bucket(), error)));
 	}
 
 	private ObjectMetadata getMetadata(byte[] byteArray) {

@@ -1,14 +1,14 @@
-package com.routeanalyzer.api.services.impl;
+package com.routeanalyzer.api.services.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.routeanalyzer.api.config.AWSConfigurationProperties;
-import com.routeanalyzer.api.services.aws.OriginalActivityS3Service;
 import io.vavr.control.Try;
-import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,13 +17,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.ByteArrayInputStream;
 import java.util.Optional;
 import java.util.Random;
 
 import static org.apache.commons.io.IOUtils.toByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -60,43 +60,46 @@ public class OriginalActivityS3ServiceTest {
     public void getFileNotExistsTest() {
         // Given the global var fileName
         // When
-        when(amazonS3.getObject(eq(BUCKET_TEST_NAME), eq(fileName))).thenReturn(null);
+        AmazonS3Exception noSuchKey = new AmazonS3Exception("NoSuchKey");
+        when(amazonS3.getObject(any(GetObjectRequest.class))).thenThrow(noSuchKey);
         Optional<S3ObjectInputStream> bufferedReader = originalActivityS3Service.getFile(fileName);
 
         // Then
+        verify(amazonS3).getObject(any(GetObjectRequest.class));
+        verify(properties).getS3Bucket();
         assertThat(bufferedReader).isEmpty();
     }
 
     @Test
     public void uploadFile() {
-        // Given the global vars: fileName and bytes
+        // Given
+        String contentMd5 = "CONTENT-MD5";
+        PutObjectResult putObjectResult = new PutObjectResult();
+        putObjectResult.setContentMd5(contentMd5);
+        when(amazonS3.putObject(any(PutObjectRequest.class))).thenReturn(putObjectResult);
+
         // When
         originalActivityS3Service.uploadFile(bytes, fileName);
 
         // Then
         verify(amazonS3).putObject(any(PutObjectRequest.class));
-        assertThat(amazonS3.listObjectsV2(BUCKET_TEST_NAME).getKeyCount()).isEqualTo(1);
-
-        byte[] actualResult = Try.of(() -> toByteArray(amazonS3.getObject(BUCKET_TEST_NAME, fileName).getObjectContent()))
-                .getOrElse(() -> null);
-        assertThat(bytes).isNotNull();
-        assertThat(bytes).isEqualTo(actualResult);
-
+        verify(properties).getS3Bucket();
     }
 
     @Test
     public void getFileExistsTest() {
-        // Given the global var fileName
         // When
         S3Object s3Object = new S3Object();
-//        s3Object.setObjectContent();
-        when(amazonS3.getObject(eq(new GetObjectRequest(eq(BUCKET_TEST_NAME), eq(fileName))))).thenReturn(bytes);
+        s3Object.setObjectContent(new ByteArrayInputStream(bytes));
+        when(amazonS3.getObject(any(GetObjectRequest.class))).thenReturn(s3Object);
+
+        // Given
         Optional<S3ObjectInputStream> bufferedReader = originalActivityS3Service.getFile(fileName);
 
         // Then
-        verify(amazonS3).getObject(eq(BUCKET_TEST_NAME), eq(fileName));
+        verify(amazonS3).getObject(any(GetObjectRequest.class));
         assertThat(bufferedReader).isNotEmpty();
-        assertThat(Try.of(() -> toByteArray(bufferedReader.get())).getOrElse(() -> null))
+        assertThat(Try.of(() -> toByteArray(bufferedReader.get())).getOrNull())
                 .isEqualTo(bytes);
     }
 }

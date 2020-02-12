@@ -1,7 +1,6 @@
 package com.routeanalyzer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +13,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -25,6 +25,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "activities")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Activity implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -36,7 +37,7 @@ public class Activity implements Serializable {
 	private String sport;
 	private String name;
 	private String sourceXmlType;
-	private LocalDateTime date;
+	private ZonedDateTime date;
 	@Field
 	@Builder.Default
 	private List<Lap> laps = Lists.newArrayList();

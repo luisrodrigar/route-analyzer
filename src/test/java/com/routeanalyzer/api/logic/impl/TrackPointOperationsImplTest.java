@@ -10,8 +10,14 @@ import org.mockito.Mock;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
@@ -44,7 +50,10 @@ public class TrackPointOperationsImplTest {
 		oviedo = toPosition("43.3602900", "-5.8447600");
 		madrid = toPosition("40.4165000", "-3.7025600");
 		park = toPosition("43.352478", "-5.8501170");
-		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime localDateTime = LocalDateTime.of(2020, 2, 12, 0, 5, 0);
+		ZoneId zoneId = ZoneId.systemDefault();
+		Clock fixed = Clock.fixed(localDateTime.toInstant(ZoneOffset.UTC), zoneId);
+		ZonedDateTime now = ZonedDateTime.now(fixed);
 		oviedoTrack = toTrackPoint(now, 1, oviedo, "100", "0",
 				null, 78);
 		parkTrack = toTrackPoint(now.plusMinutes(15L), 2,

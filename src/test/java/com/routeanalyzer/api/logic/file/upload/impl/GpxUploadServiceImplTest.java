@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static java.util.Collections.emptyList;
+import static java.util.Arrays.asList;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public class GpxUploadServiceImplTest {
@@ -61,37 +62,41 @@ public class GpxUploadServiceImplTest {
     public void setUp() throws Exception {
         gpxObject = gpxService.readXML(gpxXmlResource.getInputStream()).get();
         String jsonActivityGpxStr = new String(TestUtils.getFileBytes(activityGpxResource), StandardCharsets.UTF_8);
-        activityGpxTest = JsonUtils.fromJson(jsonActivityGpxStr, Activity.class);
+        activityGpxTest = JsonUtils.fromJson(jsonActivityGpxStr, Activity.class)
+                .getOrNull();
     }
 
     @Test
-    public void uploadGpxTest() throws JAXBException, IOException {
+    public void uploadGpxTest() throws IOException {
         // Given
         MultipartFile multipart = new MockMultipartFile("file", gpxXmlResource.getInputStream());
         // When
-        doReturn(gpxObject).when(gpxService).readXML(Mockito.any());
-        List<Activity> result = gpxUploadService.upload(multipart)
-                .map(gpxUploadService::toListActivities).getOrElse(emptyList());
+        doReturn(Try.success(gpxObject)).when(gpxService).readXML(Mockito.any());
+        GpxType result = gpxUploadService.upload(multipart).get();
         // Then
-        assertThat(result).isEqualTo(Arrays.asList(activityGpxTest));
+        assertThat(result).isEqualTo(gpxObject);
     }
 
-    @Test
+    @Test(expected = JAXBException.class)
     public void uploadThrowExceptionTest() throws IOException, SAXParseException, JAXBException {
         // Given
         MultipartFile multipart = new MockMultipartFile("file", gpxXmlResource.getInputStream());
         Exception jaxbException = new JAXBException("Problems with xml.");
         // When
-        doThrow(jaxbException).when(gpxService).readXML(Mockito.any());
-        Try<List<Activity>> result = gpxUploadService.upload(multipart)
-                .map(gpxUploadService::toListActivities);
         // Then
-        result.onSuccess((success) -> assertThat(true).isTrue())
-                .onFailure(error -> {
-                    assertThat(error).isInstanceOf(RuntimeException.class);
-                    RuntimeException runExc = (RuntimeException) error;
-                    assertThat(runExc.getCause()).isInstanceOf(JAXBException.class);
-                });
+        doReturn(Try.failure(jaxbException)).when(gpxService).readXML(Mockito.any());
+        gpxUploadService.upload(multipart).get();
+    }
+
+    @Test
+    public void xmlConvertToModelTest() {
+        // Given
+
+        // When
+        List<Activity> activities = gpxUploadService.toListActivities(gpxObject);
+
+        // Then
+        assertThat(activities).isEqualTo(asList(activityGpxTest));
     }
 
 }

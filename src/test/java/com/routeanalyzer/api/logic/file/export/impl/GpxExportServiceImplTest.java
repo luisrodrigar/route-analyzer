@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -42,7 +43,7 @@ public class GpxExportServiceImplTest {
     public void setUp() {
         gpxXmlString = new String(TestUtils.getFileBytes(gpxXmlResource), StandardCharsets.UTF_8);
         String jsonActivityGpxStr = new String(TestUtils.getFileBytes(activityGpxResource), StandardCharsets.UTF_8);
-        activityGpxTest = JsonUtils.fromJson(jsonActivityGpxStr, Activity.class);
+        activityGpxTest = JsonUtils.fromJson(jsonActivityGpxStr, Activity.class).getOrNull();
     }
 
     @Test
@@ -55,27 +56,18 @@ public class GpxExportServiceImplTest {
                 .onFailure(error -> assertThat(true).isFalse());
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void exportNullActivity() {
         // When
-        Try.of(() -> gpxExportService.export(null))
-                .onSuccess(gpxExportedFile -> assertThat(gpxExportedFile).isNull())
-                .onFailure(error -> assertThat(true).isFalse());
+        gpxExportService.export(null);
     }
 
-    @Test
+    @Test(expected = JAXBException.class)
     public void exportThrowJAXBException() {
         // Given
         Exception jaxbException = new JAXBException("Problems with the xml");
         // When
-        doThrow(jaxbException).when(gpxService).createXML(any());
-        Try.of(() -> gpxExportService.export(activityGpxTest))
-                .onSuccess(gpxExportedFile -> assertThat(true).isFalse())
-                .onFailure(error -> {
-                    assertThat(error).isInstanceOf(RuntimeException.class);
-                    RuntimeException runtimeException = (RuntimeException) error;
-                    assertThat(runtimeException.getCause()).isInstanceOf(JAXBException.class);
-                    assertThat(runtimeException.getCause().getMessage()).isEqualTo("Problems with the xml");
-                });
+        doReturn(Try.failure(jaxbException)).when(gpxService).createXML(any());
+        gpxExportService.export(activityGpxTest);
     }
 }

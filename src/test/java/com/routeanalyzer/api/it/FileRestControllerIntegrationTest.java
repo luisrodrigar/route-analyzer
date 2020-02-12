@@ -47,15 +47,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
 import static utils.TestUtils.getFileBytes;
+import static utils.TestUtils.GPX_ID_XML;
+import static utils.TestUtils.TCX_ID_XML;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test.properties")
-public class FileRestControllerTest extends IntegrationTest {
+public class FileRestControllerIntegrationTest extends IntegrationTest {
 
     private static final String CORUNA_XML_FILE = "coruna.gpx.xml";
     private static final String OVIEDO_XML_FILE = "oviedo.tcx.xml";
-    private static final String GPX_ID_XML = "0123456789";
-    private static final String TCX_ID_XML = "9876543210";
 
     @ClassRule
     public static LocalStackContainer localStackS3 = new LocalStackContainer().withServices(S3);
