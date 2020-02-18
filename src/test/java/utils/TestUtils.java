@@ -6,6 +6,7 @@ import com.google.common.io.Resources;
 import com.mongodb.Function;
 import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.xml.gpx11.GpxType;
 import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,15 @@ public class TestUtils {
 				.flatMap(urlTcx -> Try.of(() -> Resources.toString(urlTcx, Charsets.UTF_8))
 						.onFailure(err -> log.error("It could not be possible to get to json string"))
 						.flatMap(jsonStr -> JsonUtils.fromJson(jsonStr, Activity.class)))
+				.getOrNull();
+	}
+
+	public static GpxType toGpxRootModel(Resource resource)  {
+		return Try.of(() -> resource.getURL())
+				.onFailure(err -> log.error("It could not be possible to get the url"))
+				.flatMap(urlTcx -> Try.of(() -> Resources.toString(urlTcx, Charsets.UTF_8))
+						.onFailure(err -> log.error("It could not be possible to get to json string"))
+						.flatMap(jsonStr -> JsonUtils.fromJson(jsonStr, GpxType.class)))
 				.getOrNull();
 	}
 
