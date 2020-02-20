@@ -2,6 +2,7 @@ package com.routeanalyzer.api.common;
 
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.xml.gpx11.WptType;
 import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.api.xml.tcx.PositionT;
 import com.routeanalyzer.api.xml.tcx.TrackpointT;
@@ -44,6 +45,18 @@ public class CommonUtils {
 	// Model operations
 
 	// Methods which generate a track point.
+
+	public static TrackPoint toTrackPoint(ZonedDateTime dateTime, int index, Position position, BigDecimal alt) {
+		return TrackPoint.builder()
+				.date(dateTime)
+				.index(index)
+				.position(position)
+				.altitudeMeters(alt)
+				.distanceMeters(null)
+				.speed(null)
+				.heartRateBpm(null)
+				.build();
+	}
 
 	public static TrackPoint toTrackPoint(ZonedDateTime dateTime, int index, Position position, String alt, String dist,
 										  String speed, Integer heartRate) {
@@ -133,6 +146,10 @@ public class CommonUtils {
 
 	public static Position toPosition(Double lat, Double lng) {
 		return toPosition(toStringValue(lat), toStringValue(lng));
+	}
+
+	public static Optional<Position> toPosition(WptType wptType) {
+		return toPosition(wptType.getLat(), wptType.getLon());
 	}
 
 	public static Optional<Position> toPosition(BigDecimal latParam, BigDecimal lngParam) {

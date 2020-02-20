@@ -26,3 +26,4 @@ bin/
 route-analyzer.iml
 
 /src/test/resources/mongodb/mongo-volume/*
+api.iml
