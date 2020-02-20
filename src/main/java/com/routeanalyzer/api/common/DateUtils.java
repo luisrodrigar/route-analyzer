@@ -5,11 +5,7 @@ import lombok.experimental.UtilityClass;
 
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Optional;
@@ -55,7 +51,7 @@ public class DateUtils {
 
     public static Optional<ZonedDateTime> toZonedDateTime(Instant instant) {
         return ofNullable(instant)
-                .map(__ -> ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()));
+                .map(__ -> ZonedDateTime.ofInstant(instant, ZoneId.of("UTC")));
     }
 
     public static GregorianCalendar createGregorianCalendar(Date date) {
@@ -71,7 +67,7 @@ public class DateUtils {
 
     private static Optional<Instant> toInstant(LocalDateTime localDateTime) {
         return ofNullable(localDateTime)
-                .map(dateTime -> dateTime.atZone(ZoneId.systemDefault()))
+                .map(dateTime -> dateTime.atZone(ZoneOffset.UTC))
                 .map(ZonedDateTime::toInstant);
     }
 

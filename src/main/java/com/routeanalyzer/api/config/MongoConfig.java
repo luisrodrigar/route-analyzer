@@ -1,13 +1,8 @@
 package com.routeanalyzer.api.config;
 
 import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.connection.ClusterSettings;
-import com.mongodb.internal.connection.ServerAddressHelper;
-import com.routeanalyzer.api.database.ZonedDateTimeReadConverter;
-import com.routeanalyzer.api.database.ZonedDateTimeWriteConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -21,10 +16,11 @@ import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-
-import static java.util.Arrays.asList;
 
 @Configuration
 @RequiredArgsConstructor
@@ -68,6 +64,20 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
         converters.add(new ZonedDateTimeReadConverter());
         converters.add(new ZonedDateTimeWriteConverter());
         return new MongoCustomConversions(converters);
+    }
+
+    class ZonedDateTimeReadConverter implements Converter<Date, ZonedDateTime> {
+        @Override
+        public ZonedDateTime convert(Date date) {
+            return date.toInstant().atZone(ZoneOffset.UTC);
+        }
+    }
+
+    class ZonedDateTimeWriteConverter implements Converter<ZonedDateTime, Date> {
+        @Override
+        public Date convert(final ZonedDateTime zonedDateTime) {
+            return Date.from(zonedDateTime.toInstant());
+        }
     }
 
 

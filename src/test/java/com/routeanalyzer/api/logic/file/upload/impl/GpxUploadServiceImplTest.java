@@ -33,7 +33,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -88,8 +88,8 @@ public class GpxUploadServiceImplTest {
 
     private MetadataType createMetadata() {
         MetadataType metadataType = new MetadataType();
-        LocalDateTime localDateTime = LocalDateTime.of(2020, 2, 13, 11, 41);
-        metadataType.setTime(getXmlGregorianCalendar(ZonedDateTime.of(localDateTime, ZoneId.systemDefault())));
+        LocalDateTime localDateTime = LocalDateTime.of(2018, 2, 27, 13, 16, 13);
+        metadataType.setTime(getXmlGregorianCalendar(ZonedDateTime.of(localDateTime, ZoneOffset.UTC)));
         return metadataType;
     }
 
@@ -103,34 +103,34 @@ public class GpxUploadServiceImplTest {
 
     private TrksegType createTrksegType1() {
         TrksegType trksegType = new TrksegType();
-        LocalDateTime time1 = LocalDateTime.of(2018, 02, 27, 14, 16, 13);
-        LocalDateTime time2 = LocalDateTime.of(2018, 02, 27, 14, 16, 18);
-        LocalDateTime time3 = LocalDateTime.of(2018, 02, 27, 14, 16, 20);
+        LocalDateTime time1 = LocalDateTime.of(2018, 02, 27, 13, 16, 13);
+        LocalDateTime time2 = LocalDateTime.of(2018, 02, 27, 13, 16, 18);
+        LocalDateTime time3 = LocalDateTime.of(2018, 02, 27, 13, 16, 20);
         trksegType.addTrkpt(createTrkpt(new BigDecimal("42.6131970"), new BigDecimal("-6.5732170"), new BigDecimal(
-                "557.3"), new Short("96"), getXmlGregorianCalendar(ZonedDateTime.of(time1, ZoneId.systemDefault()))));
+                "557.3"), new Short("96"), getXmlGregorianCalendar(ZonedDateTime.of(time1, ZoneOffset.UTC))));
         trksegType.addTrkpt(createTrkpt(new BigDecimal("42.6132170"), new BigDecimal("-6.5733730"), new BigDecimal(
-                "557.3"), new Short("96"), getXmlGregorianCalendar(ZonedDateTime.of(time2, ZoneId.systemDefault()))));
+                "557.3"), new Short("96"), getXmlGregorianCalendar(ZonedDateTime.of(time2, ZoneOffset.UTC))));
         trksegType.addTrkpt(createTrkpt(new BigDecimal("42.6132120"), new BigDecimal("-6.5734430"), new BigDecimal(
-                "557.3"), new Short("96"), getXmlGregorianCalendar(ZonedDateTime.of(time3, ZoneId.systemDefault()))));
+                "557.3"), new Short("96"), getXmlGregorianCalendar(ZonedDateTime.of(time3, ZoneOffset.UTC))));
         return trksegType;
     }
 
     private TrksegType createTrksegType2() {
         TrksegType trksegType = new TrksegType();
-        LocalDateTime time1 = LocalDateTime.of(2018, 02, 27, 14, 16, 30);
-        LocalDateTime time2 = LocalDateTime.of(2018, 02, 27, 14, 16, 33);
+        LocalDateTime time1 = LocalDateTime.of(2018, 02, 27, 13, 16, 30);
+        LocalDateTime time2 = LocalDateTime.of(2018, 02, 27, 13, 16, 33);
         trksegType.addTrkpt(createTrkpt(new BigDecimal("42.6132120"), new BigDecimal("-6.5738250"), new BigDecimal(
-                "557.3"), new Short("106"), getXmlGregorianCalendar(ZonedDateTime.of(time1, ZoneId.systemDefault()))));
+                "557.3"), new Short("106"), getXmlGregorianCalendar(ZonedDateTime.of(time1, ZoneOffset.UTC))));
         trksegType.addTrkpt(createTrkpt(new BigDecimal("42.6132120"), new BigDecimal("-6.5739120"), new BigDecimal(
-                "557.3"), new Short("109"), getXmlGregorianCalendar(ZonedDateTime.of(time2, ZoneId.systemDefault()))));
+                "557.3"), new Short("109"), getXmlGregorianCalendar(ZonedDateTime.of(time2, ZoneOffset.UTC))));
         return trksegType;
     }
 
     private TrksegType createTrksegType3() {
         TrksegType trksegType = new TrksegType();
-        LocalDateTime time1 = LocalDateTime.of(2018, 02, 27, 14, 17, 30);
+        LocalDateTime time1 = LocalDateTime.of(2018, 02, 27, 13, 17, 30);
         trksegType.addTrkpt(createTrkpt(new BigDecimal("42.6132120"), new BigDecimal("-6.5738250"), new BigDecimal(
-                "557.3"), new Short("120"), getXmlGregorianCalendar(ZonedDateTime.of(time1, ZoneId.systemDefault()))));
+                "557.3"), new Short("120"), getXmlGregorianCalendar(ZonedDateTime.of(time1, ZoneOffset.UTC))));
         return trksegType;
     }
 
