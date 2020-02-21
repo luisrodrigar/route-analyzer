@@ -149,7 +149,8 @@ public class CommonUtils {
 	}
 
 	public static Optional<Position> toPosition(WptType wptType) {
-		return toPosition(wptType.getLat(), wptType.getLon());
+		return ofNullable(wptType)
+				.flatMap(__ -> toPosition(wptType.getLat(), wptType.getLon()));
 	}
 
 	public static Optional<Position> toPosition(BigDecimal latParam, BigDecimal lngParam) {

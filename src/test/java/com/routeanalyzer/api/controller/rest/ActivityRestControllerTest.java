@@ -58,8 +58,6 @@ public class ActivityRestControllerTest {
 
 	private Activity gpxActivity, tcxActivity;
 
-	private static final String ERROR_RESPONSE = "Activity was not found or other params are not valid.";
-
 	@Value("classpath:utils/json-activity-tcx.json")
 	private Resource tcxJsonResource;
 	@Value("classpath:utils/json-activity-gpx.json")

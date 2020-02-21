@@ -24,7 +24,6 @@ import java.util.function.Supplier;
 import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
-import static com.routeanalyzer.api.common.DateUtils.toZonedDateTime;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
@@ -50,6 +49,11 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                 .map(GpxType::getTrk)
                 .map(trackLapsList -> trackLapsList.stream()
                         .map(trackLap -> toActivity(gpxType.getMetadata(), gpxType.getCreator(), trackLap))
+                        .map(activity -> {
+                            // calculating distance speed values
+                            activityOperationsService.calculateDistanceSpeedValues(activity);
+                            return activity;
+                        })
                         .collect(toList()))
                 .orElseGet(Collections::emptyList);
     }
@@ -57,25 +61,21 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
     private Activity toActivity(final MetadataType metadataType, final String creator, final TrkType trkType) {
         AtomicInteger indexLap = new AtomicInteger(0);
         AtomicInteger indexTrackPoint = new AtomicInteger(0);
-        Activity activity = new Activity();
-        // Source xml type, in this case gpx.
-        activity.setSourceXmlType(SOURCE_GPX_XML);
-        // Set the the date
-        activity.setDate(getMetadataDate(metadataType, trkType));
-        // Device
-        ofNullable(creator).ifPresent(activity::setDevice);
-        // Name
-        ofNullable(trkType)
-                .map(TrkType::getName)
-                .map(String::trim)
-                .ifPresent(activity::setName);
-        // Laps
-        getLaps(trkType.getTrkseg(), indexLap, indexTrackPoint)
-                .forEach(activity::addLap);
-        // calculating distance speed values
-        activityOperationsService.calculateDistanceSpeedValues(activity);
-        // adding activity
-        return activity;
+        return Activity.builder()
+                // Source xml type, in this case gpx.
+                .sourceXmlType(SOURCE_GPX_XML)
+                // Set the the date
+                .date(getMetadataDate(metadataType, trkType))
+                // Device
+                .device(creator)
+                // Name
+                .name(ofNullable(trkType)
+                        .map(TrkType::getName)
+                        .map(String::trim)
+                        .orElse(null))
+                // Laps
+                .laps(getLaps(trkType.getTrkseg(), indexLap, indexTrackPoint))
+                .build();
     }
 
     private ZonedDateTime getMetadataDate(final MetadataType metadataType, final TrkType trkType) {
@@ -101,27 +101,36 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
         return trksegTypeList
                 .stream()
                 .map(trksegType -> toLap(trksegType, indexLaps, indexTrackPoints))
+                .map(lap -> {
+                    // calculating lap values
+                    lapsOperationsService.calculateLapValues(lap);
+                    return lap;
+                })
                 .collect(toList());
     }
 
     private Lap toLap(final TrksegType trksegType, final AtomicInteger indexLaps,
                                 final AtomicInteger indexTrackPoints) {
-        Lap lap = Lap.builder()
-                .startTime(toZonedDateTime(CommonUtils.getFirstElement(trksegType.getTrkpt()).getTime())
-                        .orElse(null))
+        return Lap.builder()
+                .startTime(getStartDateTimeLap(trksegType))
                 .index(indexLaps.incrementAndGet())
                 .tracks(getTrackPoints(trksegType, indexTrackPoints))
                 .build();
-        // calculating lap values
-        lapsOperationsService.calculateLapValues(lap);
-        return lap;
+    }
+
+    private ZonedDateTime getStartDateTimeLap(final TrksegType trksegType) {
+        return ofNullable(trksegType)
+                .map(TrksegType::getTrkpt)
+                .map(CommonUtils::getFirstElement)
+                .map(WptType::getTime)
+                .flatMap(DateUtils::toZonedDateTime)
+                .orElse(null);
     }
 
     private List<TrackPoint> getTrackPoints(final TrksegType trkSetType, final AtomicInteger indexTrackPoints) {
         return trkSetType.getTrkpt()
                 .stream()
-                .map(eachTrackPoint -> ofNullable(eachTrackPoint)
-                        .flatMap(wptType -> createTrackPoint(wptType, indexTrackPoints)))
+                .map(wptType -> createTrackPoint(wptType, indexTrackPoints))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(toList());
