@@ -18,37 +18,32 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.http.*;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
-import static com.routeanalyzer.api.common.Constants.GET_FILE_PATH;
-import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
-import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
-import static com.routeanalyzer.api.common.Constants.UPLOAD_FILE_PATH;
+import static com.routeanalyzer.api.common.Constants.*;
+import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.MediaType.APPLICATION_XML_VALUE;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.http.HttpMethod.POST;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
-import static utils.TestUtils.getFileBytes;
-import static utils.TestUtils.GPX_ID_XML;
-import static utils.TestUtils.TCX_ID_XML;
+import static utils.TestUtils.*;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test.properties")
@@ -75,10 +70,6 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
     @Value("classpath:controller/oviedo.tcx.xml")
     private Resource tcxXmlResource;
 
-    private MockMultipartFile gpxXmlFile;
-    private MockMultipartFile tcxXmlFile;
-    private MockMultipartFile unknownXmlFile;
-
     @Autowired
     private AmazonS3 amazonS3;
     @Autowired
@@ -89,7 +80,6 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
     @Before
     public void setUp() {
         amazonS3.createBucket(bucketName);
-        loadMultiPartFiles();
     }
 
     @TestConfiguration
@@ -109,112 +99,174 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
         }
     }
 
-    private void loadMultiPartFiles() {
-        String fileName = "file";
-        gpxXmlFile = new MockMultipartFile(fileName, CORUNA_XML_FILE, APPLICATION_XML_VALUE,
-                getFileBytes(gpxXmlResource));
-        tcxXmlFile = new MockMultipartFile(fileName, OVIEDO_XML_FILE, APPLICATION_XML_VALUE,
-                getFileBytes(tcxXmlResource));
-        unknownXmlFile = new MockMultipartFile(fileName, "", APPLICATION_XML_VALUE,
-                getFileBytes(unknownResource));
+    @Test
+    public void uploadGPXFileTest() {
+        // Given
+        LinkedMultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
+        parameters.add("file", new ClassPathResource(format("%s/%s", "controller", CORUNA_XML_FILE)));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(parameters, headers);
+
+        String uploadGpxXmlFile = UriComponentsBuilder.fromPath(UPLOAD_FILE_PATH)
+                .queryParam("type", SOURCE_GPX_XML)
+                .build()
+                .toUriString();
+
+        // When
+        ResponseEntity<String[]> result = testRestTemplate.exchange(uploadGpxXmlFile, POST, requestEntity, String[].class);
+
+        List<String> ids = getIds(result);
+        Optional<Activity> afterTestCase = activityMongoRepository.findById(ids.get(0));
+        Optional<S3ObjectInputStream> fileStored = originalActivityRepository.getFile(format("%s.%s", ids.get(0),
+                SOURCE_GPX_XML));
+
+        // Then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(afterTestCase).isNotEmpty();
+        assertThat(fileStored).isNotEmpty();
     }
 
-//    @Test
-//    public void uploadGPXFileTest() throws Exception {
-//        // Given
-//        setPostFileBuilder(UPLOAD_FILE_PATH);
-//
-//        // When
-//        MvcResult result = mockMvc.perform(builder.file(gpxXmlFile).param("type", SOURCE_GPX_XML))
-//                .andExpect(status().isOk())
-//                .andReturn();
-//        List<String> ids = getIds(result);
-//
-//        // Then
-//        Optional<Activity> afterTestCase = activityMongoRepository.findById(ids.get(0));
-//        Optional<S3ObjectInputStream> fileStored = originalActivityRepository.getFile(String.format("%s.%s",
-//                ids.get(0), SOURCE_GPX_XML));
-//
-//        assertThat(afterTestCase).isNotEmpty();
-//        assertThat(fileStored).isNotEmpty();
-//    }
-//
-//    @Test
-//    public void uploadTCXFileTest() throws Exception {
-//        // Given
-//        setPostFileBuilder(UPLOAD_FILE_PATH);
-//
-//        // When
-//        MvcResult result = mockMvc.perform(builder.file(tcxXmlFile).param("type", SOURCE_TCX_XML))
-//                .andExpect(status().isOk())
-//                .andReturn();
-//        List<String> ids = getIds(result);
-//
-//        // Then
-//        Optional<Activity> afterTestCase = activityMongoRepository.findById(ids.get(0));
-//        Optional<S3ObjectInputStream> fileStored = originalActivityRepository.getFile(String.format("%s.%s",
-//                ids.get(0), SOURCE_TCX_XML));
-//
-//        assertThat(afterTestCase).isNotEmpty();
-//        assertThat(fileStored).isNotEmpty();
-//    }
-//
-//    private List<String> getIds(MvcResult result) {
-//        return Try.of(() -> result.getResponse().getContentAsString())
-//                .map(ids -> ids.replace("[", "")
-//                        .replace("]","")
-//                        .replace("\"", ""))
-//                .toJavaStream()
-//                .flatMap(ids -> Arrays.asList(ids.split(",")).stream())
-//                .map(String::trim)
-//                .collect(Collectors.toList());
-//    }
-//
-//    @Test
-//    public void uploadUnknownFileTest() throws Exception {
-//        // Given
-//        setPostFileBuilder(UPLOAD_FILE_PATH);
-//        // When
-//        // Then
-//        isGenerateErrorByMockMultipartHTTPPost(unknownXmlFile, status().isBadRequest(), "kml",
-//                BAD_REQUEST_MESSAGE);
-//    }
-//
-//    /**
-//     *
-//     * getFile(...,...) test methods
-//     *
-//     * @throws Exception
-//     *
-//     */
-//
-//    @Test
-//    public void getGpxFileTest() throws Exception {
-//        // Given
-//        System.setProperty(SkipMd5CheckStrategy.DISABLE_GET_OBJECT_MD5_VALIDATION_PROPERTY,"true");
-//        Try.of(() -> IOUtils.toString(gpxXmlResource.getInputStream(), UTF_8).getBytes())
-//                .forEach(arrayBytes -> originalActivityRepository.uploadFile(arrayBytes, String.format("%s.%s",
-//                        GPX_ID_XML, SOURCE_GPX_XML)));
-//        // When
-//        // Then
-//        mockMvc.perform(get(GET_FILE_PATH, SOURCE_GPX_XML, GPX_ID_XML)).andExpect(status().isOk())
-//                .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM.toString()))
-//                .andExpect(content().xml(new String(getFileBytes(gpxXmlResource), UTF_8)));
-//    }
-//
-//    @Test
-//    public void getTcxFileTest() throws Exception {
-//        // Given
-//        System.setProperty(SkipMd5CheckStrategy.DISABLE_GET_OBJECT_MD5_VALIDATION_PROPERTY,"true");
-//        Try.of(() -> IOUtils.toString(tcxXmlResource.getInputStream(), UTF_8).getBytes())
-//                .forEach(arrayBytes -> originalActivityRepository.uploadFile(arrayBytes, String.format("%s.%s",
-//                        TCX_ID_XML, SOURCE_TCX_XML)));
-//        // When
-//        // Then
-//        mockMvc.perform(get(GET_FILE_PATH, SOURCE_TCX_XML, TCX_ID_XML))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM.toString()))
-//                .andExpect(content().xml(new String(getFileBytes(tcxXmlResource), UTF_8)));
-//    }
+    @Test
+    public void uploadTCXFileTest() {
+        // Given
+        LinkedMultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
+        parameters.add("file", new ClassPathResource(format("%s/%s", "controller", OVIEDO_XML_FILE)));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(parameters, headers);
+
+        String uploadTcxXmlFile = UriComponentsBuilder.fromPath(UPLOAD_FILE_PATH)
+                .queryParam("type", SOURCE_TCX_XML)
+                .build()
+                .toUriString();
+
+        // When
+        ResponseEntity<String[]> result = testRestTemplate.exchange(uploadTcxXmlFile, POST, requestEntity, String[].class);
+
+        List<String> ids = getIds(result);
+
+        Optional<Activity> afterTestCase = activityMongoRepository.findById(ids.get(0));
+        Optional<S3ObjectInputStream> fileStored = originalActivityRepository.getFile(String.format("%s.%s",
+                ids.get(0), SOURCE_TCX_XML));
+
+        // Then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(afterTestCase).isNotEmpty();
+        assertThat(fileStored).isNotEmpty();
+    }
+
+    private List<String> getIds(ResponseEntity<String[]> result) {
+        return ofNullable(result)
+                .map(ResponseEntity::getBody)
+                .map(Stream::of)
+                .map(stream -> stream.collect(toList()))
+                .orElse(new ArrayList<>());
+    }
+
+    @Test
+    public void uploadUnknownFileTest() {
+        // Given
+        String unknownXmlFile = "kml";
+        LinkedMultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
+        parameters.add("file", new ClassPathResource(format("%s/%s", "controller", OVIEDO_XML_FILE)));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(parameters, headers);
+
+        String uploadUnknownXmlFile = UriComponentsBuilder.fromPath(UPLOAD_FILE_PATH)
+                .queryParam("type", unknownXmlFile)
+                .build()
+                .toUriString();
+
+        // When
+        ResponseEntity<String> result = testRestTemplate.exchange(uploadUnknownXmlFile, POST, requestEntity, String.class);
+
+        // Then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    public void getGpxFileTest() {
+        // Given
+
+        // Upload xml file
+        System.setProperty(SkipMd5CheckStrategy.DISABLE_GET_OBJECT_MD5_VALIDATION_PROPERTY,"true");
+        Try.of(() -> IOUtils.toString(gpxXmlResource.getInputStream(), UTF_8).getBytes())
+                .forEach(arrayBytes -> originalActivityRepository.uploadFile(arrayBytes, String.format("%s.%s",
+                        GPX_ID_XML, SOURCE_GPX_XML)));
+
+        String getGpxFilePath = UriComponentsBuilder.fromPath(GET_FILE_PATH)
+                .buildAndExpand(SOURCE_GPX_XML, GPX_ID_XML)
+                .toUriString();
+
+        // When
+        ResponseEntity<String> result = testRestTemplate.getForEntity(getGpxFilePath, String.class);
+
+        // Then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isNotEmpty();
+        assertThat(result.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_OCTET_STREAM);
+    }
+
+    @Test
+    public void getTcxFileTest() {
+        // Given
+
+        // Upload xml file
+        System.setProperty(SkipMd5CheckStrategy.DISABLE_GET_OBJECT_MD5_VALIDATION_PROPERTY,"true");
+        Try.of(() -> IOUtils.toString(tcxXmlResource.getInputStream(), UTF_8).getBytes())
+                .forEach(arrayBytes -> originalActivityRepository.uploadFile(arrayBytes, String.format("%s.%s",
+                        TCX_ID_XML, SOURCE_TCX_XML)));
+
+        String getTcxFilePath = UriComponentsBuilder.fromPath(GET_FILE_PATH)
+                .buildAndExpand(SOURCE_TCX_XML, TCX_ID_XML)
+                .toUriString();
+
+        // When
+        ResponseEntity<String> result = testRestTemplate.getForEntity(getTcxFilePath, String.class);
+
+        // Then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isNotEmpty();
+        assertThat(result.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_OCTET_STREAM);
+    }
+
+    @Test
+    public void getIdParamNotCorrectFileTest() {
+        // Given
+        String badId = "123aaa321";
+
+        String getTcxFilePath = UriComponentsBuilder.fromPath(GET_FILE_PATH)
+                .buildAndExpand(SOURCE_TCX_XML, badId)
+                .toUriString();
+
+        // When
+        ResponseEntity<String> result = testRestTemplate.getForEntity(getTcxFilePath, String.class);
+
+        // Then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    public void getFileNonExistentFileTest() {
+        // Given
+        String getTcxFilePath = UriComponentsBuilder.fromPath(GET_FILE_PATH)
+                .buildAndExpand(SOURCE_TCX_XML, NOT_EXIST_1_ID)
+                .toUriString();
+
+        // When
+        ResponseEntity<String> result = testRestTemplate.getForEntity(getTcxFilePath, String.class);
+
+        // Then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
 
 }

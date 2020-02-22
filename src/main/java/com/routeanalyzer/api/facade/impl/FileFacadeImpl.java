@@ -7,6 +7,7 @@ import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.logic.file.upload.impl.GpxUploadFileService;
 import com.routeanalyzer.api.logic.file.upload.impl.TcxUploadFileService;
 import com.routeanalyzer.api.model.Activity;
+import com.routeanalyzer.api.model.exception.FileNotFoundException;
 import com.routeanalyzer.api.model.exception.FileOperationNotExecutedException;
 import com.routeanalyzer.api.services.OriginalActivityRepository;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +58,7 @@ public class FileFacadeImpl implements FileFacade {
                 .map(BufferedReader::new)
                 .map(BufferedReader::lines)
                 .map(streamLines -> streamLines.collect(joining("\n")))
-                .orElseThrow(() -> new FileOperationNotExecutedException("getFile", type));
+                .orElseThrow(() -> new FileNotFoundException(id, type));
     }
 
 
