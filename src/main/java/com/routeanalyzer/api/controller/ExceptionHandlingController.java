@@ -2,10 +2,7 @@ package com.routeanalyzer.api.controller;
 
 import com.amazonaws.AmazonClientException;
 import com.routeanalyzer.api.common.JsonUtils;
-import com.routeanalyzer.api.model.exception.ActivityColorsNotAssignedException;
-import com.routeanalyzer.api.model.exception.ActivityNotFoundException;
-import com.routeanalyzer.api.model.exception.ActivityOperationNoExecutedException;
-import com.routeanalyzer.api.model.exception.FileOperationNotExecutedException;
+import com.routeanalyzer.api.model.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.PropertyAccessException;
 import org.springframework.core.NestedRuntimeException;
@@ -21,14 +18,7 @@ import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 
-import static com.routeanalyzer.api.common.Constants.ACTIVITY_NOT_FOUND;
-import static com.routeanalyzer.api.common.Constants.AMAZON_CLIENT_EXCEPTION_MESSAGE;
-import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
-import static com.routeanalyzer.api.common.Constants.COLORS_ASSIGNED_EXCEPTION;
-import static com.routeanalyzer.api.common.Constants.IO_EXCEPTION_MESSAGE;
-import static com.routeanalyzer.api.common.Constants.JAXB_EXCEPTION_MESSAGE;
-import static com.routeanalyzer.api.common.Constants.OPERATION_NOT_EXECUTED;
-import static com.routeanalyzer.api.common.Constants.SAX_PARSE_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.*;
 
 @Slf4j
 @RestControllerAdvice
@@ -112,6 +102,14 @@ public class ExceptionHandlingController {
     Response handleErrorTypeParamsException(final Exception exception) {
         log.warn("Params error happened: ", exception);
         return createErrorBody(true, BAD_REQUEST_MESSAGE, exception);
+    }
+
+    @ResponseBody
+    @ExceptionHandler(FileNotFoundException.class)
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
+    Response handleFileNotFoundException(final Exception exception) {
+        log.warn("Params error happened: ", exception);
+        return createErrorBody(true, FILE_NOT_FOUND, exception);
     }
 
     @ResponseBody
