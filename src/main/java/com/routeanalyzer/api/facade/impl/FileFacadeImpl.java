@@ -20,9 +20,7 @@ import java.util.List;
 
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
-import static io.vavr.API.$;
-import static io.vavr.API.Case;
-import static io.vavr.API.Match;
+import static io.vavr.API.*;
 import static io.vavr.Predicates.is;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -40,7 +38,8 @@ public class FileFacadeImpl implements FileFacade {
     private final ActivityMongoRepository mongoRepository;
 
     @Override
-    public List<String> uploadFile(final MultipartFile multiPart, final String type) {
+    public List<String> uploadFile(final MultipartFile multiPart, final String type)
+            throws FileOperationNotExecutedException{
         return Match(type).option(
                 Case($(is(SOURCE_TCX_XML)), tcxType -> uploadAndSave(multiPart, tcxService)),
                 Case($(is(SOURCE_GPX_XML)), gpxType -> uploadAndSave(multiPart, gpxService)))
@@ -52,7 +51,7 @@ public class FileFacadeImpl implements FileFacade {
     }
 
     @Override
-    public String getFile(final String id, final String type) {
+    public String getFile(final String id, final String type) throws FileNotFoundException{
         return aS3Service.getFile(format("%s.%s", id, type))
                 .map(InputStreamReader::new)
                 .map(BufferedReader::new)

@@ -15,13 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalDouble;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -33,11 +27,11 @@ import java.util.stream.Stream;
 import static com.routeanalyzer.api.common.Constants.COLOR_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.STARTED_HEX_CHAR;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
+import static java.util.Arrays.asList;
 import static java.util.Objects.isNull;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static java.util.Arrays.asList;
 
 @Service
 @RequiredArgsConstructor

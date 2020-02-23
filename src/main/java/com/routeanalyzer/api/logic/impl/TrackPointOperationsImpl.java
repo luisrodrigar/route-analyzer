@@ -9,8 +9,6 @@ import com.routeanalyzer.api.model.TrackPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.function.Function;
 

@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.services.googlemaps;
 
-import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.ElevationService;
 import com.routeanalyzer.api.services.googlemaps.model.GoggleMapsAPIResponse;
@@ -18,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import static com.routeanalyzer.api.common.CommonUtils.not;
 import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.POSITIONS_DELIMITER;
 import static java.lang.String.format;
@@ -29,7 +29,6 @@ import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
-import static com.routeanalyzer.api.common.CommonUtils.not;
 
 @Slf4j
 @Service

@@ -30,13 +30,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.routeanalyzer.api.common.Constants.LAP_DELIMITER;
-import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
-import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
+import static com.routeanalyzer.api.common.Constants.*;
 import static com.routeanalyzer.api.common.MathUtils.sortingPositiveValues;
-import static io.vavr.API.$;
-import static io.vavr.API.Case;
-import static io.vavr.API.Match;
+import static io.vavr.API.*;
 import static io.vavr.Predicates.is;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
