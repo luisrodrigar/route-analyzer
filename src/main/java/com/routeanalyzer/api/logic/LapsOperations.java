@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.logic;
 
-import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;

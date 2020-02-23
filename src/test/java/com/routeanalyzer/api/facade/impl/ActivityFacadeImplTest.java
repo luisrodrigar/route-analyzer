@@ -1,29 +1,6 @@
 package com.routeanalyzer.api.facade.impl;
 
-import org.junit.Before;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-
-import static com.routeanalyzer.api.common.Constants.EXPORT_AS_PATH;
-import static com.routeanalyzer.api.common.Constants.GET_ACTIVITY_PATH;
-import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
-import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
-import static com.routeanalyzer.api.common.JsonUtils.toJson;
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static utils.TestUtils.ACTIVITY_GPX_ID;
-import static utils.TestUtils.ACTIVITY_TCX_ID;
-import static utils.TestUtils.toActivity;
 
 class ActivityFacadeImplTest {
 

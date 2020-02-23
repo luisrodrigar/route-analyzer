@@ -1,7 +1,6 @@
 package com.routeanalyzer.api.controller.rest;
 
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.routeanalyzer.api.controller.FileRestController;
 import com.routeanalyzer.api.facade.FileFacade;
 import com.routeanalyzer.api.model.Activity;
@@ -23,27 +22,15 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static com.routeanalyzer.api.common.Constants.GET_FILE_PATH;
-import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
-import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
-import static com.routeanalyzer.api.common.Constants.UPLOAD_FILE_PATH;
+import static com.routeanalyzer.api.common.Constants.*;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE;
 import static org.springframework.http.MediaType.APPLICATION_XML_VALUE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static utils.TestUtils.ACTIVITY_GPX_ID;
-import static utils.TestUtils.ACTIVITY_TCX_ID;
-import static utils.TestUtils.getFileBytes;
-import static utils.TestUtils.toActivity;
-import static utils.TestUtils.toS3ObjectInputStream;
+import static utils.TestUtils.*;
 
 @WebMvcTest(FileRestController.class)
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -116,7 +103,7 @@ public class FileRestControllerTest {
 		// When
 		// Then
 		mockMvc.perform(mockMultipart.file(corunaGpxXmlFile).param(TYPE, SOURCE_GPX_XML))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 		verify(fileFacade).uploadFile(any(MockMultipartFile.class), eq(SOURCE_GPX_XML));
 	}
 
@@ -129,7 +116,7 @@ public class FileRestControllerTest {
 		// When
 		// Then
 		mockMvc.perform(mockMultipart.file(oviedoTcxXmlFile).param(TYPE, SOURCE_TCX_XML))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 		verify(fileFacade).uploadFile(any(MockMultipartFile.class), eq(SOURCE_TCX_XML));
 	}
 

@@ -1,11 +1,7 @@
 package com.routeanalyzer.api.services.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.*;
 import com.routeanalyzer.api.config.AWSConfigurationProperties;
 import com.routeanalyzer.api.services.OriginalActivityRepository;
 import io.vavr.control.Try;
@@ -18,7 +14,6 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.util.Optional;
 
-import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 @Slf4j

@@ -6,8 +6,6 @@ import com.routeanalyzer.api.services.reader.AbstractXMLService;
 import javax.xml.bind.JAXBElement;
 import java.util.Optional;
 
-import static java.util.Optional.ofNullable;
-
 public abstract class ExportFileService<T> {
 
     private AbstractXMLService<T> xmlService;

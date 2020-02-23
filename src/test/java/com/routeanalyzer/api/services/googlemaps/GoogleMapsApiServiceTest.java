@@ -26,14 +26,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.ok;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.cloud.contract.wiremock.WireMockSpring.options;
 import static org.mockito.Mockito.when;
+import static org.springframework.cloud.contract.wiremock.WireMockSpring.options;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleMapsApiServiceTest {

@@ -63,8 +63,6 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
     @Value("${aws.s3-bucket}")
     private String bucketName;
 
-    @Value("classpath:controller/xml-input-fake-1.json")
-    private Resource unknownResource;
     @Value("classpath:controller/coruna.gpx.xml")
     private Resource gpxXmlResource;
     @Value("classpath:controller/oviedo.tcx.xml")
@@ -124,7 +122,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
                 SOURCE_GPX_XML));
 
         // Then
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(afterTestCase).isNotEmpty();
         assertThat(fileStored).isNotEmpty();
     }
@@ -155,7 +153,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
                 ids.get(0), SOURCE_TCX_XML));
 
         // Then
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(afterTestCase).isNotEmpty();
         assertThat(fileStored).isNotEmpty();
     }

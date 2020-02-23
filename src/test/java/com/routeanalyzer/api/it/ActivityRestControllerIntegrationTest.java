@@ -118,6 +118,49 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    public void exportActivityAsGpxTest() {
+        // Given
+        String exportActivityAsGpxFile = UriComponentsBuilder.fromPath(EXPORT_AS_PATH)
+                .buildAndExpand(ACTIVITY_GPX_ID, SOURCE_GPX_XML)
+                .toUriString();
+
+        // When
+        ResponseEntity<String> result = testRestTemplate.getForEntity(exportActivityAsGpxFile, String.class);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_OCTET_STREAM);
+        assertThat(result.getBody()).isNotEmpty();
+    }
+
+    @Test
+    public void exportActivityAsTcxTest() {
+        // Given
+        String exportActivityAsTcxFile = UriComponentsBuilder.fromPath(EXPORT_AS_PATH)
+                .buildAndExpand(ACTIVITY_TCX_ID, SOURCE_TCX_XML)
+                .toUriString();
+
+        // When
+        ResponseEntity<String> result = testRestTemplate.getForEntity(exportActivityAsTcxFile, String.class);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_OCTET_STREAM);
+        assertThat(result.getBody()).isNotEmpty();
+    }
+
+    @Test
+    public void exportAsNonExistentActivityXmlTest() {
+        // Given
+        String exportNonExistentActivityToTcxFile = UriComponentsBuilder.fromPath(EXPORT_AS_PATH)
+                .buildAndExpand(NOT_EXIST_1_ID, SOURCE_TCX_XML)
+                .toUriString();
+
+        // When
+        ResponseEntity<String> result = testRestTemplate.getForEntity(exportNonExistentActivityToTcxFile, String.class);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     public void exportAsUnknownXmlTest() {
         // Given
         String unknownXmlType = "kml";
@@ -126,9 +169,9 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
                 .toUriString();
 
         // When
-        ResponseEntity<String> result1 = testRestTemplate.getForEntity(exportAsNonKnownFile, String.class);
+        ResponseEntity<String> result = testRestTemplate.getForEntity(exportAsNonKnownFile, String.class);
 
-        assertThat(result1.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test

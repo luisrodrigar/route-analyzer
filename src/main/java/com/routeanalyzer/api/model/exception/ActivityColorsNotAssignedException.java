@@ -5,6 +5,6 @@ import lombok.Value;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
-public class ActivityColorsNotAssignedException extends RuntimeException {
+public class ActivityColorsNotAssignedException extends Exception {
     private String activityId;
 }
