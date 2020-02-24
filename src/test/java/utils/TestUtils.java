@@ -26,10 +26,8 @@ import com.routeanalyzer.api.xml.tcx.TrainingCenterDatabaseT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityLapExtensionT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityTrackpointExtensionT;
 import io.vavr.control.Try;
-import javafx.geometry.Pos;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.jni.Local;
 import org.springframework.core.io.Resource;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
@@ -44,9 +42,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.GregorianCalendar;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static java.nio.file.Files.newInputStream;
 
