@@ -12,6 +12,7 @@ import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.model.exception.FileNotFoundException;
 import com.routeanalyzer.api.services.OriginalActivityRepository;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,8 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -38,6 +41,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -237,6 +241,15 @@ public class ActivityOperationsImpl implements ActivityOperations {
 								.map(__ -> activity))
 						.toJavaStream())
 				.collect(toList());
+	}
+
+	@Override
+	public Optional<String> getOriginalFile(final String id, final String type ){
+		return aS3Service.getFile(format("%s.%s", id, type))
+				.map(InputStreamReader::new)
+				.map(BufferedReader::new)
+				.map(BufferedReader::lines)
+				.map(streamLines -> streamLines.collect(joining("\n")));
 	}
 
 	private Activity removeLap(Activity activity, Integer indexLap) {

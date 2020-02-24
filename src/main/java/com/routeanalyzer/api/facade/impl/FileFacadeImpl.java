@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Optional;
 
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
@@ -31,7 +32,6 @@ import static java.util.stream.Collectors.toList;
 @RequiredArgsConstructor
 public class FileFacadeImpl implements FileFacade {
 
-    private final OriginalActivityRepository aS3Service;
     private final TcxUploadFileService tcxService;
     private final GpxUploadFileService gpxService;
     private final ActivityOperations activityOperations;
@@ -43,29 +43,30 @@ public class FileFacadeImpl implements FileFacade {
         return Match(type).option(
                 Case($(is(SOURCE_TCX_XML)), tcxType -> uploadAndSave(multiPart, tcxService)),
                 Case($(is(SOURCE_GPX_XML)), gpxType -> uploadAndSave(multiPart, gpxService)))
-                .map(activities -> activities
-                        .stream()
-                        .map(Activity::getId)
-                        .collect(toList()))
-                .getOrElseThrow(() -> new FileOperationNotExecutedException("uploadFile", type));
+                .toJavaOptional()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(this::getIdsByActivities)
+                .orElseThrow(() -> new FileOperationNotExecutedException("uploadFile", type));
     }
 
     @Override
     public String getFile(final String id, final String type) throws FileNotFoundException{
-        return aS3Service.getFile(format("%s.%s", id, type))
-                .map(InputStreamReader::new)
-                .map(BufferedReader::new)
-                .map(BufferedReader::lines)
-                .map(streamLines -> streamLines.collect(joining("\n")))
+        return activityOperations.getOriginalFile(id, type)
                 .orElseThrow(() -> new FileNotFoundException(id, type));
     }
 
-
-    private List<Activity> uploadAndSave(MultipartFile multiPartFile, UploadFileService fileService) {
+    private Optional<List<Activity>> uploadAndSave(MultipartFile multiPartFile, UploadFileService fileService) {
         return activityOperations.upload(multiPartFile, fileService)
                 .map(activities -> mongoRepository.saveAll(activities))
-                .map(activities -> activityOperations.pushToS3(activities, multiPartFile))
-                .orElse(emptyList());
+                .map(activities -> activityOperations.pushToS3(activities, multiPartFile));
+    }
+
+    private List<String> getIdsByActivities(final List<Activity> activities) {
+        return activities
+                .stream()
+                .map(Activity::getId)
+                .collect(toList());
     }
 
 }
