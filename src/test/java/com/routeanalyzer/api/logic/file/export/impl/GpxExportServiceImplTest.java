@@ -1,18 +1,14 @@
 package com.routeanalyzer.api.logic.file.export.impl;
 
-import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.GPXService;
 import io.vavr.control.Try;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Spy;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import utils.TestUtils;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.xml.bind.JAXBException;
 import java.nio.charset.StandardCharsets;
@@ -20,8 +16,12 @@ import java.nio.charset.StandardCharsets;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static utils.TestUtils.getFileBytes;
+import static utils.TestUtils.toActivity;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class GpxExportServiceImplTest {
 
     @Spy
@@ -30,43 +30,46 @@ public class GpxExportServiceImplTest {
     @InjectMocks
     private GpxExportFileService gpxExportService;
 
-    @Value("classpath:utils/upload-file-gpx-test.json")
-    private Resource activityGpxResource;
-    @Value("classpath:utils/gpx-test.xml")
-    private Resource gpxXmlResource;
+    private static Activity activityGpxTest;
+    private static String gpxXmlString;
 
-    private Activity activityGpxTest;
-    private String gpxXmlString;
-
-    @Before
-    public void setUp() {
-        gpxXmlString = new String(TestUtils.getFileBytes(gpxXmlResource), StandardCharsets.UTF_8);
-        String jsonActivityGpxStr = new String(TestUtils.getFileBytes(activityGpxResource), StandardCharsets.UTF_8);
-        activityGpxTest = JsonUtils.fromJson(jsonActivityGpxStr, Activity.class).getOrNull();
+    @BeforeClass
+    public static void setUp() {
+        activityGpxTest = toActivity("utils/upload-file-gpx-test.json");
+        gpxXmlString = new String(getFileBytes("utils/gpx-test.xml"), StandardCharsets.UTF_8);
     }
 
     @Test
     public void export() {
         // Given
+
         // When
         Try<String> result = Try.of(() -> gpxExportService.export(activityGpxTest));
+
         // Then
-        result.onSuccess(gpxExportedFile -> assertThat(gpxExportedFile).isEqualTo(gpxXmlString))
-                .onFailure(error -> assertThat(true).isFalse());
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo(gpxXmlString);
+        verify(gpxService).createXML(any());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void exportNullActivity() {
+        // Given
+
         // When
         gpxExportService.export(null);
+
+        // Then
+        verify(gpxService, never()).createXML(any());
     }
 
     @Test(expected = JAXBException.class)
     public void exportThrowJAXBException() {
         // Given
         Exception jaxbException = new JAXBException("Problems with the xml");
-        // When
         doReturn(Try.failure(jaxbException)).when(gpxService).createXML(any());
+
+        // When
         gpxExportService.export(activityGpxTest);
     }
 }

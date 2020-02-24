@@ -7,18 +7,23 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
-import java.time.*;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 import static com.routeanalyzer.api.common.CommonUtils.toPosition;
 import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class TrackPointOperationsImplTest {
 
 	@Mock
@@ -71,7 +76,7 @@ public class TrackPointOperationsImplTest {
 	public void isThisTrackPositionNullTest() {
 		// Given
 		TrackPoint trackpoint = toTrackPoint(12123123L, 0, null, "450", "0", "0", 150);
-		doReturn(false).when(positionOperations).isThisPosition(isNull(), eq(latParam), eq(lngParam));
+
 		// When
 		boolean isThisTrack = trackPointOperations.isThisTrack(trackpoint, toPosition("12", "6"), 12123123L, 0);
 		// Then
@@ -82,10 +87,10 @@ public class TrackPointOperationsImplTest {
 	public void isThisTrackPositionLatNotEqualTest() {
 		// Given
 		TrackPoint trackpoint = toTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
-		Position position = trackpoint.getPosition();
-		doReturn(false).when(positionOperations).isThisPosition(eq(position), eq(latParam), eq(lngParam));
+
 		// When
 		boolean isThisTrack = trackPointOperations.isThisTrack(trackpoint, toPosition("5.67", "6"), 12123123L, 0);
+
 		// Then
 		assertThat(isThisTrack).isFalse();
 	}
@@ -94,8 +99,7 @@ public class TrackPointOperationsImplTest {
 	public void isThisTrackPositionLngNotEqualTest() {
 		// Given
 		TrackPoint trackpoint = toTrackPoint(12123123L, 0, "12", "6", "450", "0", "0", 150);
-		Position position = trackpoint.getPosition();
-		doReturn(false).when(positionOperations).isThisPosition(eq(position), eq(latParam), eq(lngParam));
+
 		// When
 		boolean isThisTrack = trackPointOperations.isThisTrack(trackpoint, toPosition("12", "3"), 12123123L, 0);
 		// Then
