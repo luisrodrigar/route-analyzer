@@ -7,12 +7,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
-import org.mockito.Spy;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import java.nio.charset.StandardCharsets;
 
+import static io.vavr.control.Try.success;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -24,7 +26,7 @@ import static utils.TestUtils.toActivity;
 @RunWith(MockitoJUnitRunner.class)
 public class TcxExportServiceImplTest {
 
-    @Spy
+    @Mock
     private TCXService tcxService;
 
     @InjectMocks
@@ -42,6 +44,7 @@ public class TcxExportServiceImplTest {
     @Test
     public void export() {
         // Given
+        doReturn(success(tcxXmlString)).when(tcxService).createXML(any(JAXBElement.class));
 
         // When
         Try<String> result = Try.of(() -> tcxExportService.export(activityTcxTest));
