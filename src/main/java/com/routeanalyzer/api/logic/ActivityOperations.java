@@ -126,6 +126,14 @@ public interface ActivityOperations {
 	 */
 	String exportByType(final String type, final Activity activity);
 
+	/**
+	 * Getting original input xml file
+	 * @param id activity identification
+	 * @param type of the xml file
+	 * @return optional string file value
+	 */
+	Optional<String> getOriginalFile(final String id, final String type);
+
 
 
 }
