@@ -14,7 +14,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,7 +39,7 @@ import static utils.TestUtils.toActivity;
 @RunWith(MockitoJUnitRunner.class)
 public class TcxUploadServiceImplTest {
 
-    @Spy
+    @Mock
     private TCXService tcxService;
 
     @Mock
