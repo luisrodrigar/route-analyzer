@@ -1,5 +1,6 @@
 package com.routeanalyzer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,18 +8,19 @@ import lombok.ToString;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 @Getter
 @Setter
 @Builder
 @ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TrackPoint implements Comparable<TrackPoint>, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private LocalDateTime date;
+	private ZonedDateTime date;
 	// Field in cases when date field is not informed.
 	private Integer index;
 	private Position position;

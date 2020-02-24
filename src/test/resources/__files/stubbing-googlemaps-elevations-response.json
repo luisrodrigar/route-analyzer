@@ -1,0 +1,26 @@
+{
+  "status": "OK",
+  "results": [
+    {
+      "elevation": 450.31,
+      "location": {
+        "lat": 7.3212,
+        "lng": 1.3419
+      }
+    },
+    {
+      "elevation": 340.31,
+      "location": {
+        "lat": 4.3212,
+        "lng": 2.3419
+      }
+    },
+    {
+      "elevation": 560.31,
+      "location": {
+        "lat": 3.6012,
+        "lng": 0.3419
+      }
+    }
+  ]
+}

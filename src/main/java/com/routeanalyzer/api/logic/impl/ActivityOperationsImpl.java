@@ -5,51 +5,65 @@ import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
+import com.routeanalyzer.api.logic.file.export.impl.GpxExportFileService;
+import com.routeanalyzer.api.logic.file.export.impl.TcxExportFileService;
+import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.model.exception.FileNotFoundException;
+import com.routeanalyzer.api.services.OriginalActivityRepository;
+import io.vavr.control.Try;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SerializationUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.routeanalyzer.api.common.CommonUtils.toValueOrNull;
+import static com.routeanalyzer.api.common.Constants.*;
+import static com.routeanalyzer.api.common.MathUtils.sortingPositiveValues;
+import static io.vavr.API.*;
+import static io.vavr.Predicates.is;
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ActivityOperationsImpl implements ActivityOperations {
 
-	private LapsOperations lapsOperationsService;
-
-	@Autowired
-	public ActivityOperationsImpl(LapsOperations lapsOperations) {
-		this.lapsOperationsService = lapsOperations;
-	}
+	private final LapsOperations lapsOperationsService;
+	private final OriginalActivityRepository aS3Service;
+	private final TcxExportFileService tcxExportService;
+	private final GpxExportFileService gpxExportService;
 
 	@Override
-	public Activity removePoint(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint) {
+	public Activity removePoint(Activity act, String lat, String lng, Long timeInMillis, Integer indexTrackPoint) {
 	    Function<Position, Integer> getLapIndex = position ->
-                indexOfALap(act, position, toValueOrNull(timeInMillis, Long::parseLong),
-                        toValueOrNull(indexTrackPoint, Integer::parseInt));
+                indexOfALap(act, position, timeInMillis, indexTrackPoint);
 		return CommonUtils.toOptPosition(lat, lng)
 				.flatMap(position -> of(position)
 						.map(getLapIndex)
                         .flatMap(indexLap -> of(indexLap)
                                 .map(indexLapParam ->
-                                        indexOfTrackPoint(act, indexLapParam, position,
-                                                toValueOrNull(timeInMillis, Long::parseLong),
-                                                toValueOrNull(indexTrackPoint, Integer::parseInt)))
+                                        indexOfTrackPoint(act, indexLapParam, position, timeInMillis, indexTrackPoint))
                                 .map(indexTrack -> of(indexTrack)
                                         .flatMap(indexTrackParam -> of(indexLap)
 												.map(act.getLaps()::get)
@@ -65,10 +79,9 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	}
 
 	@Override
-	public Activity splitLap(Activity activity, String lat, String lng, String timeInMillis, String indexTrackPoint) {
+	public Activity splitLap(Activity activity, String lat, String lng, Long timeInMillis, Integer indexTrackPoint) {
 		Function<Position, Integer> getLapIndex = position ->
-				indexOfALap(activity, position, toValueOrNull(timeInMillis, Long::parseLong),
-						toValueOrNull(indexTrackPoint, Integer::parseInt));
+				indexOfALap(activity, position, timeInMillis, indexTrackPoint);
 		return CommonUtils.toOptPosition(lat, lng)
 				.flatMap(position -> ofNullable(activity)
 						.map(Activity::getLaps)
@@ -77,8 +90,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 							.flatMap(indexLap -> of(indexLap)
 									.map(indexLapParam ->
 											indexOfTrackPoint(activity, indexLapParam, position,
-													toValueOrNull(timeInMillis, Long::parseLong),
-													toValueOrNull(indexTrackPoint, Integer::parseInt)))
+													timeInMillis, indexTrackPoint))
 									.flatMap(indexPosition -> of(indexPosition)
 											.filter(MathUtils::isPositiveNonZero)
 											.flatMap(indexTrackParam -> of(indexLap)
@@ -125,47 +137,22 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	 * 5th: decrease the index of the laps in the index right and from now on
 	 *
 	 * @param activity activity which contains all the data
-	 * @param indexLeft index lap located in the left side (just before the right lap)
-	 * @param indexRight index lap located in the right side (just after the right lap)
+	 * @param index1 lap index 1 to join
+	 * @param index2 lap index 2 to join
 	 * @return activity with the joined laps
 	 */
 	@Override
-	public Activity joinLaps(Activity activity, String indexLeft, String indexRight) {
-		Function<Integer[], Integer> toLeftIndex = indexes -> indexes[0];
-		Function<Integer[], Integer> toRightIndex = indexes -> indexes[1];
-		return getResultIndexLaps(indexLeft, indexRight)
-				.flatMap(resultIndexes -> ofNullable(activity)
-						.map(Activity::getLaps)
-						.flatMap(laps -> ofNullable(resultIndexes)
-										.map(toLeftIndex)
-										.map(laps::get)
-										.flatMap(lapLeftParam -> ofNullable(resultIndexes)
-												.map(toRightIndex)
-												.map(laps::get)
-												.map(lapRightParam -> {
-													laps.remove(lapLeftParam);
-													laps.remove(lapRightParam);
-													return lapRightParam;
-												})
-												.flatMap(lapRightParam -> ofNullable(
-														lapsOperationsService.joinLaps(lapLeftParam, lapRightParam))
-														.map(newLap -> {
-															ofNullable(resultIndexes)
-																.map(toLeftIndex)
-																.ifPresent(leftIndex -> laps.add(leftIndex, newLap));
-															return newLap;
-														})
-														.map(newLap ->  {
-															ofNullable(resultIndexes)
-																.map(toRightIndex)
-																.ifPresent(rightIndex ->
-																		decreaseIndexFollowingLaps(rightIndex, laps));
-															return activity;
-														})
-												)
-										)
-								)
-				).orElse(null);
+	public Activity joinLaps(Activity activity, Integer index1, Integer index2) {
+		ofNullable(activity)
+				.orElseThrow(() -> new IllegalArgumentException("Activity"));
+		List<Integer> sortedIndexes = sortingPositiveValues(index1, index2);
+		Lap indexLeftLap = activity.getLaps().get(sortedIndexes.get(0));
+		Lap indexRightLap = activity.getLaps().get(sortedIndexes.get(1));
+		Lap joinedLap = lapsOperationsService.joinLaps(indexLeftLap, indexRightLap);
+		activity.getLaps().removeAll(asList(indexLeftLap, indexRightLap));
+		activity.getLaps().add(sortedIndexes.get(0), joinedLap);
+		decreaseIndexFollowingLaps(sortedIndexes.get(1), activity.getLaps());
+		return activity;
 	}
 
 	@Override
@@ -211,6 +198,58 @@ public class ActivityOperationsImpl implements ActivityOperations {
 						.map(lap -> lapsOperationsService.getTrackPoint(lap, position, time, index)))
 				.flatMap(indexOfTrackPoint)
 				.orElse(-1);
+	}
+
+	@Override
+	public Activity setColorsGetActivity(Activity activity, String dataColors) {
+		// [color1(hex)-lightColor1(hex)]@[color2(hex)-lightColor2(hex)]@[...]...
+		AtomicInteger indexLap = new AtomicInteger();
+		ofNullable(activity)
+				.map(Activity::getLaps)
+				.ifPresent(laps -> asList(dataColors.split(LAP_DELIMITER)).stream()
+						.forEach(lapColors -> lapsOperationsService
+								.setColorLap(laps.get(indexLap.getAndIncrement()), lapColors)));
+		return activity;
+	}
+
+	@Override
+	public String exportByType(String type, Activity activity) {
+		return Match(type.toLowerCase()).option(
+				Case($(is(SOURCE_TCX_XML)), tcxFile -> tcxExportService.export(activity)),
+				Case($(is(SOURCE_GPX_XML)), gpxFile -> gpxExportService.export(activity)))
+				.getOrElseThrow(() -> new IllegalArgumentException("Bad type file."));
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Optional<List<Activity>> upload(final MultipartFile multiPart, final UploadFileService service) {
+		return (Optional<List<Activity>>) service.upload(multiPart)
+				.toJavaOptional()
+				.map(service::toListActivities);
+	}
+
+	@Override
+	public List<Activity> pushToS3(final List<Activity> activities, final MultipartFile multiPart) {
+		return activities.stream()
+				.flatMap(activity -> Try.of(() -> multiPart.getBytes())
+						.onFailure(err -> log.error("Error trying to convert the file to bytes", err))
+						.flatMap(arrayBytes -> Try
+								.run(() -> aS3Service
+										.uploadFile(arrayBytes,
+												format("%s.%s", activity.getId(), activity.getSourceXmlType())))
+								.onFailure(err -> log.error("Error trying to upload to S3Bucket.", err))
+								.map(__ -> activity))
+						.toJavaStream())
+				.collect(toList());
+	}
+
+	@Override
+	public Optional<String> getOriginalFile(final String id, final String type ){
+		return aS3Service.getFile(format("%s.%s", id, type))
+				.map(InputStreamReader::new)
+				.map(BufferedReader::new)
+				.map(BufferedReader::lines)
+				.map(streamLines -> streamLines.collect(joining("\n")));
 	}
 
 	private Activity removeLap(Activity activity, Integer indexLap) {
@@ -261,15 +300,6 @@ public class ActivityOperationsImpl implements ActivityOperations {
 				.orElse(activity);
 	}
 
-	private Optional<Integer[]> getResultIndexLaps(String index1, String index2) {
-		return ofNullable(index1)
-				.filter(StringUtils::isNumeric)
-				.map(Integer::parseInt)
-				.flatMap(indexLeftParam -> ofNullable(index2)
-						.filter(StringUtils::isNumeric)
-						.map(Integer::parseInt)
-						.map((indexRightParam) -> MathUtils.sortingPositiveValues(indexLeftParam, indexRightParam)));
-	}
 
 
 

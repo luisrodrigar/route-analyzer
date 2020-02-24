@@ -1,0 +1,11 @@
+mongodb:
+  image: 'mongo:4.0'
+  environment:
+    - MONGO_INITDB_DATABASE=test
+  ports:
+    - '27017:27017'
+
+mongo_seed:
+  build: ./mongo-seed
+  links:
+    - mongodb

@@ -7,22 +7,15 @@ import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
-import com.routeanalyzer.api.services.googlemaps.GoogleMapsServiceImpl;
-import org.apache.commons.lang3.ArrayUtils;
+import com.routeanalyzer.api.services.googlemaps.GoogleMapsApiService;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalDouble;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -31,22 +24,28 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.routeanalyzer.api.common.Constants.COLOR_DELIMITER;
+import static com.routeanalyzer.api.common.Constants.STARTED_HEX_CHAR;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
+import static java.util.Arrays.asList;
 import static java.util.Objects.isNull;
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 
 @Service
+@RequiredArgsConstructor
 public class LapsOperationsImpl implements LapsOperations {
 
-	@Autowired
-	private GoogleMapsServiceImpl googleMapsService;
-	@Autowired
-	private TrackPointOperations trackPointOperationsService;
+	private final GoogleMapsApiService googleMapsService;
+	private final TrackPointOperations trackPointOperationsService;
 
 	@Override
 	public Lap joinLaps(Lap lapLeft, Lap lapRight) {
 		// Join the track points of the two laps
 		List<TrackPoint> tracks = joinTrackPointLaps(lapLeft, lapRight);
+
+		recalculateJoinedLap(tracks);
 
 		Lap newLap = Lap.builder()
 				// Tracks joined
@@ -67,6 +66,10 @@ public class LapsOperationsImpl implements LapsOperations {
 		calculateAggregateValuesLap(newLap);
 
 		return newLap;
+	}
+	private void recalculateJoinedLap(List<TrackPoint> trackPoints) {
+		IntStream.range(trackPoints.get(0).getIndex(), trackPoints.size() + trackPoints.get(0).getIndex())
+				.forEach(index -> trackPoints.get(index-trackPoints.get(0).getIndex()).setIndex(index));
 	}
 
 	@Override
@@ -217,10 +220,9 @@ public class LapsOperationsImpl implements LapsOperations {
 				.map(newLap -> {
 					newLap.setIndex(newLapIndex);
 					getOptLapField(lap, Lap::getTracks)
-							.ifPresent(trackPoints -> ofNullable(
-									MathUtils.sortingPositiveValues(initTrackPointIndex, endTrackPointIndex))
-									.filter(ArrayUtils::isNotEmpty)
-									.map(indexes -> IntStream.range(indexes[0], indexes[1])
+							.ifPresent(trackPoints -> of(MathUtils.sortingPositiveValues(initTrackPointIndex,
+									endTrackPointIndex))
+									.map(indexes -> IntStream.range(indexes.get(0), indexes.get(1))
 											.mapToObj(indexEachTrackPoint ->
 													trackPoints.get(indexEachTrackPoint)).collect(Collectors.toList()))
 									.map(getSetterIndexTrackPoints::apply)
@@ -267,6 +269,25 @@ public class LapsOperationsImpl implements LapsOperations {
 	public void calculateAggregateValuesLap(Lap lap) {
 		calculateAggregateHeartRate(lap);
 		calculateAggregateSpeed(lap);
+	}
+
+	@Override
+	public Lap setColorLap(Lap lap, String lapColors) {
+		return assignColorToLap(lap, toHexColors(lapColors));
+	}
+
+	private List<String> toHexColors(String lapColors) {
+		// [color(hex)-lightColor(hex)] number without #
+		Function<String, String> addHexPrefix = color -> STARTED_HEX_CHAR + color;
+		return asList(lapColors.split(COLOR_DELIMITER)).stream()
+				.map(addHexPrefix)
+				.collect(toList());
+	}
+
+	private Lap assignColorToLap(Lap lap, List<String> colors) {
+		lap.setColor(colors.get(0));
+		lap.setLightColor(colors.get(1));
+		return lap;
 	}
 
 	private Predicate<Lap> hasPositionValues = (lapParam) -> lapTrackPointValueHasCondition(lapParam, TrackPoint::getPosition, Objects::nonNull);

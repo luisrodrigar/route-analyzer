@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.logic.file.upload.impl;
 
-import com.google.common.collect.Lists;
 import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
@@ -12,30 +11,18 @@ import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.reader.TCXService;
-import com.routeanalyzer.api.xml.tcx.AbstractSourceT;
-import com.routeanalyzer.api.xml.tcx.ActivityLapT;
-import com.routeanalyzer.api.xml.tcx.ActivityListT;
-import com.routeanalyzer.api.xml.tcx.ActivityT;
-import com.routeanalyzer.api.xml.tcx.CourseLapT;
-import com.routeanalyzer.api.xml.tcx.CourseListT;
-import com.routeanalyzer.api.xml.tcx.CourseT;
-import com.routeanalyzer.api.xml.tcx.ExtensionsT;
-import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
-import com.routeanalyzer.api.xml.tcx.IntensityT;
-import com.routeanalyzer.api.xml.tcx.PositionT;
-import com.routeanalyzer.api.xml.tcx.SportT;
-import com.routeanalyzer.api.xml.tcx.TrackT;
-import com.routeanalyzer.api.xml.tcx.TrackpointT;
-import com.routeanalyzer.api.xml.tcx.TrainingCenterDatabaseT;
+import com.routeanalyzer.api.xml.tcx.*;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityLapExtensionT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityTrackpointExtensionT;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.xml.bind.JAXBElement;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -46,14 +33,15 @@ import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class TcxUploadFileService extends UploadFileService<TrainingCenterDatabaseT> {
 
     @Autowired
-    public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperationsService,
-                                LapsOperations lapsOperationsService) {
-        super(tcxService, activityOperationsService, lapsOperationsService);
+    public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperationsImpl,
+                                LapsOperations lapsOperationsImpl) {
+        super(tcxService, activityOperationsImpl, lapsOperationsImpl);
     }
 
     private Function<PositionT, Predicate<Position>> getIsThisPosition = positionT -> positionToCompare ->
@@ -66,7 +54,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
      * @return list of activities which contains the xml document.
      */
     @Override
-    protected List<Activity> toListActivities(TrainingCenterDatabaseT tcxType) {
+    public List<Activity> toListActivities(TrainingCenterDatabaseT tcxType) {
         return ofNullable(tcxType)
                 .map(TrainingCenterDatabaseT::getActivities)
                 .map(this::toActivities)
@@ -78,198 +66,240 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
     }
 
     private List<Activity> toActivities(ActivityListT activityListT) {
-        List<Activity> activities = Lists.newArrayList();
-        activityListT.getActivity().forEach(eachActivity -> {
-            AtomicInteger indexLap = new AtomicInteger();
-            AtomicInteger indexTrackPoint = new AtomicInteger();
-            Activity activity = new Activity();
-            activity.setSourceXmlType(SOURCE_TCX_XML);
-            of(eachActivity)
-                    .map(ActivityT::getCreator)
-                    .map(AbstractSourceT::getName)
-                    .ifPresent(activity::setDevice);
-            of(eachActivity)
-                    .map(ActivityT::getId)
-                    .flatMap(DateUtils::toLocalDateTime)
-                    .ifPresent(activity::setDate);
-            of(eachActivity)
-                    .map(ActivityT::getSport)
-                    .map(SportT::value)
-                    .ifPresent(activity::setSport);
-            eachActivity.getLap().forEach(eachLap -> {
-                Lap lap = new Lap();
-                of(eachLap)
+        return activityListT.getActivity()
+                .stream()
+                .map(this::toActivity)
+                .map(activity -> {
+                    activityOperationsService.calculateDistanceSpeedValues(activity);
+                    return activity;
+                })
+                .collect(toList());
+    }
+
+    private Activity toActivity(final ActivityT activityT) {
+        AtomicInteger indexLap = new AtomicInteger(0);
+        AtomicInteger indexTrackPoint = new AtomicInteger(0);
+        return Activity.builder()
+                .sourceXmlType(SOURCE_TCX_XML)
+                .device(of(activityT)
+                        .map(ActivityT::getCreator)
+                        .map(AbstractSourceT::getName)
+                        .orElse(null))
+                .date(of(activityT)
+                        .map(ActivityT::getId)
+                        .flatMap(DateUtils::toZonedDateTime)
+                        .orElse(null))
+                .sport(of(activityT)
+                        .map(ActivityT::getSport)
+                        .map(SportT::value)
+                        .orElse(null))
+                .laps(toLapFromActivityLapTList(activityT.getLap(), indexLap, indexTrackPoint))
+                .build();
+    }
+
+    private List<Lap> toLapFromActivityLapTList(final List<ActivityLapT> activityLapTS, final AtomicInteger indexLaps,
+                                final AtomicInteger indexTrackPoints) {
+        return activityLapTS.stream()
+                .map(activityLapT -> toLap(activityLapT, indexLaps, indexTrackPoints))
+                .map(lap -> {
+                    // Calculate values not informed of a lap.
+                    lapsOperationsService.calculateLapValues(lap);
+                    return lap;
+                })
+                .collect(toList());
+    }
+
+    private Lap toLap(final ActivityLapT activityLapT, final AtomicInteger indexLaps,
+                      final AtomicInteger indexTrackPoints) {
+        return Lap.builder()
+                .averageHearRate(of(activityLapT)
                         .map(ActivityLapT::getAverageHeartRateBpm)
                         .map(HeartRateInBeatsPerMinuteT::getValue)
                         .map(Double::valueOf)
                         .filter(MathUtils::isPositiveNonZero)
-                        .ifPresent(lap::setAverageHearRate);
-                of(eachLap)
+                        .orElse(null))
+                .calories(of(activityLapT)
                         .map(ActivityLapT::getCalories)
                         .filter(MathUtils::isPositiveNonZero)
-                        .ifPresent(lap::setCalories);
-                of(eachLap)
+                        .orElse(null))
+                .distanceMeters(of(activityLapT)
                         .map(ActivityLapT::getDistanceMeters)
                         .filter(MathUtils::isPositiveNonZero)
-                        .ifPresent(lap::setDistanceMeters);
-                of(eachLap)
+                        .orElse(null))
+                .maximumSpeed(of(activityLapT)
                         .map(ActivityLapT::getMaximumSpeed)
                         .filter(MathUtils::isPositiveNonZero)
-                        .ifPresent(lap::setMaximumSpeed);
-                of(eachLap)
+                        .orElse(null))
+                .maximumHeartRate(of(activityLapT)
                         .map(ActivityLapT::getMaximumHeartRateBpm)
                         .map(HeartRateInBeatsPerMinuteT::getValue)
                         .map(Integer::valueOf)
                         .filter(MathUtils::isPositiveNonZero)
-                        .ifPresent(lap::setMaximumHeartRate);
-                of(eachLap)
+                        .orElse(null))
+                .startTime(of(activityLapT)
                         .map(ActivityLapT::getStartTime)
-                        .flatMap(DateUtils::toLocalDateTime)
-                        .ifPresent(lap::setStartTime);
-                of(indexLap)
-                        .map(AtomicInteger::incrementAndGet)
-                        .ifPresent(lap::setIndex);
-                of(eachLap)
+                        .flatMap(DateUtils::toZonedDateTime)
+                        .orElse(null))
+                .index(indexLaps.incrementAndGet())
+                .totalTimeSeconds(of(activityLapT)
                         .map(ActivityLapT::getTotalTimeSeconds)
                         .filter(MathUtils::isPositiveNonZero)
-                        .ifPresent(lap::setTotalTimeSeconds);
-                of(eachLap)
+                        .orElse(null))
+                .intensity(of(activityLapT)
                         .map(ActivityLapT::getIntensity)
                         .map(IntensityT::value)
-                        .ifPresent(lap::setIntensity);
-                of(eachLap)
-                        .map(ActivityLapT::getExtensions)
-                        .ifPresent(extensionsT -> setExtensions(extensionsT, lap));
-                of(eachLap)
-                        .map(ActivityLapT::getTrack)
-                        .ifPresent(trackTS -> trackTS.forEach(trackT -> trackT.getTrackpoint().forEach(trackPointT ->
-                                of(trackPointT)
-                                        .map(TrackpointT::getPosition)
-                                        .flatMap(positionT -> of(indexTrackPoint)
-                                                .map(AtomicInteger::incrementAndGet)
-                                                .map(indexTrackPointParam ->
-                                                        toTrackPoint(trackPointT, indexTrackPointParam))
-                                                .map(trackPoint -> {
-                                                    setExtensions(trackPointT, trackPoint);
-                                                    return trackPoint;
-                                                }))
-                                        .ifPresent(lap::addTrack))));
-                // Calculate values not informed of a lap.
-                lapsOperationsService.calculateLapValues(lap);
-                activity.addLap(lap);
-            });
-            activityOperationsService.calculateDistanceSpeedValues(activity);
-            activities.add(activity);
-        });
-        return activities;
+                        .orElse(null))
+                .tracks(getTrackPointsOfLap(activityLapT.getTrack(), indexTrackPoints))
+                .averageSpeed(getAverageSpeedExtensionValue(activityLapT.getExtensions())
+                        .orElse(null))
+                .build();
+    }
+
+    private List<TrackPoint> getTrackPointsOfLap(final List<TrackT> trackTList, final AtomicInteger indexTrackPoints) {
+        return trackTList.stream()
+                .flatMap(trackT -> trackT.getTrackpoint()
+                        .stream()
+                        .map(trackPointT -> toTrackPointModel(trackPointT, indexTrackPoints)))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(toList());
+    }
+
+    private Optional<TrackPoint> toTrackPointModel(final TrackpointT trackpointT, final AtomicInteger indexTrackPoints) {
+        return of(trackpointT)
+                .map(TrackpointT::getPosition)
+                .map(positionT -> toTrackPoint(trackpointT, indexTrackPoints.incrementAndGet()))
+                .map(trackPoint -> setTrackPointExtensions(trackpointT, trackPoint));
     }
 
     private List<Activity> toActivities(CourseListT courseListT) {
-        List<Activity> activities = Lists.newArrayList();
-        courseListT.getCourse().forEach(course -> {
-            Activity activity = new Activity();
-            AtomicInteger indexLap = new AtomicInteger();
-            AtomicInteger indexTrackPoint = new AtomicInteger();
-            activity.setSourceXmlType(SOURCE_TCX_XML);
-            of(course)
-                    .map(CourseT::getName)
-                    .ifPresent(activity::setName);
-            course.getLap().forEach(eachLap -> {
-                Lap lap = new Lap();
-                of(eachLap)
+        return courseListT.getCourse()
+                .stream()
+                .map(this::toActivity)
+                .map(activity -> {
+                    // Calculate values not informed of a lap.
+                    activityOperationsService.calculateDistanceSpeedValues(activity);
+                    return activity;
+                })
+                .collect(toList());
+    }
+
+    private Activity toActivity(final CourseT courseT) {
+        AtomicInteger indexLap = new AtomicInteger(0);
+        AtomicInteger indexTrackPoint = new AtomicInteger(0);
+        return Activity.builder()
+                .sourceXmlType(SOURCE_TCX_XML)
+                .name(courseT.getName())
+                .laps(toLapList(courseT.getLap(), courseT.getTrack(), indexLap, indexTrackPoint))
+                .build();
+    }
+
+    private List<Lap> toLapList(final List<CourseLapT> courseLapTList, final List<TrackT> trackTList,
+                                final AtomicInteger indexLap, final AtomicInteger indexTrackPoints) {
+        return courseLapTList
+                .stream()
+                .map(courseLapT -> toLap(courseLapT, trackTList, indexLap, indexTrackPoints))
+                .map(lap -> {
+                    lapsOperationsService.calculateLapValues(lap);
+                    return lap;
+                })
+                .collect(toList());
+    }
+
+    private Lap toLap(final CourseLapT courseLapT, final List<TrackT> trackTList, final AtomicInteger indexLap,
+                      final AtomicInteger indexTrackPoints) {
+        return Lap.builder()
+                .averageHearRate(of(courseLapT)
                         .map(CourseLapT::getAverageHeartRateBpm)
                         .map(HeartRateInBeatsPerMinuteT::getValue)
                         .map(Double::valueOf)
                         .filter(MathUtils::isPositiveNonZero)
-                        .ifPresent(lap::setAverageHearRate);
-                of(eachLap)
-                        .map(CourseLapT::getTotalTimeSeconds)
-                        .ifPresent(lap::setTotalTimeSeconds);
-                of(eachLap)
-                        .map(CourseLapT::getDistanceMeters)
-                        .ifPresent(lap::setDistanceMeters);
-                of(indexLap)
-                        .map(AtomicInteger::getAndIncrement)
-                        .ifPresent(lap::setIndex);
-                of(eachLap)
-                        .map(CourseLapT::getExtensions)
-                        .ifPresent(extensionsT -> setExtensions(extensionsT, lap));
-                Position initial = toPosition(eachLap.getBeginPosition().getLatitudeDegrees(),
-                        eachLap.getBeginPosition().getLongitudeDegrees());
-                Position end = toPosition(eachLap.getEndPosition().getLatitudeDegrees(),
-                        eachLap.getEndPosition().getLongitudeDegrees());
-                AtomicInteger eachIndex = new AtomicInteger();
-                AtomicInteger indexStart = new AtomicInteger();
-                AtomicInteger indexEnd = new AtomicInteger();
-
-                course.getTrack().forEach(track ->
-                    track.getTrackpoint().forEach(trackPoint -> {
-                        of(trackPoint)
-                                .map(TrackpointT::getPosition)
-                                .filter(positionT -> getIsThisPosition.apply(positionT).test(initial))
-                                .ifPresent(positionT -> of(eachIndex).map(AtomicInteger::get).ifPresent(indexStart::set));
-                        of(trackPoint)
-                                .map(TrackpointT::getPosition)
-                                .filter(positionT -> getIsThisPosition.apply(positionT).test(end))
-                                .ifPresent(positionT -> of(eachIndex).map(AtomicInteger::get).ifPresent(indexEnd::set));
-                        eachIndex.incrementAndGet();
-
-                    }));
-                IntStream.range(indexStart.get(), MathUtils.increaseUnit(indexEnd.get()))
-                        .forEach(index -> of(course)
-                            .map(CourseT::getTrack)
-                            .map(CommonUtils::getFirstElement)
-                            .map(TrackT::getTrackpoint)
-                            .map(trackPointTs -> trackPointTs.get(index))
-                            .flatMap(trT -> of(indexTrackPoint)
-                                    .map(AtomicInteger::getAndIncrement)
-                                    .map(indexTrackPointParam -> toTrackPoint(trT, indexTrackPointParam))
-                                    .map(trackPoint -> {
-                                        setExtensions(trT, trackPoint);
-                                        return trackPoint;
-                                    }))
-                            .ifPresent(lap::addTrack));
-                // Calculate values not informed of a lap.
-                lapsOperationsService.calculateLapValues(lap);
-                activity.addLap(lap);
-            });
-            activityOperationsService.calculateDistanceSpeedValues(activity);
-            activities.add(activity);
-        });
-        return activities;
+                        .orElse(null))
+                .totalTimeSeconds(courseLapT.getTotalTimeSeconds())
+                .distanceMeters(courseLapT.getDistanceMeters())
+                .index(indexLap.incrementAndGet())
+                .averageSpeed(getAverageSpeedExtensionValue(courseLapT.getExtensions()).orElse(null))
+                .tracks(getTrackPointsOfLap(courseLapT, trackTList, indexTrackPoints))
+                .build();
     }
 
-    private void setExtensions(ExtensionsT xmlExtensionsLap, Lap modelLap) {
-        of(xmlExtensionsLap)
-                .map(ExtensionsT::getAny)
-                .ifPresent(extensions -> extensions.stream()
-                        .filter(JAXBElement.class::isInstance)
-                        .map(JAXBElement.class::cast)
-                        .map(JAXBElement::getValue)
-                        .filter(ActivityLapExtensionT.class::isInstance)
-                        .map(ActivityLapExtensionT.class::cast)
-                        .map(ActivityLapExtensionT::getAvgSpeed)
-                        .filter(Objects::nonNull)
-                        .findFirst()
-                        .ifPresent(modelLap::setAverageSpeed));
+    private List<TrackPoint> getTrackPointsOfLap(final CourseLapT courseLapT, final List<TrackT> trackTList,
+                                                 final AtomicInteger indexTrackPoints) {
+        AtomicInteger eachIndex = new AtomicInteger();
+        AtomicInteger indexStart = new AtomicInteger();
+        AtomicInteger indexEnd = new AtomicInteger();
+        Position initial = toPosition(courseLapT.getBeginPosition().getLatitudeDegrees(),
+                courseLapT.getBeginPosition().getLongitudeDegrees());
+        Position end = toPosition(courseLapT.getEndPosition().getLatitudeDegrees(),
+                courseLapT.getEndPosition().getLongitudeDegrees());
+        trackTList.forEach(track ->
+                track.getTrackpoint().forEach(trackPoint -> {
+                    of(trackPoint)
+                            .map(TrackpointT::getPosition)
+                            .filter(positionT -> getIsThisPosition.apply(positionT).test(initial))
+                            .ifPresent(positionT -> of(eachIndex).map(AtomicInteger::get).ifPresent(indexStart::set));
+                    of(trackPoint)
+                            .map(TrackpointT::getPosition)
+                            .filter(positionT -> getIsThisPosition.apply(positionT).test(end))
+                            .ifPresent(positionT -> of(eachIndex).map(AtomicInteger::get).ifPresent(indexEnd::set));
+                    eachIndex.incrementAndGet();
+                }));
+        return IntStream.range(indexStart.get(), MathUtils.increaseUnit(indexEnd.get()))
+                .mapToObj(index -> ofNullable(trackTList)
+                        .map(CommonUtils::getFirstElement)
+                        .map(TrackT::getTrackpoint)
+                        .map(trackPointTs -> trackPointTs.get(index))
+                        .flatMap(trT -> of(indexTrackPoints)
+                                .map(AtomicInteger::getAndIncrement)
+                                .map(indexTrackPointParam -> toTrackPoint(trT, indexTrackPointParam))
+                                .map(trackPoint -> {
+                                    getSpeedExtensionValue(trT.getExtensions().getAny())
+                                            .ifPresent(trackPoint::setSpeed);
+                                    return trackPoint;
+                                })))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(toList());
     }
 
-    private void setExtensions(TrackpointT xmlTrackPoint, TrackPoint modelTrackPoint) {
-        ofNullable(xmlTrackPoint)
+    private Optional<Double> getAverageSpeedExtensionValue(final ExtensionsT extensionsT) {
+        return extensionsT.getAny()
+                .stream()
+                .filter(JAXBElement.class::isInstance)
+                .map(JAXBElement.class::cast)
+                .map(JAXBElement::getValue)
+                .filter(ActivityLapExtensionT.class::isInstance)
+                .map(ActivityLapExtensionT.class::cast)
+                .map(ActivityLapExtensionT::getAvgSpeed)
+                .filter(Objects::nonNull)
+                .findFirst();
+    }
+
+    private TrackPoint setTrackPointExtensions(TrackpointT xmlTrackPoint, TrackPoint trackPoint) {
+        return ofNullable(xmlTrackPoint)
                 .map(TrackpointT::getExtensions)
                 .map(ExtensionsT::getAny)
-                .ifPresent(extension -> extension.stream()
-                        .filter(Objects::nonNull)
-                        .filter(JAXBElement.class::isInstance)
-                        .map(JAXBElement.class::cast)
-                        .map(JAXBElement::getValue)
-                        .filter(ActivityTrackpointExtensionT.class::isInstance)
-                        .map(ActivityTrackpointExtensionT.class::cast)
-                        .map(ActivityTrackpointExtensionT::getSpeed)
-                        .filter(Objects::nonNull)
-                        .map(MathUtils::toBigDecimal)
-                        .findFirst()
-                        .ifPresent(modelTrackPoint::setSpeed)
-                );
+                .map(extensions -> addSpeedToTrackPoint(extensions, trackPoint))
+                .orElse(trackPoint);
+    }
+
+    private TrackPoint addSpeedToTrackPoint(final List<Object> extensions, final TrackPoint trackPoint) {
+        getSpeedExtensionValue(extensions)
+                .ifPresent(trackPoint::setSpeed);
+        return trackPoint;
+    }
+
+    private Optional<BigDecimal> getSpeedExtensionValue(final List<Object> extensions) {
+        return extensions.stream()
+                .filter(Objects::nonNull)
+                .filter(JAXBElement.class::isInstance)
+                .map(JAXBElement.class::cast)
+                .map(JAXBElement::getValue)
+                .filter(ActivityTrackpointExtensionT.class::isInstance)
+                .map(ActivityTrackpointExtensionT.class::cast)
+                .map(ActivityTrackpointExtensionT::getSpeed)
+                .filter(Objects::nonNull)
+                .map(MathUtils::toBigDecimal)
+                .findFirst();
     }
 }

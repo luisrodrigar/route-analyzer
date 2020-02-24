@@ -1,9 +1,12 @@
 package com.routeanalyzer.api.logic;
 
+import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Position;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ActivityOperations {
 
@@ -25,7 +28,8 @@ public interface ActivityOperations {
 	 *            order of creation
 	 * @return activity or null if there was any error.
 	 */
-	Activity removePoint(Activity act, String lat, String lng, String timeInMillis, String indexTrackPoint);
+	Activity removePoint(final Activity act, final String lat, final String lng, final Long timeInMillis,
+						 final Integer indexTrackPoint);
 	
 	/**
 	 * Split a lap into two laps with one track point as the divider.
@@ -43,16 +47,17 @@ public interface ActivityOperations {
 	 *            of the track point which will be the divider
 	 * @return activity with the new laps.
 	 */
-	Activity splitLap(Activity activity, String lat, String lng, String timeInMillis, String indexTrackPoint);
+	Activity splitLap(final Activity activity, final String lat, final String lng, final Long timeInMillis,
+					  final Integer indexTrackPoint);
 
 	/**
 	 * Join two laps, the result is one lap with the mixed values
 	 * @param activity
-	 * @param indexLeft
-	 * @param indexRight
+	 * @param index1
+	 * @param index2
 	 * @return
 	 */
-	Activity joinLaps(Activity activity, String indexLeft, String indexRight);
+	Activity joinLaps(final Activity activity, final Integer index1, final Integer index2);
 
 	/**
 	 * Delete a lap from an activity
@@ -61,13 +66,13 @@ public interface ActivityOperations {
 	 * @param indexLap
 	 * @return
 	 */
-	Activity removeLaps(Activity act, List<Long> startTime, List<Integer> indexLap);
+	Activity removeLaps(final Activity act, final List<Long> startTime, final List<Integer> indexLap);
 
 	/**
 	 * Calculate total distance and speed of an activity.
 	 * @param activity
 	 */
-	void calculateDistanceSpeedValues(Activity activity);
+	void calculateDistanceSpeedValues(final Activity activity);
 
 	/**
 	 * Method which returns an index corresponding to the track point with the
@@ -86,6 +91,49 @@ public interface ActivityOperations {
 	 *            index of the position in the array
 	 * @return index of a track point
 	 */
-	int indexOfTrackPoint(Activity activity, Integer indexLap, Position position, Long time, Integer index);
+	int indexOfTrackPoint(final Activity activity, final Integer indexLap, final Position position, final Long time,
+						  final Integer index);
+
+	/**
+	 * Set regular and light color to each activity's lap
+	 * @param activity activity where the colors want to apply
+	 * @param dataColors separated each color lap by ',' regular and light color lap separated by '#'
+	 * @return activity with the colors applied
+	 */
+	Activity setColorsGetActivity(final Activity activity, final String dataColors);
+
+	/**
+	 * Parser and transform the xml file to data model List
+	 * @param multiPartFile : xml file contains the activity data
+	 * @param fileService : file service to use
+	 * @return stored activity ids
+	 */
+	Optional<List<Activity>> upload(final MultipartFile multiPartFile, final UploadFileService fileService);
+
+	/**
+	 * Push the original file to S3 bucket.
+	 * @param activities all the activities
+	 * @param multiPart original file
+	 * @return list of activities
+	 */
+	List<Activity> pushToS3(final List<Activity> activities, final MultipartFile multiPart);
+
+	/**
+	 * Export activity by type
+	 * @param type of the file to export
+	 * @param activity to export
+	 * @return
+	 */
+	String exportByType(final String type, final Activity activity);
+
+	/**
+	 * Getting original input xml file
+	 * @param id activity identification
+	 * @param type of the xml file
+	 * @return optional string file value
+	 */
+	Optional<String> getOriginalFile(final String id, final String type);
+
+
 
 }

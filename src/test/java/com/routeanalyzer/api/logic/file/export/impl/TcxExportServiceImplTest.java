@@ -1,86 +1,82 @@
 package com.routeanalyzer.api.logic.file.export.impl;
 
-import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.TCXService;
 import io.vavr.control.Try;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
-import org.mockito.Spy;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import utils.TestUtils;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import java.nio.charset.StandardCharsets;
 
+import static io.vavr.control.Try.success;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static utils.TestUtils.toRuntimeException;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static utils.TestUtils.getFileBytes;
+import static utils.TestUtils.toActivity;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class TcxExportServiceImplTest {
 
-    @Spy
+    @Mock
     private TCXService tcxService;
 
     @InjectMocks
     private TcxExportFileService tcxExportService;
 
-    @Value("classpath:utils/json-activity-tcx.json")
-    private Resource activityTcxResource;
-    @Value("classpath:utils/tcx-test.xml")
-    private Resource tcxXmlResource;
+    private static Activity activityTcxTest;
+    private static String tcxXmlString;
 
-    private Activity activityTcxTest;
-    private String tcxXmlString;
-
-    @Before
-    public void setUp() {
-        tcxXmlString = new String(TestUtils.getFileBytes(tcxXmlResource), StandardCharsets.UTF_8);
-        String jsonActivityTcxStr = new String(TestUtils.getFileBytes(activityTcxResource), StandardCharsets.UTF_8);
-        activityTcxTest = JsonUtils.fromJson(jsonActivityTcxStr, Activity.class);
+    @BeforeClass
+    public static void setUp() {
+        activityTcxTest = toActivity("utils/json-activity-tcx.json");
+        tcxXmlString = new String(getFileBytes("utils/tcx-test.xml"), StandardCharsets.UTF_8);
     }
 
     @Test
     public void export() {
         // Given
+        doReturn(success(tcxXmlString)).when(tcxService).createXML(any(JAXBElement.class));
+
         // When
         Try<String> result = Try.of(() -> tcxExportService.export(activityTcxTest));
+
         // Then
-        result.onSuccess(tcxExportedFile ->assertThat(tcxExportedFile).isEqualTo(tcxXmlString))
-                .onFailure(error -> assertThat(true).isFalse());
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo(tcxXmlString);
+        verify(tcxService).createXML(any());
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void exportActivityNull() {
+        // Given
+
         // When
-        Try.of(() -> tcxExportService.export(null))
-                // Then
-                .onSuccess(tcxExportedFile -> assertThat(tcxExportedFile).isNull())
-                .onFailure(error -> assertThat(true).isFalse());
+        tcxExportService.export(null);
+
+        // Then
+        verify(tcxService, never()).createXML(any());
     }
 
-    @Test
+    @Test(expected = JAXBException.class)
     public void exportActivityThrowRuntimeException() {
         // Given
         Exception jaxbException = new JAXBException("Problems with xml.");
+        doReturn(Try.failure(jaxbException)).when(tcxService).createXML(any());
+
         // When
-        doThrow(toRuntimeException(jaxbException)).when(tcxService).createXML(any());
-        Try.of(() -> tcxExportService.export(activityTcxTest))
-                // Then
-                .onSuccess(tcxExportedFile -> assertThat(true).isFalse())
-                .onFailure(error -> {
-                    assertThat(error).isInstanceOf(RuntimeException.class);
-                    RuntimeException runtimeException = (RuntimeException) error;
-                    assertThat(runtimeException.getCause()).isInstanceOf(JAXBException.class);
-                    assertThat(runtimeException.getCause().getMessage())
-                            .isEqualTo("Problems with xml.");
-                });
+        tcxExportService.export(activityTcxTest);
+
+        // Then
+        verify(tcxService).createXML(any());
     }
 
 

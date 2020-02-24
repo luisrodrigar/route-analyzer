@@ -2,9 +2,9 @@ package com.routeanalyzer.api.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 @Builder
 @AllArgsConstructor
 public class Response {

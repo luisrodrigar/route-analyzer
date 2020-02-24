@@ -62,14 +62,14 @@ public final class Encrypter {
     private static byte[] decodeString(String encrypted, Cipher cipher) {
         return ofNullable(encrypted)
                 .map(Base64::decodeBase64)
-                .map(ThrowingFunction.unchecked(cipher::doFinal))
+                .flatMap(decodeStr -> Try.of(() -> cipher.doFinal(decodeStr)).toJavaOptional())
                 .orElse(null);
     }
 
     private static String encodeString(String decrypted, Cipher cipher) {
         return ofNullable(decrypted)
                 .map(String::getBytes)
-                .map(ThrowingFunction.unchecked(cipher::doFinal))
+                .flatMap(bytes -> Try.of( () -> cipher.doFinal(bytes)).toJavaOptional())
                 .map(Base64::encodeBase64String)
                 .orElse(null);
     }
