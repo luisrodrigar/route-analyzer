@@ -3,7 +3,6 @@ package com.routeanalyzer.api.it;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,18 +57,12 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
     @Value("classpath:controller/remove-laps-tcx.json")
     private Resource removeLapsTcxJsonResource;
 
-    private Activity gpxActivity, tcxActivity;
     private HttpEntity<Activity> requestEntity = new HttpEntity<>(new Activity(), new HttpHeaders());
-
-    @Before
-    public void setUp() {
-        gpxActivity = toActivity(gpxJsonResource);
-        tcxActivity = toActivity(tcxJsonResource);
-    }
 
     @Test
     public void getGpxActivityByIdTest() throws Exception {
         // Given
+        Activity gpxActivity = toActivity(gpxJsonResource);
         String getGpxUri = UriComponentsBuilder.fromPath(GET_ACTIVITY_PATH)
                 .buildAndExpand(ACTIVITY_GPX_ID)
                 .toUriString();
@@ -85,6 +78,7 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
     @Test
     public void getTcxActivityByIdTest() {
         // Given
+        Activity tcxActivity = toActivity(tcxJsonResource);
         String getTcxUri = UriComponentsBuilder.fromPath(GET_ACTIVITY_PATH)
                 .buildAndExpand(ACTIVITY_TCX_ID)
                 .toUriString();

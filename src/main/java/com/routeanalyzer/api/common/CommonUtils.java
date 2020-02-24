@@ -20,6 +20,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
+import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
 import static com.routeanalyzer.api.common.DateUtils.toZonedDateTime;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static java.lang.String.format;
@@ -28,12 +29,6 @@ import static java.util.stream.Collectors.toList;
 
 @UtilityClass
 public class CommonUtils {
-
-	public static <T> T toValueOrNull(String object, Function<String, T> convertTo) {
-		return ofNullable(object)
-				.map(convertTo)
-				.orElse(null);
-	}
 
 	public static <T> T getFirstElement(List<T> list) {
 		return ofNullable(list)
@@ -196,6 +191,10 @@ public class CommonUtils {
 
 	public static <T> Predicate<T> not(Predicate<T> t) {
 		return t.negate();
+	}
+
+	public static String joinByComma(Object firstParam, Object secondParam) {
+		return format("%s%s%s", firstParam, COMMA_DELIMITER, secondParam);
 	}
 
 }
