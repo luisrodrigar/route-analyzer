@@ -3,6 +3,7 @@ package com.routeanalyzer.api.services.googlemaps;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.services.googlemaps.model.GoggleMapsAPIResponse;
 import io.vavr.control.Try;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
@@ -29,7 +30,9 @@ import java.util.stream.Stream;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.cloud.contract.wiremock.WireMockSpring.options;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -81,7 +84,7 @@ public class GoogleMapsApiServiceTest {
     }
 
     @Test
-    public void getAltitudeTest() throws Exception {
+    public void getAltitudeTest() {
         // Given
         stubFor(get(urlEqualTo(getEndpoint(POSITIONS_URL_ENCODED)))
                 .willReturn(ok()
@@ -97,10 +100,13 @@ public class GoogleMapsApiServiceTest {
         // Then
         assertThat(mapResults).isNotEmpty();
         assertThat(mapResults).isEqualTo(expectedResult);
+        verify(restTemplate).getForObject(
+                "http://localhost:" + googleApiWireMock.port() + getEndpoint(POSITIONS),
+                GoggleMapsAPIResponse.class);
     }
 
     @Test
-    public void getAltitudeFailServiceTest() throws Exception {
+    public void getAltitudeFailServiceTest() {
         // Given
         stubFor(get(urlEqualTo(getEndpoint(POSITIONS_URL_ENCODED)))
                 .willReturn(ok()
@@ -119,6 +125,9 @@ public class GoogleMapsApiServiceTest {
         assertThat(mapResults).isNotNull();
         assertThat(mapResults).isNotEmpty();
         assertThat(mapResults).isEqualTo(errorResult);
+        verify(restTemplate).getForObject(
+                "http://localhost:" + googleApiWireMock.port() + getEndpoint(POSITIONS),
+                GoggleMapsAPIResponse.class);
     }
 
     @Test
@@ -131,6 +140,7 @@ public class GoogleMapsApiServiceTest {
         // Then
         assertThat(mapResults).isNotNull();
         assertThat(mapResults).isEmpty();
+        verify(restTemplate, never()).getForObject(any(),any());
     }
 
     @Test
@@ -143,6 +153,7 @@ public class GoogleMapsApiServiceTest {
         // Then
         assertThat(mapResults).isNotNull();
         assertThat(mapResults).isEmpty();
+        verify(restTemplate, never()).getForObject(any(),any());
     }
 
     @Test
@@ -202,7 +213,7 @@ public class GoogleMapsApiServiceTest {
         Assertions.assertThat(elevationCode).isEqualTo("5.63654,1.3456|5.63654,1.3456|5.63654,1.3456");
     }
 
-    @org.junit.Test
+    @Test
     public void createPositionsRequestSomeTrackPointNotHavePositionTest() {
         // Given
         BigDecimal latitude = new BigDecimal("5.63654");

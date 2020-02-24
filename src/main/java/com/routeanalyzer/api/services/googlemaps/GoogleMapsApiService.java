@@ -17,10 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import static com.routeanalyzer.api.common.CommonUtils.joinByComma;
 import static com.routeanalyzer.api.common.CommonUtils.not;
-import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.POSITIONS_DELIMITER;
-import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.Objects.isNull;
@@ -41,16 +40,6 @@ public class GoogleMapsApiService implements ElevationService {
 	private final GoogleMapsApiProperties properties;
 	private final RestTemplate restTemplate;
 
-	private String getUrl(String positions) {
-		return UriComponentsBuilder.newInstance()
-				.scheme(properties.getElevationProtocol())
-				.host(properties.getElevationHost())
-				.path(properties.getElevationEndpoint())
-				.query(PARAMS)
-				.buildAndExpand(positions, properties.getApiKey())
-				.toUriString();
-	}
-
 	@Override
 	public Map<String, String> getAltitude(String positions) {
 		return ofNullable(positions)
@@ -60,6 +49,38 @@ public class GoogleMapsApiService implements ElevationService {
 						.toJavaOptional())
 				.map(this::toMapResult)
 				.orElse(emptyMap());
+	}
+
+	public String createPositionsRequest(List<TrackPoint> trackPointList) {
+		Predicate<TrackPoint> isTrackValid = trackPoint -> isNull(trackPoint.getAltitudeMeters())
+				&& nonNull(trackPoint.getPosition());
+		return ofNullable(trackPointList)
+				.filter(not(List::isEmpty))
+				.map(trackPoints -> trackPoints
+						.stream()
+						.filter(isTrackValid)
+						.map(this::getCoordinatesCode)
+						.collect(joining(POSITIONS_DELIMITER)))
+				.orElse(null);
+	}
+
+	public String getCoordinatesCode(TrackPoint trackPoint) {
+		return ofNullable(trackPoint)
+				.map(TrackPoint::getPosition)
+				.filter(position -> nonNull(position.getLatitudeDegrees()))
+				.filter(position -> nonNull(position.getLongitudeDegrees()))
+				.map(position -> joinByComma(position.getLatitudeDegrees(), position.getLongitudeDegrees()))
+				.orElse(null);
+	}
+
+	private String getUrl(String positions) {
+		return UriComponentsBuilder.newInstance()
+				.scheme(properties.getElevationProtocol())
+				.host(properties.getElevationHost())
+				.path(properties.getElevationEndpoint())
+				.query(PARAMS)
+				.buildAndExpand(positions, properties.getApiKey())
+				.toUriString();
 	}
 
 	private Map<String, String> toMapResult(GoggleMapsAPIResponse gmResponse) {
@@ -89,32 +110,6 @@ public class GoogleMapsApiService implements ElevationService {
 	private Map<String, String> addStatusToResponse(Map<String, String> resultMap, GoggleMapsAPIResponse gmResponse) {
 		resultMap.put(RESULT_STATUS_MAP_KEY, gmResponse.getStatus());
 		return resultMap;
-	}
-
-	public String createPositionsRequest(List<TrackPoint> trackPointList) {
-		Predicate<TrackPoint> isTrackValid = trackPoint -> isNull(trackPoint.getAltitudeMeters())
-				&& nonNull(trackPoint.getPosition());
-		return ofNullable(trackPointList)
-				.filter(not(List::isEmpty))
-				.map(trackPoints -> trackPoints
-						.stream()
-						.filter(isTrackValid)
-						.map(this::getCoordinatesCode)
-						.collect(joining(POSITIONS_DELIMITER)))
-				.orElse(null);
-	}
-
-	public String getCoordinatesCode(TrackPoint trackPoint) {
-		return ofNullable(trackPoint)
-				.map(TrackPoint::getPosition)
-				.filter(position -> nonNull(position.getLatitudeDegrees()))
-				.filter(position -> nonNull(position.getLongitudeDegrees()))
-				.map(position -> joinByComma(position.getLatitudeDegrees(), position.getLongitudeDegrees()))
-				.orElse(null);
-	}
-
-	private String joinByComma(Object firstParam, Object secondParam) {
-		return format("%s%s%s", firstParam, COMMA_DELIMITER, secondParam);
 	}
 
 }
