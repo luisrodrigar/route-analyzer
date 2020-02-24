@@ -1,45 +1,34 @@
 package com.routeanalyzer.api.common;
 
-import com.routeanalyzer.api.controller.Response;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.xml.gpx11.WptType;
 import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.api.xml.tcx.PositionT;
 import com.routeanalyzer.api.xml.tcx.TrackpointT;
+import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Collections;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Stream;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
-import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
+import static com.routeanalyzer.api.common.DateUtils.toZonedDateTime;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static org.springframework.http.ResponseEntity.badRequest;
-import static org.springframework.http.ResponseEntity.ok;
-import static org.springframework.http.ResponseEntity.status;
 
 @UtilityClass
 public class CommonUtils {
-
-	public static <T> T toValueOrNull(String object, Function<String, T> convertTo) {
-		return ofNullable(object)
-				.map(convertTo)
-				.orElse(null);
-	}
 
 	public static <T> T getFirstElement(List<T> list) {
 		return ofNullable(list)
@@ -51,7 +40,19 @@ public class CommonUtils {
 
 	// Methods which generate a track point.
 
-	public static TrackPoint toTrackPoint(LocalDateTime dateTime, int index, Position position, String alt, String dist,
+	public static TrackPoint toTrackPoint(ZonedDateTime dateTime, int index, Position position, BigDecimal alt) {
+		return TrackPoint.builder()
+				.date(dateTime)
+				.index(index)
+				.position(position)
+				.altitudeMeters(alt)
+				.distanceMeters(null)
+				.speed(null)
+				.heartRateBpm(null)
+				.build();
+	}
+
+	public static TrackPoint toTrackPoint(ZonedDateTime dateTime, int index, Position position, String alt, String dist,
 										  String speed, Integer heartRate) {
 		return TrackPoint.builder()
 				.date(dateTime)
@@ -64,7 +65,7 @@ public class CommonUtils {
 				.build();
 	}
 
-	public static TrackPoint toTrackPoint(LocalDateTime dateTime, int index, Position position, Double alt, Double dist,
+	public static TrackPoint toTrackPoint(ZonedDateTime dateTime, int index, Position position, Double alt, Double dist,
 										  Double speed, Integer heartRate) {
 		return toTrackPoint(dateTime, index, position, toStringValue(alt), toStringValue(dist),
 				toStringValue(speed), heartRate);
@@ -72,24 +73,24 @@ public class CommonUtils {
 
 	public static TrackPoint toTrackPoint(XMLGregorianCalendar gregorianCalendar, int index, Position position,
 										  String alt, String dist, String speed, Integer heartRate) {
-		return toTrackPoint(DateUtils.toLocalDateTime(gregorianCalendar).orElse(null),
+		return toTrackPoint(DateUtils.toZonedDateTime(gregorianCalendar).orElse(null),
 				index, position, alt, dist, speed, heartRate);
 	}
 
 	public static TrackPoint toTrackPoint(long timeMillis, int index, Position position, String alt, String dist,
 										  String speed, Integer heartRate) {
-		return toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null),
+		return toTrackPoint(toZonedDateTime(timeMillis).orElse(null),
 				index, position, alt, dist, speed, heartRate);
 	}
 
-	public static TrackPoint toTrackPoint(LocalDateTime dateTime, int index, String lat, String lng, String alt,
+	public static TrackPoint toTrackPoint(ZonedDateTime dateTime, int index, String lat, String lng, String alt,
 										  String dist, String speed, Integer heartRate) {
 		return toTrackPoint(dateTime, index, toPosition(lat, lng), alt, dist, speed, heartRate);
 	}
 	
 	public static TrackPoint toTrackPoint(long timeMillis, int index, String lat, String lng, String alt, String dist,
 											   String speed, Integer heartRate) {
-		return toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null),
+		return toTrackPoint(toZonedDateTime(timeMillis).orElse(null),
 				index, lat, lng, alt, dist, speed, heartRate);
 	}
 
@@ -97,9 +98,9 @@ public class CommonUtils {
 											   String speed, HeartRateInBeatsPerMinuteT heartRate) {
 		return ofNullable(heartRate)
 				.map(heartRateXml ->
-						toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
+						toTrackPoint(toZonedDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
 								Integer.valueOf(heartRateXml.getValue())))
-				.orElse(toTrackPoint(DateUtils.toLocalDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
+				.orElse(toTrackPoint(toZonedDateTime(timeMillis).orElse(null), index, lat, lng, alt, dist, speed,
 						null));
 	}
 
@@ -113,7 +114,7 @@ public class CommonUtils {
 		return ofNullable(position)
 				.map(positionXml ->
 						ofNullable(xmlGregorianCalendar)
-								.flatMap(DateUtils::toLocalDateTime)
+								.flatMap(DateUtils::toZonedDateTime)
 								.map(localDateTime ->
 										ofNullable(heartRate).map(heartRateXml -> toTrackPoint(localDateTime, index,
 												toPosition(positionXml.getLatitudeDegrees(),
@@ -141,6 +142,11 @@ public class CommonUtils {
 		return toPosition(toStringValue(lat), toStringValue(lng));
 	}
 
+	public static Optional<Position> toPosition(WptType wptType) {
+		return ofNullable(wptType)
+				.flatMap(__ -> toPosition(wptType.getLat(), wptType.getLon()));
+	}
+
 	public static Optional<Position> toPosition(BigDecimal latParam, BigDecimal lngParam) {
 		return ofNullable(latParam)
 				.flatMap(latitude -> ofNullable(lngParam)
@@ -158,69 +164,37 @@ public class CommonUtils {
 
 	// Headers
 
-	public static HttpHeaders toJsonHeaders(){
-		MultiValueMap<String, String> values = new LinkedMultiValueMap<>();
-		values.add("Content-Type", MediaType.APPLICATION_JSON_UTF8.toString());
-		return toHeaders(values);
-	}
-
-	private static HttpHeaders toApplicationFileHeaders(String id, String fileType){
-		MultiValueMap<String, String> values = new LinkedMultiValueMap<>();
-		values.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM.toString());
-		values.add("Content-Disposition", "attachment;filename=" + id + "_" + fileType + ".xml");
-		return toHeaders(values);
-	}
-
-	private static HttpHeaders toHeaders(MultiValueMap<String, String> values) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.addAll(values);
-		return responseHeaders;
+	public static ResponseEntity<String> createOKApplicationOctetResponse(String file) {
+		return ResponseEntity.ok()
+				.contentType(MediaType.APPLICATION_OCTET_STREAM)
+				.body(file);
 	}
 
 
 	// Response Utils
 
-	public static ResponseEntity<String> getFileExportResponse(String file, String id, String fileType) {
-		return ResponseEntity.ok().headers(toApplicationFileHeaders(id, fileType)).body(file);
-	}
-
-	public static ResponseEntity<String> toBadRequestParams() {
-		Response errorValue = Response.builder()
-				.error(true)
-				.description(BAD_REQUEST_MESSAGE)
-				.errorMessage(null)
-				.exception(null)
-				.build();
-		return badRequest().headers(toJsonHeaders()).body(JsonUtils.toJson(errorValue));
-	}
-
-	public static ResponseEntity<String> toBadRequestResponse(Object response) {
-		return badRequest().headers(toJsonHeaders()).body(JsonUtils.toJson(response));
-	}
-
-	public static ResponseEntity<String> toOKMessageResponse(Object response) {
-		return ok().headers(toJsonHeaders()).body(JsonUtils.toJson(response));
-	}
-
-	public static ResponseEntity<String> emptyResponse() {
-		return status(HttpStatus.NOT_FOUND).body(JsonUtils.toJson(Collections.emptyList()));
-	}
-
 	// String utils
 
-	public static List<String> splitStringByDelimiter(String string, String delimiter) {
-		return ofNullable(string)
-				.map(__ -> string.split(delimiter))
-				.map(Stream::of)
-				.map(streamSlices -> streamSlices
-						.filter(StringUtils::isNotEmpty)
-						.collect(toList()))
-				.orElseGet(Collections::emptyList);
+	public static <T> List<T> toListOfType(List<String> listStrings, Function<String, T> convertTo) {
+		Function<String, T> checkConvertTo = str ->  Try.of(() -> convertTo.apply(str))
+				.getOrElseThrow(() -> new IllegalArgumentException(format("Could not be " +
+						"convert string: %s to type", str)));
+		return IntStream.range(0, listStrings.size())
+				.boxed()
+				.map(index -> checkConvertTo.apply(listStrings.get(index)))
+				.collect(toList());
 	}
 
 	private static String toStringValue(Object value) {
 		return ofNullable(value).map(String::valueOf).orElse(null);
 	}
 
+	public static <T> Predicate<T> not(Predicate<T> t) {
+		return t.negate();
+	}
+
+	public static String joinByComma(Object firstParam, Object secondParam) {
+		return format("%s%s%s", firstParam, COMMA_DELIMITER, secondParam);
+	}
 
 }

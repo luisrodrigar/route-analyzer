@@ -5,7 +5,7 @@ import com.routeanalyzer.api.model.Position;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
 
@@ -14,7 +14,7 @@ import static com.routeanalyzer.api.common.MathUtils.round;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class PositionOperationsImplTest {
 
     private PositionOperations positionOperations;

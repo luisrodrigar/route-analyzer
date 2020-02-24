@@ -23,6 +23,6 @@ bin/
 .project
 .classpath
 .idea
-route-analyzer.iml
-api.iml
+*.iml
 
+/src/test/resources/mongodb/mongo-volume/*

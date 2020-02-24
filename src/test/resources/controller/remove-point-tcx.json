@@ -1,5 +1,5 @@
 {
-  "id": "5ace8caf4c147400048aa6af",
+  "id": "9aab30a74e13840004822bcb",
   "device": "Garmin Connect",
   "name": "Untitled",
   "sourceXmlType": "tcx",
@@ -7,61 +7,61 @@
   "laps": [
     {
       "startTime": "2018-02-27T14:16:13+01:00",
-      "index": "1",
-      "totalTimeSeconds": "16.0",
-      "distanceMeters": "43.313081753899034",
-      "maximumSpeed": "6.143949288527114",
-      "averageSpeed": "2.6801723874025747",
-      "averageHearRate": "97.42857142857143",
-      "maximumHeartRate":  "103",
+      "index": 1,
+      "totalTimeSeconds": 7.0,
+      "distanceMeters": 18.569499594878234,
+      "maximumSpeed": 2.6527856564111763,
+      "averageSpeed": 1.3263928282055881,
+      "averageHearRate": 96.0,
+      "maximumHeartRate": 96,
       "tracks": [
         {
           "date": "2018-02-27T14:16:13+01:00",
-          "index":  "1",
+          "index":  1,
           "position": {
-            "latitudeDegrees": "42.6131970",
-            "longitudeDegrees": "-6.5732170"
+            "latitudeDegrees": 42.6131970,
+            "longitudeDegrees": -6.5732170
           },
-          "altitudeMeters": "557.3",
-          "distanceMeters": "0",
-          "speed": "0",
-          "heartRateBpm":  "96"
+          "altitudeMeters": 557.3,
+          "distanceMeters": 0,
+          "speed": 0,
+          "heartRateBpm":  96
         },
         {
           "date": "2018-02-27T14:16:20+01:00",
-          "index":  "3",
+          "index":  3,
           "position": {
-            "latitudeDegrees": "42.6132120",
-            "longitudeDegrees": "-6.5734430"
+            "latitudeDegrees": 42.6132120,
+            "longitudeDegrees": -6.5734430
           },
-          "altitudeMeters": "557.3",
-          "distanceMeters": "18.734670396302984585190642974339425563812255859375",
-          "speed": "2.8811720464786834128290138323791325092315673828125",
+          "altitudeMeters": 557.3,
+          "distanceMeters": 18.569499594878234205452827154658734798431396484375,
+          "speed": 2.652785656411176251623373900656588375568389892578125,
           "heartRateBpm":  "96"
         }
       ]
     },
     {
       "startTime": "2018-02-27T14:16:40+01:00",
-      "index":  "2",
-      "totalTimeSeconds": "1.0",
-      "distanceMeters": "0.0",
-      "maximumSpeed": "6.717731656189975",
-      "averageSpeed": "6.717731656189975",
-      "averageHearRate": "120.0",
-      "maximumHeartRate":  "120",
+      "index":  2,
+      "totalTimeSeconds": 0.0,
+      "distanceMeters": 0.0,
+      "maximumSpeed": 0.44657498592871836,
+      "averageSpeed": 0.44657498592871836,
+      "averageHearRate": 120.0,
+      "maximumHeartRate":  120,
       "tracks": [
         {
           "date": "2018-02-27T14:17:30+01:00",
-          "index":  "1",
+          "index":  1,
           "position": {
-            "latitudeDegrees": "42.6132120",
-            "longitudeDegrees": "-6.5738250"
+            "latitudeDegrees": 42.6132120,
+            "longitudeDegrees": -6.5738250
           },
-          "altitudeMeters": "557.3",
-          "distanceMeters": "106.8994958749806443165653035975992679595947265625",
-          "speed": "6.71773165618997580850191297940909862518310546875",
-          "heartRateBpm":  "120"
+          "altitudeMeters": 557.3,
+          "distanceMeters": 49.82974860988851872889426886104047298431396484375,
+          "speed": 0.44657498592871835985107509259250946342945098876953125,
+          "heartRateBpm":  120
         }
       ]
     }

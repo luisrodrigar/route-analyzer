@@ -98,4 +98,12 @@ public interface LapsOperations {
 	 */
 	void calculateAggregateValuesLap(Lap lap);
 
+	/**
+	 * Applied the colors to the activity's lap
+	 * @param lap lap to apply the colors
+	 * @param dataColor light and regular color
+	 * @return Lap with the colors applied
+	 */
+	Lap setColorLap(Lap lap, String dataColor);
+
 }
