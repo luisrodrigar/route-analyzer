@@ -9,23 +9,19 @@ import com.routeanalyzer.api.logic.file.upload.impl.TcxUploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.exception.FileNotFoundException;
 import com.routeanalyzer.api.model.exception.FileOperationNotExecutedException;
-import com.routeanalyzer.api.services.OriginalActivityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Optional;
 
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
-import static io.vavr.API.*;
+import static io.vavr.API.$;
+import static io.vavr.API.Case;
+import static io.vavr.API.Match;
 import static io.vavr.Predicates.is;
-import static java.lang.String.format;
-import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 @Service

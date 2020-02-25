@@ -19,7 +19,10 @@ public class MathUtils {
     // Mathematics operations
 
     public static BigDecimal toBigDecimal(String number) {
-        return ofNullable(number).filter(StringUtils::isNotEmpty).map(BigDecimal::new).orElse(null);
+        return ofNullable(number)
+                .filter(StringUtils::isNotEmpty)
+                .map(BigDecimal::new)
+                .orElse(null);
     }
 
     public static BigDecimal toBigDecimal(Double number) {

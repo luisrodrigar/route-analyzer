@@ -2,6 +2,7 @@ package com.routeanalyzer.api.logic.file.upload;
 
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
+import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.reader.AbstractXMLService;
 import io.vavr.control.Try;
@@ -18,6 +19,7 @@ public abstract class UploadFileService<T> {
     protected final AbstractXMLService<T> xmlService;
     protected final ActivityOperations activityOperationsService;
     protected final LapsOperations lapsOperationsService;
+    protected final TrackPointOperations trackPointOperations;
 
     /**
      * Upload a specific xml file with the date of a sport activity

@@ -1,39 +1,45 @@
 package com.routeanalyzer.api.logic.impl;
 
+import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.PositionOperations;
 import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
+import com.routeanalyzer.api.xml.gpx11.WptType;
+import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
+import com.routeanalyzer.api.xml.tcx.TrackpointT;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.xml.datatype.XMLGregorianCalendar;
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.function.Function;
 
+import static com.routeanalyzer.api.common.CommonUtils.toStringValue;
 import static com.routeanalyzer.api.common.DateUtils.toTimeMillis;
+import static com.routeanalyzer.api.common.DateUtils.toZonedDateTime;
+import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static io.vavr.Predicates.is;
+import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
 @Service
 @RequiredArgsConstructor
 public class TrackPointOperationsImpl implements TrackPointOperations {
 
-	private final PositionOperations positionUtilsService;
+	private final PositionOperations positionOperations;
 
 	@Override
-	public boolean isThisTrack(TrackPoint track, Position position, Long timeInMillis, Integer index) {
+	public boolean isThisTrack(TrackPoint track, String latitude, String longitude, Long timeInMillis, Integer index) {
 		// Position: latitude and longitude
 		boolean isPosition = ofNullable(track)
 				.map(TrackPoint::getPosition)
-				.flatMap(positionParam -> ofNullable(position)
-						.map(Position::getLatitudeDegrees)
-						.flatMap(latitudeDegrees -> ofNullable(position)
-								.map(Position::getLongitudeDegrees)
-								.map(longitudeDegrees ->
-										positionUtilsService.isThisPosition(positionParam, latitudeDegrees, longitudeDegrees)))
-				).orElse(false);
+				.map(positionParam -> positionOperations.isThisPosition(positionParam, latitude, longitude))
+				.orElse(false);
 		// Time Millis
 		boolean isTimeMillis = isEqualsValueTrack(track, TrackPoint::getDate,
 				(localDateTime) -> toTimeMillis((ZonedDateTime) localDateTime).orElse(null), timeInMillis);
@@ -51,20 +57,117 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 				.map(TrackPoint::getPosition)
 				.flatMap(originPosition -> ofNullable(end)
 						.map(TrackPoint::getPosition)
-						.map(endPosition -> positionUtilsService.calculateDistance(originPosition, endPosition)))
+						.flatMap(endPosition -> positionOperations.calculateDistance(originPosition, endPosition)))
 				.orElse(null);
 	}
 
 	@Override
 	public Double calculateSpeed(TrackPoint origin, TrackPoint end) {
 		return ofNullable(origin)
-				.flatMap(originTrackPoint -> ofNullable(end)
-						.map(endTrackPoint -> this.calculateTime(originTrackPoint, endTrackPoint))
+				.flatMap(__ -> ofNullable(end)
+						.map(___ -> calculateTime(origin, end))
 						.filter(MathUtils::isPositiveNonZero)
-						.flatMap(totalTime -> ofNullable(this.calculateDistance(originTrackPoint, end))
+						.flatMap(totalTime -> ofNullable(calculateDistance(origin, end))
 								.map(Math::abs)
 								.map(distance -> distance / totalTime)))
 				.orElse(null);
+	}
+
+	@Override
+	public TrackPoint toTrackPoint(final ZonedDateTime zonedDateTime, final int index, final Position position,
+								   final BigDecimal altitude) {
+		return TrackPoint.builder()
+				.date(zonedDateTime)
+				.index(index)
+				.position(position)
+				.altitudeMeters(altitude)
+				.distanceMeters(null)
+				.speed(null)
+				.heartRateBpm(null)
+				.build();
+	}
+
+	@Override
+	public TrackPoint toTrackPoint(final ZonedDateTime zonedDateTime, final int index, final Position position,
+								   final String altitude, final String distance, final String speed,
+								   final Integer heartRate) {
+		return TrackPoint.builder()
+				.date(zonedDateTime)
+				.index(index)
+				.position(position)
+				.altitudeMeters(toBigDecimal(altitude))
+				.distanceMeters(toBigDecimal(distance))
+				.speed(toBigDecimal(speed))
+				.heartRateBpm(heartRate)
+				.build();
+	}
+
+	@Override
+	public TrackPoint toTrackPoint(final ZonedDateTime zonedDateTime, final int index, final Position position,
+								   final Double altitude, final Double distance, final Double speed,
+								   final Integer heartRate) {
+		return toTrackPoint(zonedDateTime, index, position, toStringValue(altitude), toStringValue(distance),
+				toStringValue(speed), heartRate);
+	}
+
+	@Override
+	public TrackPoint toTrackPoint(final XMLGregorianCalendar xmlGregorianCalendar, final int index,
+								   final Position position, final String altitude, final String distance,
+								   final String speed, final Integer heartRate) {
+		return toZonedDateTime(xmlGregorianCalendar)
+				.map(zonedDateTime -> toTrackPoint(zonedDateTime, index, position, altitude, distance, speed, heartRate))
+				.orElse(null);
+	}
+
+	@Override
+	public TrackPoint toTrackPoint(final long timeMillis, final int index, final Position position,
+								   final String altitude, final String distance, final String speed,
+								   final Integer heartRate) {
+		return toZonedDateTime(timeMillis)
+				.map(zonedDateTime -> toTrackPoint(zonedDateTime, index, position, altitude, distance, speed, heartRate))
+				.orElse(null);
+	}
+
+	@Override
+	public TrackPoint toTrackPoint(final ZonedDateTime zonedDateTime, final int index, final String latitude,
+								   final String longitude, final String altitude, final String distance,
+								   final String speed, final Integer heartRate) {
+		return toTrackPoint(zonedDateTime, index, positionOperations.toPosition(latitude, longitude), altitude,
+				distance, speed, heartRate);
+	}
+
+	@Override
+	public TrackPoint toTrackPoint(final long timeMillis, final int index, final String latitude,
+								   final String longitude, final String altitude, final String distance,
+								   final String speed, final Integer heartRate) {
+		return toZonedDateTime(timeMillis)
+				.map(zonedDateTime -> toTrackPoint(zonedDateTime, index, latitude, longitude, altitude, distance, speed, heartRate))
+				.orElse(null);
+	}
+
+	@Override
+	public TrackPoint toTrackPoint(TrackpointT trackpointT, int index) {
+		return positionOperations.toPosition(trackpointT)
+				.filter(__ -> nonNull(trackpointT.getTime()))
+				.map(position -> ofNullable(trackpointT)
+						.map(TrackpointT::getHeartRateBpm)
+						.map(HeartRateInBeatsPerMinuteT::getValue)
+						.map(Integer::valueOf)
+						.map(hearRate -> toTrackPoint(trackpointT.getTime(), index, position,
+								toStringValue(trackpointT.getAltitudeMeters()),
+								toStringValue(trackpointT.getDistanceMeters()), null, hearRate))
+						.orElseGet(() -> toTrackPoint(trackpointT.getTime(), index, position,
+								toStringValue(trackpointT.getAltitudeMeters()),
+								toStringValue(trackpointT.getDistanceMeters()), null, null))
+				).orElse(null);
+	}
+
+	@Override
+	public Optional<TrackPoint> toTrackPoint(final WptType wptType, final int index) {
+		return positionOperations.toPosition(wptType)
+				.filter(__ -> nonNull(wptType.getTime()))
+				.map(position -> toTrackPoint(wptType.getTime(), index, position, toStringValue(wptType.getEle()),
+						null, null, null));
 	}
 
 	private Long calculateTime(TrackPoint origin, TrackPoint end) {
@@ -80,14 +183,6 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 				.orElse(null);
 	}
 
-	/**
-	 * Check if a track´s attribute has a specific value
-	 * @param track
-	 * @param methodGetter
-	 * @param transformMethod
-	 * @param expectedValue
-	 * @return true or false
-	 */
 	private boolean isEqualsValueTrack(TrackPoint track, Function<TrackPoint, Object> methodGetter,
 									   Function<Object, Long> transformMethod, long expectedValue) {
 		return ofNullable(track)

@@ -5,7 +5,6 @@ import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.model.Lap;
-import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.googlemaps.GoogleMapsApiService;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,13 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -159,24 +164,21 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public boolean fulfillCriteriaPositionTime(Lap lap, Position positionParam, Long timeInMillis, Integer index) {
+	public boolean fulfillCriteriaPositionTime(Lap lap, String latitude, String longitude, Long timeInMillis, Integer index) {
 		return getOptLapField(lap, Lap::getTracks)
-				.flatMap(tracks ->
-						ofNullable(positionParam)
-								.map(position ->
-										tracks.stream().anyMatch(track ->
-												trackPointOperationsService
-														.isThisTrack(track, position, timeInMillis, index)))
-				).orElse(false);
+				.map(tracks -> tracks.stream().anyMatch(track ->
+						trackPointOperationsService.isThisTrack(track, latitude, longitude, timeInMillis, index)))
+				.orElse(false);
 	}
 
 	@Override
-	public TrackPoint getTrackPoint(Lap lap, Position position, Long time, Integer index) {
+	public TrackPoint getTrackPoint(final Lap lap, final String latitude, final String longitude, final Long time,
+									final Integer index) {
 		return ofNullable(lap)
 				.map(Lap::getTracks)
 				.map(List::stream)
 				.flatMap(trackPointList ->  trackPointList
-						.filter(track -> trackPointOperationsService.isThisTrack(track, position, time, index))
+						.filter(track -> trackPointOperationsService.isThisTrack(track, latitude, longitude, time, index))
 						.findFirst())
 				.orElse(null);
 	}

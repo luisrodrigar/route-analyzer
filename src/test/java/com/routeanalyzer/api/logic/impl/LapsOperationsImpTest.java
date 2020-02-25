@@ -16,32 +16,38 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.routeanalyzer.api.common.CommonUtils.toPosition;
-import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.DateUtils.toZonedDateTime;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LapsOperationsImpTest {
 
-    @Mock
+    @Spy
     private TrackPointOperations trackPointOperations;
+
     @Mock
     private GoogleMapsApiService googleMapsService;
+
     @InjectMocks
     private LapsOperationsImpl lapsOperations;
 
@@ -49,17 +55,25 @@ public class LapsOperationsImpTest {
     private Lap lapRight;
     private List<TrackPoint> trackPointsLeft;
     private List<TrackPoint> trackPointsRight;
-    private TrackPoint trackPointLeft1, trackPointLeft2, trackPointLeft3, trackPointLeft4;
-    private long timeMillisLeft1, timeMillisLeft2, timeMillisLeft3, timeMillisLeft4;
-    private TrackPoint trackPointRight1, trackPointRight2, trackPointRight3, trackPointRight4;
-    private long timeMillisRight1, timeMillisRight2, timeMillisRight3, timeMillisRight4;
-    private Position oviedo;
-    private Position park;
+    private TrackPoint trackPointLeft1;
+    private TrackPoint trackPointLeft2;
+    private TrackPoint trackPointLeft3;
+    private TrackPoint trackPointLeft4;
+    private long timeMillisLeft1;
+    private long timeMillisLeft2;
+    private long timeMillisLeft3;
+    private long timeMillisLeft4;
+    private TrackPoint trackPointRight1;
+    private TrackPoint trackPointRight2;
+    private TrackPoint trackPointRight3;
+    private TrackPoint trackPointRight4;
+    private long timeMillisRight1;
+    private long timeMillisRight2;
+    private long timeMillisRight3;
+    private long timeMillisRight4;
 
     @Before
     public void setUp() {
-        oviedo = toPosition("43.3602900", "-5.8447600");
-        park = toPosition("43.352478", "-5.8501170");
         addLeftTracks();
         addRightTracks();
     }
@@ -88,14 +102,54 @@ public class LapsOperationsImpTest {
         timeMillisLeft3 = 123476L;
         timeMillisLeft4 = 123486L;
 
-        trackPointLeft1 = toTrackPoint(timeMillisLeft1, 3, "43.3602900", "-5.8447600", "120"
-                , "25.0", "12.0", 76);
-        trackPointLeft2 = toTrackPoint(timeMillisLeft2, 4, "43.352478", "-5.8501170", "120"
-                , "25.0", "12.0", 86);
-        trackPointLeft3 = toTrackPoint(timeMillisLeft3, 5, "44.3602900", "-6.8447600", "120"
-                , "25.0", "35.0", 90);
-        trackPointLeft4 = toTrackPoint(timeMillisLeft4, 6, "46.352478", "-4.8501170", "120"
-                , "25.0", "12.0", 95);
+        trackPointLeft1 = TrackPoint.builder()
+                .date(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillisLeft1), ZoneId.of("UTC")))
+                .index(3)
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("43.3602900"))
+                        .longitudeDegrees(new BigDecimal("-5.8447600"))
+                        .build())
+                .altitudeMeters(new BigDecimal("120"))
+                .distanceMeters(new BigDecimal("25.0"))
+                .speed(new BigDecimal("12.0"))
+                .heartRateBpm(76)
+                .build();
+        trackPointLeft2 = TrackPoint.builder()
+                .date(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillisLeft2), ZoneId.of("UTC")))
+                .index(4)
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("43.352478"))
+                        .longitudeDegrees(new BigDecimal("-5.8501170"))
+                        .build())
+                .altitudeMeters(new BigDecimal("120"))
+                .distanceMeters(new BigDecimal("25.0"))
+                .speed(new BigDecimal("12.0"))
+                .heartRateBpm(86)
+                .build();
+        trackPointLeft3 = TrackPoint.builder()
+                .date(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillisLeft3), ZoneId.of("UTC")))
+                .index(5)
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("44.3602900"))
+                        .longitudeDegrees(new BigDecimal("-6.8447600"))
+                        .build())
+                .altitudeMeters(new BigDecimal("120"))
+                .distanceMeters(new BigDecimal("25.0"))
+                .speed(new BigDecimal("35.0"))
+                .heartRateBpm(90)
+                .build();
+        trackPointLeft4 = TrackPoint.builder()
+                .date(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillisLeft4), ZoneId.of("UTC")))
+                .index(6)
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("46.352478"))
+                        .longitudeDegrees(new BigDecimal("-4.8501170"))
+                        .build())
+                .altitudeMeters(new BigDecimal("120"))
+                .distanceMeters(new BigDecimal("25.0"))
+                .speed(new BigDecimal("12.0"))
+                .heartRateBpm(95)
+                .build();
     }
 
     private void createRightTrack() {
@@ -104,14 +158,54 @@ public class LapsOperationsImpTest {
         timeMillisRight3 = 123546L;
         timeMillisRight4 = 123606L;
 
-        trackPointRight1 = toTrackPoint(timeMillisRight1, 7, "42.3602900", "-3.8447600", "120"
-                , "50.0", "12.0", 100);
-        trackPointRight2 = toTrackPoint(timeMillisRight2, 8, "46.452478", "-6.9501170", "120"
-                , "50.0", "12.0", 107);
-        trackPointRight3 = toTrackPoint(timeMillisRight3, 9, "40.3602900", "-8.8447600", "120"
-                , "25.0", "12.0", 112);
-        trackPointRight4 = toTrackPoint(timeMillisRight4, 10, "40.352478", "-9.8501170", "120"
-                , "25.0", "22.0", 123);
+        trackPointRight1 = TrackPoint.builder()
+                .date(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillisRight1), ZoneId.of("UTC")))
+                .index(7)
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("42.3602900"))
+                        .longitudeDegrees(new BigDecimal("-3.8447600"))
+                        .build())
+                .altitudeMeters(new BigDecimal("120"))
+                .distanceMeters(new BigDecimal("50.0"))
+                .speed(new BigDecimal("12.0"))
+                .heartRateBpm(100)
+                .build();
+        trackPointRight2 = TrackPoint.builder()
+                .date(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillisRight2), ZoneId.of("UTC")))
+                .index(8)
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("46.452478"))
+                        .longitudeDegrees(new BigDecimal("-6.9501170"))
+                        .build())
+                .altitudeMeters(new BigDecimal("120"))
+                .distanceMeters(new BigDecimal("50.0"))
+                .speed(new BigDecimal("12.0"))
+                .heartRateBpm(107)
+                .build();
+        trackPointRight3 = TrackPoint.builder()
+                .date(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillisRight3), ZoneId.of("UTC")))
+                .index(9)
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("40.3602900"))
+                        .longitudeDegrees(new BigDecimal("-8.8447600"))
+                        .build())
+                .altitudeMeters(new BigDecimal("120"))
+                .distanceMeters(new BigDecimal("25.0"))
+                .speed(new BigDecimal("12.0"))
+                .heartRateBpm(112)
+                .build();
+        trackPointRight4 = TrackPoint.builder()
+                .date(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillisRight4), ZoneId.of("UTC")))
+                .index(10)
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("40.352478"))
+                        .longitudeDegrees(new BigDecimal("-9.8501170"))
+                        .build())
+                .altitudeMeters(new BigDecimal("120"))
+                .distanceMeters(new BigDecimal("25.0"))
+                .speed(new BigDecimal("22.0"))
+                .heartRateBpm(123)
+                .build();
     }
 
     @Test
@@ -131,8 +225,10 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity("HIGH")
                 .build();
+
         // When
         Lap result = lapsOperations.joinLaps(lapLeft, lapRight);
+
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getTracks().size()).isEqualTo(8);
@@ -169,8 +265,10 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity(null)
                 .build();
+
         // When
         Lap result = lapsOperations.joinLaps(lapLeft, lapRight);
+
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getTracks().size()).isEqualTo(8);
@@ -210,8 +308,10 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity("MEDIUM")
                 .build();
+
         // When
         Lap result = lapsOperations.joinLaps(lapLeft, lapRight);
+
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getTracks().size()).isEqualTo(7);
@@ -250,8 +350,10 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity(null)
                 .build();
+
         // When
         Lap result = lapsOperations.joinLaps(lapLeft, lapRight);
+
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getIntensity()).isNull();
@@ -279,7 +381,6 @@ public class LapsOperationsImpTest {
         BigDecimal ele2 = toBigDecimal(285.0);
         BigDecimal ele3 = toBigDecimal(300.0);
         BigDecimal ele4 = toBigDecimal(225.0);
-        // When
         String positions = trackPointLeft1.getPosition().getLatitudeDegrees() + ","
                 + trackPointLeft1.getPosition().getLongitudeDegrees() + "|"
                 + trackPointLeft2.getPosition().getLatitudeDegrees() + ","
@@ -308,7 +409,11 @@ public class LapsOperationsImpTest {
         doReturn(key2).when(googleMapsService).getCoordinatesCode(eq(trackPointLeft2));
         doReturn(key3).when(googleMapsService).getCoordinatesCode(eq(trackPointLeft3));
         doReturn(key4).when(googleMapsService).getCoordinatesCode(eq(trackPointLeft4));
+
+        // When
         lapsOperations.calculateAltitude(lapLeft);
+
+        // Then
         assertThat(lapLeft).isNotNull();
         assertThat(lapLeft.getTracks().get(0).getAltitudeMeters()).isEqualTo(ele1);
         assertThat(lapLeft.getTracks().get(1).getAltitudeMeters()).isEqualTo(ele2);
@@ -335,13 +440,16 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity(null)
                 .build();
-        // When
         String positions = "fail_service_request" ;
         doReturn(positions).when(googleMapsService).createPositionsRequest(anyList());
         Map<String, String> result = Maps.newHashMap();
         result.put("status", "BAD_REQUEST");
         doReturn(result).when(googleMapsService).getAltitude(eq(positions));
+
+        // When
         lapsOperations.calculateAltitude(lapLeft);
+
+        // Then
         assertThat(lapLeft).isNotNull();
         assertThat(lapLeft.getTracks().get(0).getAltitudeMeters()).isNull();
         assertThat(lapLeft.getTracks().get(1).getAltitudeMeters()).isNull();
@@ -352,7 +460,6 @@ public class LapsOperationsImpTest {
     @Test
     public void calculateAltitudeTrackPointsHasAltitudeTest() {
         // Given
-
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
                 .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
@@ -364,8 +471,11 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity(null)
                 .build();
+
         // When
         lapsOperations.calculateAltitude(lapLeft);
+
+        // Then
         assertThat(lapLeft).isNotNull();
         assertThat(lapLeft.getTracks().get(0).getAltitudeMeters()).isEqualTo(toBigDecimal(120.0));
         assertThat(lapLeft.getTracks().get(1).getAltitudeMeters()).isEqualTo(toBigDecimal(120.0));
@@ -391,8 +501,11 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity(null)
                 .build();
+
         // When
         lapsOperations.calculateAltitude(lapLeft);
+
+        // Then
         assertThat(lapLeft).isNotNull();
         assertThat(lapLeft.getTracks().get(0).getAltitudeMeters()).isNull();
         assertThat(lapLeft.getTracks().get(1).getAltitudeMeters()).isNull();
@@ -418,8 +531,11 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity(null)
                 .build();
+
         // When
         lapsOperations.calculateAltitude(lapLeft);
+
+        // Then
         assertThat(lapLeft).isNotNull();
         assertThat(lapLeft.getTracks().get(0).getAltitudeMeters()).isNull();
         assertThat(lapLeft.getTracks().get(1).getAltitudeMeters()).isNull();
@@ -443,12 +559,14 @@ public class LapsOperationsImpTest {
         double dist3 = 12.0;
         double dist4 = 5.0;
         double previousDistance = trackPointLeft4.getDistanceMeters().doubleValue();
-        // When
         doReturn(dist1).when(trackPointOperations).calculateDistance(eq(trackPointLeft4), eq(trackPointRight1));
         doReturn(dist2).when(trackPointOperations).calculateDistance(eq(trackPointRight1), eq(trackPointRight2));
         doReturn(dist3).when(trackPointOperations).calculateDistance(eq(trackPointRight2), eq(trackPointRight3));
         doReturn(dist4).when(trackPointOperations).calculateDistance(eq(trackPointRight3), eq(trackPointRight4));
+
+        // When
         lapsOperations.calculateDistanceLap(lapRight, trackPointLeft4);
+
         // Then
         assertThat(lapRight).isNotNull();
         assertThat(lapRight.getTracks().get(0).getDistanceMeters()).isEqualTo(
@@ -478,11 +596,13 @@ public class LapsOperationsImpTest {
         double dist2 = 9.0;
         double dist3 = 11.0;
         double dist4 = 45.0;
-        // When
         doReturn(dist2).when(trackPointOperations).calculateDistance(eq(trackPointLeft1), eq(trackPointLeft2));
         doReturn(dist3).when(trackPointOperations).calculateDistance(eq(trackPointLeft2), eq(trackPointLeft3));
         doReturn(dist4).when(trackPointOperations).calculateDistance(eq(trackPointLeft3), eq(trackPointLeft4));
+
+        // When
         lapsOperations.calculateDistanceLap(lapLeft, null);
+
         // Then
         assertThat(lapLeft).isNotNull();
         assertThat(lapLeft.getTracks().get(0).getDistanceMeters()).isEqualTo(
@@ -513,12 +633,14 @@ public class LapsOperationsImpTest {
         double speed2 = 10.0;
         double speed3 = 15.0;
         double speed4 = 23.0;
-        // When
         doReturn(speed1).when(trackPointOperations).calculateSpeed(eq(trackPointLeft4), eq(trackPointRight1));
         doReturn(speed2).when(trackPointOperations).calculateSpeed(eq(trackPointRight1), eq(trackPointRight2));
         doReturn(speed3).when(trackPointOperations).calculateSpeed(eq(trackPointRight2), eq(trackPointRight3));
         doReturn(speed4).when(trackPointOperations).calculateSpeed(eq(trackPointRight3), eq(trackPointRight4));
+
+        // When
         lapsOperations.calculateSpeedLap(lapRight, trackPointLeft4);
+
         // Then
         assertThat(lapRight).isNotNull();
         assertThat(lapRight.getTracks().get(0).getSpeed()).isEqualTo(
@@ -553,11 +675,13 @@ public class LapsOperationsImpTest {
         double speed2 = 9.0;
         double speed3 = 11.0;
         double speed4 = 45.0;
-        // When
         doReturn(speed2).when(trackPointOperations).calculateSpeed(eq(trackPointLeft1), eq(trackPointLeft2));
         doReturn(speed3).when(trackPointOperations).calculateSpeed(eq(trackPointLeft2), eq(trackPointLeft3));
         doReturn(speed4).when(trackPointOperations).calculateSpeed(eq(trackPointLeft3), eq(trackPointLeft4));
+
+        // When
         lapsOperations.calculateSpeedLap(lapLeft, null);
+
         // Then
         assertThat(lapLeft).isNotNull();
         assertThat(lapLeft.getTracks().get(0).getSpeed()).isEqualTo(
@@ -590,8 +714,10 @@ public class LapsOperationsImpTest {
                 .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
+
         // When
         lapsOperations.calculateSpeedLap(lapLeft, null);
+
         // Then
         assertThat(lapLeft).isNotNull();
         assertThat(lapLeft.getTracks().isEmpty()).isTrue();
@@ -599,7 +725,7 @@ public class LapsOperationsImpTest {
         assertThat(lapLeft.getMaximumSpeed()).isNull();
         assertThat(lapLeft.getTotalTimeSeconds()).isNull();
         assertThat(lapLeft.getDistanceMeters()).isNull();
-        verify(trackPointOperations, times(0)).calculateSpeed(any(), any());
+        verify(trackPointOperations, never()).calculateSpeed(any(), any());
     }
 
     @Test
@@ -610,16 +736,21 @@ public class LapsOperationsImpTest {
                 .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
+        doReturn(true).when(trackPointOperations).isThisTrack(trackPointLeft1,
+                trackPointLeft1.getPosition().getLatitudeDegrees().toString(),
+                trackPointLeft1.getPosition().getLongitudeDegrees().toString(), timeMillisLeft1,
+                trackPointLeft1.getIndex());
+
         // When
-        doReturn(true).when(trackPointOperations).isThisTrack(eq(trackPointLeft1),
-                eq(trackPointLeft1.getPosition()), eq(timeMillisLeft1), eq(trackPointLeft1.getIndex()));
-        boolean isInTheLap =
-                lapsOperations
-                        .fulfillCriteriaPositionTime(lapLeft, trackPointLeft1.getPosition(), timeMillisLeft1,
-                                trackPointLeft1.getIndex());
+        boolean isInTheLap = lapsOperations.fulfillCriteriaPositionTime(lapLeft,
+                trackPointLeft1.getPosition().getLatitudeDegrees().toString(),
+                trackPointLeft1.getPosition().getLongitudeDegrees().toString(), timeMillisLeft1,
+                trackPointLeft1.getIndex());
+
         // Then
         assertThat(isInTheLap).isTrue();
-        verify(trackPointOperations, times(1)).isThisTrack(any(), any(), any(), any());
+        verify(trackPointOperations, times(1)).isThisTrack(any(TrackPoint.class),
+                any(String.class), any(String.class), any(Long.class), any(Integer.class));
     }
 
     @Test
@@ -630,16 +761,21 @@ public class LapsOperationsImpTest {
                 .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
+        doReturn(true).when(trackPointOperations).isThisTrack(trackPointLeft4,
+                trackPointLeft4.getPosition().getLatitudeDegrees().toString(),
+                trackPointLeft4.getPosition().getLongitudeDegrees().toString(), timeMillisLeft4,
+                trackPointLeft4.getIndex());
+
         // When
-        doReturn(true).when(trackPointOperations).isThisTrack(eq(trackPointLeft4),
-                eq(trackPointLeft4.getPosition()), eq(timeMillisLeft4), eq(trackPointLeft4.getIndex()));
-        boolean isInTheLap =
-                lapsOperations
-                        .fulfillCriteriaPositionTime(lapLeft, trackPointLeft4.getPosition(), timeMillisLeft4,
-                                trackPointLeft4.getIndex());
+        boolean isInTheLap = lapsOperations.fulfillCriteriaPositionTime(lapLeft,
+                trackPointLeft4.getPosition().getLatitudeDegrees().toString(),
+                trackPointLeft4.getPosition().getLongitudeDegrees().toString(), timeMillisLeft4,
+                trackPointLeft4.getIndex());
+
         // Then
         assertThat(isInTheLap).isTrue();
-        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+        verify(trackPointOperations, times(4)).isThisTrack(any(TrackPoint.class),
+                any(String.class), any(String.class), any(Long.class), any(Integer.class));
     }
 
     @Test
@@ -650,14 +786,17 @@ public class LapsOperationsImpTest {
                 .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
+
         // When
-        boolean isInTheLap =
-                lapsOperations
-                        .fulfillCriteriaPositionTime(lapLeft, trackPointRight1.getPosition(), timeMillisRight1,
-                                trackPointRight1.getIndex());
+        boolean isInTheLap = lapsOperations.fulfillCriteriaPositionTime(lapLeft,
+                trackPointRight1.getPosition().getLatitudeDegrees().toString(),
+                trackPointRight1.getPosition().getLongitudeDegrees().toString(), timeMillisRight1,
+                trackPointRight1.getIndex());
+
         // Then
         assertThat(isInTheLap).isFalse();
-        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+        verify(trackPointOperations, times(4)).isThisTrack(any(TrackPoint.class),
+                any(String.class), any(String.class), any(Long.class), any(Integer.class));
     }
 
     @Test
@@ -668,16 +807,46 @@ public class LapsOperationsImpTest {
                 .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
+        doReturn(true).when(trackPointOperations)
+                .isThisTrack(trackPointLeft1, trackPointLeft1.getPosition().getLatitudeDegrees().toString(),
+                        trackPointLeft1.getPosition().getLongitudeDegrees().toString(), timeMillisLeft1, trackPointLeft1.getIndex());
 
         // When
-        doReturn(true).when(trackPointOperations)
-                .isThisTrack(trackPointLeft1, trackPointLeft1.getPosition(), timeMillisLeft1, trackPointLeft1.getIndex());
         TrackPoint result = lapsOperations
-                .getTrackPoint(lapLeft, trackPointLeft1.getPosition(), timeMillisLeft1, trackPointLeft1.getIndex());
+                .getTrackPoint(lapLeft, trackPointLeft1.getPosition().getLatitudeDegrees().toString(),
+                        trackPointLeft1.getPosition().getLongitudeDegrees().toString(), timeMillisLeft1,
+                        trackPointLeft1.getIndex());
+
         // Then
         assertThat(result).isNotNull();
         assertThat(result).isEqualTo(trackPointLeft1);
-        verify(trackPointOperations).isThisTrack(any(), any(), any(), any());
+        verify(trackPointOperations).isThisTrack(any(TrackPoint.class), any(String.class), any(String.class),
+                any(Long.class), any(Integer.class));
+    }
+
+    @Test
+    public void getTrackPoint3Test() {
+        // Given
+        lapLeft = Lap.builder()
+                .tracks(trackPointsLeft)
+                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .index(0)
+                .build();
+        doReturn(true).when(trackPointOperations)
+                .isThisTrack(trackPointLeft3, trackPointLeft3.getPosition().getLatitudeDegrees().toString(),
+                        trackPointLeft3.getPosition().getLongitudeDegrees().toString(), timeMillisLeft3,
+                        trackPointLeft3.getIndex());
+
+        // When
+        TrackPoint result = lapsOperations
+                .getTrackPoint(lapLeft, trackPointLeft3.getPosition().getLatitudeDegrees().toString(),
+                        trackPointLeft3.getPosition().getLongitudeDegrees().toString(), timeMillisLeft3, trackPointLeft3.getIndex());
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(trackPointLeft3);
+        verify(trackPointOperations, times(3)).isThisTrack(any(TrackPoint.class), any(String.class),
+                any(String.class), any(Long.class), any(Integer.class));
     }
 
     @Test
@@ -690,23 +859,27 @@ public class LapsOperationsImpTest {
                 .build();
 
         // When
-        TrackPoint result = lapsOperations
-                .getTrackPoint(lapLeft, trackPointRight1.getPosition(), timeMillisRight1, trackPointRight1.getIndex());
+        TrackPoint result = lapsOperations.getTrackPoint(lapLeft,
+                trackPointRight1.getPosition().getLatitudeDegrees().toString(),
+                trackPointRight1.getPosition().getLongitudeDegrees().toString(), timeMillisRight1, trackPointRight1.getIndex());
         // Then
         assertThat(result).isNull();
-        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+        verify(trackPointOperations, times(4)).isThisTrack(any(TrackPoint.class), any(String.class),
+                any(String.class), any(Long.class), any(Integer.class));
     }
 
     @Test
     public void getTrackPointNullLapParamTest() {
         // Given
-        Lap lapNull = null;
+
         // When
         TrackPoint result = lapsOperations
-                .getTrackPoint(lapNull, trackPointLeft1.getPosition(), timeMillisRight1, trackPointLeft1.getIndex());
+                .getTrackPoint(null, trackPointLeft1.getPosition().getLatitudeDegrees().toString(),
+                        trackPointLeft1.getPosition().getLongitudeDegrees().toString(), timeMillisRight1, trackPointLeft1.getIndex());
         // Then
         assertThat(result).isNull();
-        verify(trackPointOperations, times(0)).isThisTrack(any(), any(), any(), any());
+        verify(trackPointOperations, times(0)).isThisTrack(any(TrackPoint.class), any(String.class),
+                any(String.class), any(Long.class), any(Integer.class));
     }
 
     @Test
@@ -717,12 +890,15 @@ public class LapsOperationsImpTest {
                 .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
+
         // When
-        TrackPoint result = lapsOperations
-                .getTrackPoint(lapLeft, null, timeMillisLeft1, trackPointLeft1.getIndex());
+        TrackPoint result = lapsOperations.getTrackPoint(lapLeft, null, null, timeMillisLeft1,
+                trackPointLeft1.getIndex());
+
         // Then
         assertThat(result).isNull();
-        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+        verify(trackPointOperations, times(4)).isThisTrack(any(TrackPoint.class),
+                isNull(), isNull(), any(Long.class), any(Integer.class));
     }
 
     @Test
@@ -734,11 +910,14 @@ public class LapsOperationsImpTest {
                 .index(0)
                 .build();
         // When
-        TrackPoint result = lapsOperations
-                .getTrackPoint(lapLeft, trackPointLeft1.getPosition(), null, trackPointLeft1.getIndex());
+        TrackPoint result = lapsOperations.getTrackPoint(lapLeft,
+                trackPointLeft1.getPosition().getLatitudeDegrees().toString(),
+                trackPointLeft1.getPosition().getLongitudeDegrees().toString(),null, trackPointLeft1.getIndex());
+
         // Then
         assertThat(result).isNull();
-        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+        verify(trackPointOperations, times(4)).isThisTrack(any(TrackPoint.class),
+                any(String.class), any(String.class), isNull(), any(Integer.class));
     }
 
     @Test
@@ -749,12 +928,16 @@ public class LapsOperationsImpTest {
                 .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
+
         // When
-        TrackPoint result = lapsOperations
-                .getTrackPoint(lapLeft, trackPointLeft1.getPosition(), timeMillisLeft1, null);
+        TrackPoint result = lapsOperations.getTrackPoint(lapLeft,
+                trackPointLeft1.getPosition().getLatitudeDegrees().toString(),
+                trackPointLeft1.getPosition().getLongitudeDegrees().toString(), timeMillisLeft1, null);
+
         // Then
         assertThat(result).isNull();
-        verify(trackPointOperations, times(4)).isThisTrack(any(), any(), any(), any());
+        verify(trackPointOperations, times(4)).isThisTrack(any(TrackPoint.class),
+                any(String.class), any(String.class), any(Long.class), isNull());
     }
 
     @Test
@@ -790,6 +973,7 @@ public class LapsOperationsImpTest {
         // When
         Lap newLapLeft =lapsOperations.createSplitLap(lap, 4, 0, lap.getIndex());
         Lap newLapRight = lapsOperations.createSplitLap(lap, 8, 4, lap.getIndex() + 1);
+
         // Then
         assertNewLapLeftRight(newLapLeft, newLapRight);
     }
@@ -817,9 +1001,11 @@ public class LapsOperationsImpTest {
 
     @Test
     public void splitLapNullLapParamTest() {
-        // Given lap is null
+        // Given
+
         // When
         Lap newLap = lapsOperations.createSplitLap(null, 0, 1, 0);
+
         // Then
         assertThat(newLap).isNull();
     }
@@ -833,8 +1019,10 @@ public class LapsOperationsImpTest {
                 .maximumSpeed(14.6)
                 .maximumHeartRate(167)
                 .build();
+
         // When
         lapsOperations.resetAggregateValues(lapRight);
+
         // Then
         assertThat(lapRight).isNotNull();
         assertThat(lapRight.getAverageSpeed()).isNull();
@@ -847,10 +1035,12 @@ public class LapsOperationsImpTest {
     public void resetAggregateValuesLapNullTest() {
         // Given
         lapRight = null;
+
         // When
-        Try.run(() -> lapsOperations.resetAggregateValues(lapRight))
-                // Then
-                .onFailure(exc -> assertThat(true).isFalse());
+        Try<Void> tryResult = Try.run(() -> lapsOperations.resetAggregateValues(lapRight));
+
+        // Then
+        assertThat(tryResult.isSuccess()).isTrue();
     }
 
     @Test
@@ -860,8 +1050,10 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(40.55)
                 .distanceMeters(760.00)
                 .build();
+
         // When
         lapsOperations.resetTotals(lapRight);
+
         // Then
         assertThat(lapRight).isNotNull();
         assertThat(lapRight.getTotalTimeSeconds()).isNull();
@@ -874,9 +1066,10 @@ public class LapsOperationsImpTest {
         lapRight = null;
 
         // When
-        Try.run(() -> lapsOperations.resetTotals(lapRight))
-                // Then
-                .onFailure(exc -> assertThat(true).isFalse());
+        Try<Void> tryResult = Try.run(() -> lapsOperations.resetTotals(lapRight));
+
+        // Then
+        assertThat(tryResult.isSuccess()).isTrue();
     }
 
     @Test
@@ -889,8 +1082,10 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity("LOW")
                 .build();
+
         // When
         lapsOperations.setTotalValuesLap(lapLeft);
+
         // Then
         assertThat(lapLeft.getTotalTimeSeconds())
                 .isEqualTo(DateUtils.millisToSeconds(Double.valueOf(timeMillisLeft4)
@@ -904,10 +1099,12 @@ public class LapsOperationsImpTest {
     public void setTotalValuesNullLapTest() {
         // Given
         lapLeft = null;
+
         // When
-        Try.run(() -> lapsOperations.setTotalValuesLap(lapLeft))
-            // Then
-            .onFailure(exc -> assertThat(true).isFalse());
+        Try<Void> tryResult = Try.run(() -> lapsOperations.setTotalValuesLap(lapLeft));
+
+        // Then
+        assertThat(tryResult.isSuccess()).isTrue();
 
     }
 
@@ -921,8 +1118,10 @@ public class LapsOperationsImpTest {
                 .totalTimeSeconds(50.0)
                 .intensity("LOW")
                 .build();
+
         // When
         lapsOperations.calculateAggregateValuesLap(lapLeft);
+
         // Then
         assertThat(lapLeft.getMaximumHeartRate()).isEqualTo(95);
         assertThat(lapLeft.getAverageHearRate()).isEqualTo(86.75);
@@ -934,10 +1133,12 @@ public class LapsOperationsImpTest {
     public void calculateAggregateValuesNullLapTest() {
         // Given
         lapLeft = null;
+
         // When
-        Try.run(() -> lapsOperations.calculateAggregateValuesLap(lapLeft))
-                // Then
-                .onFailure(exc -> assertThat(true).isFalse());
+        Try<Void> tryResult = Try.run(() -> lapsOperations.calculateAggregateValuesLap(lapLeft));
+
+        // Then
+        assertThat(tryResult.isSuccess()).isTrue();
 
     }
 

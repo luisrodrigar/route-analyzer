@@ -1,6 +1,5 @@
 package utils;
 
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.mongodb.Function;
@@ -44,8 +43,6 @@ import java.time.ZonedDateTime;
 import java.util.GregorianCalendar;
 import java.util.Optional;
 
-import static java.nio.file.Files.newInputStream;
-
 @Slf4j
 @UtilityClass
 public class TestUtils {
@@ -62,9 +59,6 @@ public class TestUtils {
 	public static final String ACTIVITY_TCX_6_ID	= "cacb82a74aa1230004822c6a";
 	public static final String NOT_EXIST_1_ID 		= "aaaccc111222000333555fff";
 	public static final String NOT_EXIST_2_ID 		= "000ccc111222aaa333555bbb";
-
-	public static Function<Path, S3ObjectInputStream> toS3ObjectInputStream = path -> Try.of(() ->
-			new S3ObjectInputStream(newInputStream(path), null)).getOrNull();
 
 	public static byte[] getFileBytes(Resource resource) {
 		Function<Path, Try<byte[]>> toByteArray = path -> Try.of(() -> Files.readAllBytes(path));

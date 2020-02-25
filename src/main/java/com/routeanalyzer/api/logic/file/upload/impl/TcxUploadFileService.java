@@ -5,13 +5,28 @@ import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
+import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.reader.TCXService;
-import com.routeanalyzer.api.xml.tcx.*;
+import com.routeanalyzer.api.xml.tcx.AbstractSourceT;
+import com.routeanalyzer.api.xml.tcx.ActivityLapT;
+import com.routeanalyzer.api.xml.tcx.ActivityListT;
+import com.routeanalyzer.api.xml.tcx.ActivityT;
+import com.routeanalyzer.api.xml.tcx.CourseLapT;
+import com.routeanalyzer.api.xml.tcx.CourseListT;
+import com.routeanalyzer.api.xml.tcx.CourseT;
+import com.routeanalyzer.api.xml.tcx.ExtensionsT;
+import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
+import com.routeanalyzer.api.xml.tcx.IntensityT;
+import com.routeanalyzer.api.xml.tcx.PositionT;
+import com.routeanalyzer.api.xml.tcx.SportT;
+import com.routeanalyzer.api.xml.tcx.TrackT;
+import com.routeanalyzer.api.xml.tcx.TrackpointT;
+import com.routeanalyzer.api.xml.tcx.TrainingCenterDatabaseT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityLapExtensionT;
 import com.routeanalyzer.api.xml.tcx.activityextension.ActivityTrackpointExtensionT;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +43,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
-import static com.routeanalyzer.api.common.CommonUtils.toPosition;
-import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
@@ -40,8 +53,8 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
 
     @Autowired
     public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperationsImpl,
-                                LapsOperations lapsOperationsImpl) {
-        super(tcxService, activityOperationsImpl, lapsOperationsImpl);
+                                LapsOperations lapsOperationsImpl, TrackPointOperations trackPointOperations) {
+        super(tcxService, activityOperationsImpl, lapsOperationsImpl, trackPointOperations);
     }
 
     private Function<PositionT, Predicate<Position>> getIsThisPosition = positionT -> positionToCompare ->
@@ -168,7 +181,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
     private Optional<TrackPoint> toTrackPointModel(final TrackpointT trackpointT, final AtomicInteger indexTrackPoints) {
         return of(trackpointT)
                 .map(TrackpointT::getPosition)
-                .map(positionT -> toTrackPoint(trackpointT, indexTrackPoints.incrementAndGet()))
+                .map(positionT -> trackPointOperations.toTrackPoint(trackpointT, indexTrackPoints.incrementAndGet()))
                 .map(trackPoint -> setTrackPointExtensions(trackpointT, trackPoint));
     }
 
@@ -228,10 +241,14 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
         AtomicInteger eachIndex = new AtomicInteger();
         AtomicInteger indexStart = new AtomicInteger();
         AtomicInteger indexEnd = new AtomicInteger();
-        Position initial = toPosition(courseLapT.getBeginPosition().getLatitudeDegrees(),
-                courseLapT.getBeginPosition().getLongitudeDegrees());
-        Position end = toPosition(courseLapT.getEndPosition().getLatitudeDegrees(),
-                courseLapT.getEndPosition().getLongitudeDegrees());
+        Position initial = Position.builder()
+                .latitudeDegrees(new BigDecimal(courseLapT.getBeginPosition().getLatitudeDegrees()))
+                .longitudeDegrees(new BigDecimal(courseLapT.getBeginPosition().getLongitudeDegrees()))
+                .build();
+        Position end = Position.builder()
+                .latitudeDegrees(new BigDecimal(courseLapT.getEndPosition().getLatitudeDegrees()))
+                .longitudeDegrees(new BigDecimal(courseLapT.getEndPosition().getLongitudeDegrees()))
+                .build();
         trackTList.forEach(track ->
                 track.getTrackpoint().forEach(trackPoint -> {
                     of(trackPoint)
@@ -251,15 +268,17 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                         .map(trackPointTs -> trackPointTs.get(index))
                         .flatMap(trT -> of(indexTrackPoints)
                                 .map(AtomicInteger::getAndIncrement)
-                                .map(indexTrackPointParam -> toTrackPoint(trT, indexTrackPointParam))
-                                .map(trackPoint -> {
-                                    getSpeedExtensionValue(trT.getExtensions().getAny())
-                                            .ifPresent(trackPoint::setSpeed);
-                                    return trackPoint;
-                                })))
+                                .map(indexTrackPointParam -> trackPointOperations.toTrackPoint(trT, indexTrackPointParam))
+                                .map(trackPoint -> setSpeedExtensionGetTrackPoint(trT.getExtensions(), trackPoint))))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(toList());
+    }
+
+    private TrackPoint setSpeedExtensionGetTrackPoint(final ExtensionsT extensionsT, final TrackPoint trackPoint) {
+        getSpeedExtensionValue(extensionsT.getAny())
+                .ifPresent(trackPoint::setSpeed);
+        return trackPoint;
     }
 
     private Optional<Double> getAverageSpeedExtensionValue(final ExtensionsT extensionsT) {
@@ -292,9 +311,6 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
     private Optional<BigDecimal> getSpeedExtensionValue(final List<Object> extensions) {
         return extensions.stream()
                 .filter(Objects::nonNull)
-                .filter(JAXBElement.class::isInstance)
-                .map(JAXBElement.class::cast)
-                .map(JAXBElement::getValue)
                 .filter(ActivityTrackpointExtensionT.class::isInstance)
                 .map(ActivityTrackpointExtensionT.class::cast)
                 .map(ActivityTrackpointExtensionT::getSpeed)

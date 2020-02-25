@@ -2,10 +2,14 @@ package com.routeanalyzer.api.logic.file.upload.impl;
 
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
+import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
+import com.routeanalyzer.api.model.Position;
+import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.reader.GPXService;
 import com.routeanalyzer.api.xml.gpx11.GpxType;
+import com.routeanalyzer.api.xml.gpx11.WptType;
 import io.vavr.control.Try;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -21,6 +25,10 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import static io.vavr.control.Try.failure;
@@ -36,6 +44,7 @@ import static utils.TestUtils.createValidGpxType;
 import static utils.TestUtils.getStreamResource;
 import static utils.TestUtils.toActivity;
 import static utils.TestUtils.toGpxRootModel;
+import static java.util.Optional.of;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GpxUploadServiceImplTest {
@@ -45,6 +54,9 @@ public class GpxUploadServiceImplTest {
 
     @Mock
     private LapsOperations lapsOperations;
+
+    @Mock
+    private TrackPointOperations trackPointOperations;
 
     @Mock
     private ActivityOperations activityOperations;
@@ -101,14 +113,71 @@ public class GpxUploadServiceImplTest {
     @Test
     public void xmlConvertToModelTest() {
         // Given
+        doReturn(of(TrackPoint.builder()
+                .date(ZonedDateTime.of(LocalDateTime.of(2018, 2, 27, 13, 16, 13), ZoneId.of("UTC")))
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("42.6131970"))
+                        .longitudeDegrees(new BigDecimal("-6.5732170")).build())
+                .altitudeMeters(new BigDecimal("557.3"))
+                .build())).when(trackPointOperations).toTrackPoint(any(WptType.class), eq(1));
+        doReturn(of(TrackPoint.builder()
+                .date(ZonedDateTime.of(LocalDateTime.of(2018, 2, 27, 13, 16, 18), ZoneId.of("UTC")))
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("42.6132170"))
+                        .longitudeDegrees(new BigDecimal("-6.5733730")).build())
+                .altitudeMeters(new BigDecimal("557.3"))
+                .build())).when(trackPointOperations).toTrackPoint(any(WptType.class), eq(2));
+        doReturn(of(TrackPoint.builder()
+                .date(ZonedDateTime.of(LocalDateTime.of(2018, 2, 27, 13, 16, 20), ZoneId.of("UTC")))
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("42.6132120"))
+                        .longitudeDegrees(new BigDecimal("-6.5734430")).build())
+                .altitudeMeters(new BigDecimal("557.3"))
+                .build())).when(trackPointOperations).toTrackPoint(any(WptType.class), eq(3));
+
+        doReturn(of(TrackPoint.builder()
+                .date(ZonedDateTime.of(LocalDateTime.of(2018, 2, 27, 13, 16, 30), ZoneId.of("UTC")))
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("42.6132120"))
+                        .longitudeDegrees(new BigDecimal("-6.5738250")).build())
+                .altitudeMeters(new BigDecimal("557.3"))
+                .build())).when(trackPointOperations).toTrackPoint(any(WptType.class), eq(4));
+        doReturn(of(TrackPoint.builder()
+                .date(ZonedDateTime.of(LocalDateTime.of(2018, 2, 27, 13, 16, 33), ZoneId.of("UTC")))
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("42.6132120"))
+                        .longitudeDegrees(new BigDecimal("-6.5739120")).build())
+                .altitudeMeters(new BigDecimal("557.3"))
+                .build())).when(trackPointOperations).toTrackPoint(any(WptType.class), eq(5));
+
+        doReturn(of(TrackPoint.builder()
+                .date(ZonedDateTime.of(LocalDateTime.of(2018, 2, 27, 13, 17, 30), ZoneId.of("UTC")))
+                .position(Position.builder()
+                        .latitudeDegrees(new BigDecimal("42.6132120"))
+                        .longitudeDegrees(new BigDecimal("-6.5738250")).build())
+                .altitudeMeters(new BigDecimal("557.3"))
+                .build())).when(trackPointOperations).toTrackPoint(any(WptType.class), eq(6));
 
         // When
         List<Activity> activities = gpxUploadService.toListActivities(gpxObject);
 
         // Then
         assertThat(activities).isEqualTo(asList(activityGpxTest));
+        assertThat(activities.get(0).getLaps().get(0).getTracks().get(0).getHeartRateBpm())
+                .isEqualTo(96);
+        assertThat(activities.get(0).getLaps().get(0).getTracks().get(1).getHeartRateBpm())
+                .isEqualTo(96);
+        assertThat(activities.get(0).getLaps().get(0).getTracks().get(2).getHeartRateBpm())
+                .isEqualTo(96);
+        assertThat(activities.get(0).getLaps().get(1).getTracks().get(0).getHeartRateBpm())
+                .isEqualTo(106);
+        assertThat(activities.get(0).getLaps().get(1).getTracks().get(1).getHeartRateBpm())
+                .isEqualTo(109);
+        assertThat(activities.get(0).getLaps().get(2).getTracks().get(0).getHeartRateBpm())
+                .isEqualTo(120);
         verify(activityOperations).calculateDistanceSpeedValues(any(Activity.class));
         verify(lapsOperations, times(3)).calculateLapValues(any(Lap.class));
+        verify(trackPointOperations, times(6)).toTrackPoint(any(WptType.class), any(Integer.class));
     }
 
 }

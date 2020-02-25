@@ -16,6 +16,7 @@ public class Position implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private BigDecimal latitudeDegrees, longitudeDegrees;
+	private BigDecimal latitudeDegrees;
+	private BigDecimal longitudeDegrees;
 	
 }

@@ -14,16 +14,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
-import static com.routeanalyzer.api.common.CommonUtils.toPosition;
-import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.DateUtils.toZonedDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -130,16 +133,38 @@ public class ActivityOperationsImplTest {
         lap3OneTrackPoint.getTracks().remove(1);
 	}
 
-	private void createAddTrack(Lap lap, long timeMillisLap1,
-								 long timeMillisLap2, int index1, int index2, String latitude1, String latitude2,
-								 String lng1, String lng2, String alt1, String alt2, String dist1, String dist2,
-								 String speed1, String speed2, int heartRate1, int heartRate2) {
+	private void createAddTrack(Lap lap, long timeMillisLap1, long timeMillisLap2, int index1, int index2,
+								String latitude1, String latitude2, String lng1, String lng2, String alt1, String alt2,
+								String dist1, String dist2, String speed1, String speed2, int heartRate1, int heartRate2) {
 		List<TrackPoint> trackPoints = Lists.newArrayList();
-		trackPoints.add(toTrackPoint(timeMillisLap1, index1, latitude1, lng1, alt1, dist1, speed1, heartRate1));
-		trackPoints.add(toTrackPoint(timeMillisLap2, index2, latitude2, lng2, alt2, dist2, speed2, heartRate2));
+		trackPoints.add(TrackPoint
+				.builder()
+				.date(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillisLap1), ZoneId.of("UTC")))
+				.index(index1)
+				.position(Position.builder()
+						.latitudeDegrees(new BigDecimal(latitude1))
+						.longitudeDegrees(new BigDecimal(lng1))
+						.build())
+				.altitudeMeters(new BigDecimal(alt1))
+				.distanceMeters(new BigDecimal(dist1))
+				.speed(new BigDecimal(speed1))
+				.heartRateBpm(heartRate1)
+				.build());
+		trackPoints.add(TrackPoint
+						.builder()
+						.date(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillisLap2), ZoneId.of("UTC")))
+						.index(index2)
+						.position(Position.builder()
+								.latitudeDegrees(new BigDecimal(latitude2))
+								.longitudeDegrees(new BigDecimal(lng2))
+								.build())
+						.altitudeMeters(new BigDecimal(alt2))
+						.distanceMeters(new BigDecimal(dist2))
+						.speed(new BigDecimal(speed2))
+						.heartRateBpm(heartRate2)
+						.build());
 		lap.setTracks(trackPoints);
 	}
-
 
 	@Test
 	public void removeLapTest() {
@@ -395,13 +420,16 @@ public class ActivityOperationsImplTest {
 				.sport("sport")
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
-		Position position = toPosition("46.452478", "-6.9501170");
-		// When
+		String latitude = "46.452478";
+		String longitude = "-6.9501170";
 		doReturn(lap3.getTracks().get(1)).when(lapsOperations)
-				.getTrackPoint(eq(lap3),eq(position), eq(timeMillisLap32), eq(1));
-		int index = activityOperations.indexOfTrackPoint(activity, 2, position, timeMillisLap32, 1);
+				.getTrackPoint(eq(lap3), eq(latitude), eq(longitude), eq(timeMillisLap32), eq(1));
+
+		// When
+		int index = activityOperations.indexOfTrackPoint(activity, 2, latitude, longitude, timeMillisLap32, 1);
+
 		// Then
-		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any(), any());
 		assertThat(index).isPositive();
 		assertThat(index).isEqualTo(1);
 	}
@@ -420,13 +448,16 @@ public class ActivityOperationsImplTest {
 				.sport("sport")
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
-		Position position = toPosition("46.452478", "-6.9501170");
-		// When
+		String latitude = "46.452478";
+		String longitude = "-6.9501170";
 		doReturn(lap3.getTracks().get(1)).when(lapsOperations)
-				.getTrackPoint(eq(lap3),eq(position), isNull(), eq(1));
-		int index = activityOperations.indexOfTrackPoint(activity, 2, position, null, 1);
+				.getTrackPoint(lap3, latitude, longitude, null,1);
+
+		// When
+		int index = activityOperations.indexOfTrackPoint(activity,2, latitude, longitude,null,1);
+
 		// Then
-		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any(), any());
 		assertThat(index).isPositive();
 		assertThat(index).isEqualTo(1);
 	}
@@ -445,13 +476,16 @@ public class ActivityOperationsImplTest {
 				.sport("sport")
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
-		Position position = toPosition("46.452478", "-6.9501170");
-		// When
+		String latitude = "46.452478";
+		String longitude = "-6.9501170";
 		doReturn(lap3.getTracks().get(1)).when(lapsOperations)
-				.getTrackPoint(eq(lap3),eq(position), eq(timeMillisLap31), isNull());
-		int index = activityOperations.indexOfTrackPoint(activity, 2, position, timeMillisLap31, null);
+				.getTrackPoint(lap3, latitude, longitude, timeMillisLap31, null);
+
+		// When
+		int index = activityOperations.indexOfTrackPoint(activity, 2, latitude, longitude, timeMillisLap31, null);
+
 		// Then
-		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any(), any());
 		assertThat(index).isPositive();
 		assertThat(index).isEqualTo(1);
 	}
@@ -470,13 +504,14 @@ public class ActivityOperationsImplTest {
 				.sport("sport")
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
-		Position position = null;
-		// When
 		doReturn(lap3.getTracks().get(1)).when(lapsOperations)
-				.getTrackPoint(eq(lap3), isNull(), eq(timeMillisLap31), eq(1));
-		int index = activityOperations.indexOfTrackPoint(activity, 2, position, timeMillisLap31, 1);
+				.getTrackPoint(lap3, null, null, timeMillisLap31,1);
+
+		// When
+		int index = activityOperations.indexOfTrackPoint(activity, 2, null, null, timeMillisLap31, 1);
+
 		// Then
-		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any(), any());
 		assertThat(index).isPositive();
 		assertThat(index).isEqualTo(1);
 	}
@@ -485,10 +520,11 @@ public class ActivityOperationsImplTest {
 	public void indexOfTrackPointNullActivityTest() {
 		// Given
 		activity = null;
-		Position position = toPosition("46.452478", "-6.9501170");
-		int index = activityOperations.indexOfTrackPoint(activity, 2, position, timeMillisLap31, 1);
+		String latitude = "46.452478";
+		String longitude = "-6.9501170";
+		int index = activityOperations.indexOfTrackPoint(activity, 2, latitude, longitude, timeMillisLap31, 1);
 		// Then
-		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any(), any());
 		assertThat(index).isNegative();
 		assertThat(index).isEqualTo(-1);
 	}
@@ -507,18 +543,19 @@ public class ActivityOperationsImplTest {
                 .sport("sport")
                 .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
-        Position position = toPosition("46.452478", "-6.9501170");
+		String latitude = "46.452478";
+		String longitude = "-6.9501170";
+		doReturn(true).when(lapsOperations)
+				.fulfillCriteriaPositionTime(lap3, latitude, longitude, timeMillisLap32, index32);
+		doReturn(lap3.getTracks().get(1)).when(lapsOperations)
+				.getTrackPoint(lap3, latitude, longitude, timeMillisLap32, index32);
+
         // When
-        doReturn(true).when(lapsOperations)
-                .fulfillCriteriaPositionTime(eq(lap3), eq(position), eq(timeMillisLap32), eq(index32));
-        doReturn(lap3.getTracks().get(1)).when(lapsOperations)
-                .getTrackPoint(eq(lap3), eq(position), eq(timeMillisLap32), eq(index32));
-        Activity act = activityOperations.removePoint(activity, "46.452478", "-6.9501170",
-                timeMillisLap32, index32);
+        Activity act = activityOperations.removePoint(activity, latitude, longitude, timeMillisLap32, index32);
 
         // Then
-		verify(lapsOperations).getTrackPoint(any(), any(), any(), any());
-		verify(lapsOperations, times(3)).fulfillCriteriaPositionTime(any(), any(), any(), any());
+		verify(lapsOperations).getTrackPoint(any(), any(), any(), any(), any());
+		verify(lapsOperations, times(3)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
         assertThat(act).isNotNull();
         assertThat(act.getLaps()).isNotEmpty();
         assertThat(act.getLaps().get(2)).isNotNull();
@@ -541,18 +578,20 @@ public class ActivityOperationsImplTest {
                 .sport("sport")
                 .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
-        Position position = toPosition("40.3602900", "-8.8447600");
+		String latitude = "40.3602900";
+		String longitude = "-8.8447600";
+		doReturn(true).when(lapsOperations)
+				.fulfillCriteriaPositionTime(lap3OneTrackPoint, latitude, longitude, timeMillisLap31, index31);
+		doReturn(lap3OneTrackPoint.getTracks().get(0)).when(lapsOperations)
+				.getTrackPoint(lap3OneTrackPoint, latitude, longitude, timeMillisLap31, index31);
+
         // When
-        doReturn(true).when(lapsOperations)
-                .fulfillCriteriaPositionTime(eq(lap3OneTrackPoint), eq(position), eq(timeMillisLap31), eq(index31));
-        doReturn(lap3OneTrackPoint.getTracks().get(0)).when(lapsOperations)
-                .getTrackPoint(eq(lap3OneTrackPoint), eq(position), eq(timeMillisLap31), eq(index31));
         Activity act = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
                 timeMillisLap31, index31);
 
         // Then
-		verify(lapsOperations).getTrackPoint(any(), any(), any(), any());
-		verify(lapsOperations, times(3)).fulfillCriteriaPositionTime(any(), any(), any(), any());
+		verify(lapsOperations).getTrackPoint(any(), any(), any(), any(), any());
+		verify(lapsOperations, times(3)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
         assertThat(act).isNotNull();
         assertThat(act.getLaps()).isNotEmpty();
         assertThat(act.getLaps().get(2)).isNotNull();
@@ -576,10 +615,10 @@ public class ActivityOperationsImplTest {
                 timeMillisLap31, index31);
 
         // Then
-		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
-		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
-        verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
-        verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any(), any());
+		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
+        verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
+        verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any(), any());
         assertThat(act).isNull();
     }
 
@@ -597,19 +636,20 @@ public class ActivityOperationsImplTest {
                 .sport("sport")
                 .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
-        Position position = toPosition("40.3602900", "-8.8447600");
+		String latitude = "40.3602900";
+		String longitude = "-8.8447600";
+		doReturn(true).when(lapsOperations)
+				.fulfillCriteriaPositionTime(lap3OneTrackPoint, latitude, longitude, null, index31);
+		doReturn(lap3OneTrackPoint.getTracks().get(0)).when(lapsOperations)
+				.getTrackPoint(lap3OneTrackPoint, latitude, longitude, null, index31);
+
         // When
-        doReturn(true).when(lapsOperations)
-                .fulfillCriteriaPositionTime(eq(lap3OneTrackPoint), eq(position), isNull(), eq(index31));
-        doReturn(lap3OneTrackPoint.getTracks().get(0)).when(lapsOperations)
-                .getTrackPoint(eq(lap3OneTrackPoint), eq(position), isNull(), eq(index31));
-        Activity act = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
-                null, index31);
+        Activity act = activityOperations.removePoint(activity, latitude, longitude,null, index31);
 
         // Then
-		verify(lapsOperations).getTrackPoint(any(), any(), isNull(), any());
+		verify(lapsOperations).getTrackPoint(any(), any(), any(), isNull(), any());
 		verify(lapsOperations, times(3))
-				.fulfillCriteriaPositionTime(any(), any(), isNull(), any());
+				.fulfillCriteriaPositionTime(any(), any(), any(), isNull(), any());
         assertThat(act).isNotNull();
         assertThat(act.getLaps()).isNotEmpty();
         assertThat(act.getLaps().get(2)).isNotNull();
@@ -633,19 +673,21 @@ public class ActivityOperationsImplTest {
                 .sport("sport")
                 .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
-        Position position = toPosition("44.3602900",  "-6.8447600");
+		String latitude = "44.3602900";
+		String longitude = "-6.8447600";
+		doReturn(true).when(lapsOperations)
+				.fulfillCriteriaPositionTime(lap2, latitude, longitude, timeMillisLap21, null);
+		doReturn(lap2.getTracks().get(0)).when(lapsOperations)
+				.getTrackPoint(lap2, latitude, longitude, timeMillisLap21, null);
+
         // When
-        doReturn(true).when(lapsOperations)
-                .fulfillCriteriaPositionTime(eq(lap2), eq(position), eq(timeMillisLap21), isNull());
-        doReturn(lap2.getTracks().get(0)).when(lapsOperations)
-                .getTrackPoint(eq(lap2), eq(position), eq(timeMillisLap21), isNull());
         Activity act = activityOperations.removePoint(activity, "44.3602900",  "-6.8447600",
                 timeMillisLap21, null);
 
         // Then
-		verify(lapsOperations).getTrackPoint(any(), any(), any(), isNull());
+		verify(lapsOperations).getTrackPoint(any(), any(), any(), any(), isNull());
 		verify(lapsOperations, times(2))
-				.fulfillCriteriaPositionTime(any(), any(), any(), isNull());
+				.fulfillCriteriaPositionTime(any(), any(), any(), any(), isNull());
         assertThat(act).isNotNull();
         assertThat(act.getLaps()).isNotEmpty();
         assertThat(act.getLaps().get(1)).isNotNull();
@@ -674,8 +716,8 @@ public class ActivityOperationsImplTest {
                null, null);
 
         // Then
-		verify(lapsOperations, times(4)).fulfillCriteriaPositionTime(any(), any(), isNull(), isNull());
-		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(4)).fulfillCriteriaPositionTime(any(), any(), any(), isNull(), isNull());
+		verify(lapsOperations, never()).getTrackPoint(any(), any(), any(), any(), any());
         assertThat(act).isNull();
     }
 
@@ -695,20 +737,21 @@ public class ActivityOperationsImplTest {
 				.sport("sport")
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
-		Position position = toPosition("44.3602900", "-6.8447600");
-		// When
+		String latitude = "44.3602900";
+		String longitude = "-6.8447600";
 		doReturn(true).when(lapsOperations)
-				.fulfillCriteriaPositionTime(eq(lap1), eq(position), eq(timeMillisLap21), eq(index21));
+				.fulfillCriteriaPositionTime(lap1, latitude, longitude, timeMillisLap21, index21);
 		doReturn(lap2.getTracks().get(0)).when(lapsOperations)
-				.getTrackPoint(eq(lap1), eq(position), eq(timeMillisLap21), eq(index21));
+				.getTrackPoint(lap1, latitude, longitude, timeMillisLap21, index21);
 		doReturn(lap3OneTrackPoint).when(lapsOperations).createSplitLap(eq(lap1), eq(0), eq(index21), eq(lap1.getIndex()));
 		doReturn(lap2).when(lapsOperations).createSplitLap(eq(lap1), eq(index21), eq(lap1.getTracks().size()), eq(lap1.getIndex() + 1));
-		Activity act = activityOperations.splitLap(activity, "44.3602900", "-6.8447600",
-				timeMillisLap21, index21);
+
+		// When
+		Activity act = activityOperations.splitLap(activity, latitude, longitude, timeMillisLap21, index21);
 
 		// Then
-		verify(lapsOperations, times(1)).fulfillCriteriaPositionTime(any(), any(), any(), any());
-		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(1)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
+		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any(), any());
 		assertThat(act).isNotNull();
 		assertThat(act.getLaps()).isNotEmpty();
 		List<Lap> laps = act.getLaps();
@@ -727,8 +770,8 @@ public class ActivityOperationsImplTest {
 				timeMillisLap21, index21);
 
 		// Then
-		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
-		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
+		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any(), any());
 		assertThat(act).isNull();
 	}
 
@@ -746,8 +789,8 @@ public class ActivityOperationsImplTest {
 		Activity act = activityOperations.splitLap(activity, null, "-6.8447600", timeMillisLap21, index21);
 
 		// Then
-		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
-		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), isNull(), any(), any(), any());
+		verify(lapsOperations, times(0)).getTrackPoint(any(), isNull(), any(), any(), any());
 		assertThat(act).isNull();
 	}
 
@@ -766,8 +809,8 @@ public class ActivityOperationsImplTest {
 				timeMillisLap21, index21);
 
 		// Then
-		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any());
-		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any());
+		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), isNull(), any(), any());
+		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), isNull(), any(), any());
 		assertThat(act).isNull();
 	}
 
