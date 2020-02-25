@@ -9,6 +9,7 @@ import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.services.OriginalActivityRepository;
 import io.vavr.control.Try;
+import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,7 +24,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -39,8 +44,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.routeanalyzer.api.common.Constants.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.routeanalyzer.api.common.Constants.GET_FILE_PATH;
+import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
+import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
+import static com.routeanalyzer.api.common.Constants.UPLOAD_FILE_PATH;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
@@ -48,7 +59,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.cloud.contract.wiremock.WireMockSpring.options;
 import static org.springframework.http.HttpMethod.POST;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
-import static utils.TestUtils.*;
+import static utils.TestUtils.GPX_ID_XML;
+import static utils.TestUtils.NOT_EXIST_1_ID;
+import static utils.TestUtils.TCX_ID_XML;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test.properties")
@@ -76,13 +89,17 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
             .dynamicPort()
             .bindAddress(LOCALHOST_HOST_NAME));
 
-    @Rule
-    public DockerComposeContainer mongoDbContainer =
+    @ClassRule
+    public static DockerComposeContainer mongoDbContainer =
             new DockerComposeContainer(new File(DOCKER_COMPOSE_MONGO_DB))
                     .withExposedService(MONGO_CONTAINER_NAME, MONGO_PORT);
 
-    @Rule
-    public WireMockClassRule googleApiWireMock = googleApiWireMockClass;
+    @AfterClass
+    public static void shutDown() {
+        mongoDbContainer.stop();
+        localStackS3.stop();
+        googleApiWireMockClass.stop();
+    }
 
     @Value("classpath:controller/coruna.gpx.xml")
     private Resource gpxXmlResource;
@@ -179,7 +196,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
         List<String> ids = getIds(result.getBody());
 
         Optional<Activity> afterTestCase = activityMongoRepository.findById(ids.get(0));
-        Optional<S3ObjectInputStream> fileStored = originalActivityRepository.getFile(String.format("%s.%s",
+        Optional<S3ObjectInputStream> fileStored = originalActivityRepository.getFile(format("%s.%s",
                 ids.get(0), SOURCE_TCX_XML));
 
         // Then
@@ -195,6 +212,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
                 .willReturn(ok()
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBodyFile(ELEVATION_STUBBING_RESPONSE)));
+
         LinkedMultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
         parameters.add("file", new ClassPathResource(format("%s/%s", "controller", GPX_WITHOUT_ELEVATION_FILE)));
 
@@ -268,7 +286,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
         // Upload xml file
         System.setProperty(SkipMd5CheckStrategy.DISABLE_GET_OBJECT_MD5_VALIDATION_PROPERTY,"true");
         Try.of(() -> IOUtils.toString(gpxXmlResource.getInputStream(), UTF_8).getBytes())
-                .forEach(arrayBytes -> originalActivityRepository.uploadFile(arrayBytes, String.format("%s.%s",
+                .forEach(arrayBytes -> originalActivityRepository.uploadFile(arrayBytes, format("%s.%s",
                         GPX_ID_XML, SOURCE_GPX_XML)));
 
         String getGpxFilePath = UriComponentsBuilder.fromPath(GET_FILE_PATH)
@@ -291,7 +309,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
         // Upload xml file
         System.setProperty(SkipMd5CheckStrategy.DISABLE_GET_OBJECT_MD5_VALIDATION_PROPERTY,"true");
         Try.of(() -> IOUtils.toString(tcxXmlResource.getInputStream(), UTF_8).getBytes())
-                .forEach(arrayBytes -> originalActivityRepository.uploadFile(arrayBytes, String.format("%s.%s",
+                .forEach(arrayBytes -> originalActivityRepository.uploadFile(arrayBytes, format("%s.%s",
                         TCX_ID_XML, SOURCE_TCX_XML)));
 
         String getTcxFilePath = UriComponentsBuilder.fromPath(GET_FILE_PATH)

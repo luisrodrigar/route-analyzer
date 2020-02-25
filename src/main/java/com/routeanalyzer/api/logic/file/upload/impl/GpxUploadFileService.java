@@ -4,12 +4,18 @@ import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
+import com.routeanalyzer.api.logic.TrackPointOperations;
 import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.reader.GPXService;
-import com.routeanalyzer.api.xml.gpx11.*;
+import com.routeanalyzer.api.xml.gpx11.ExtensionsType;
+import com.routeanalyzer.api.xml.gpx11.GpxType;
+import com.routeanalyzer.api.xml.gpx11.MetadataType;
+import com.routeanalyzer.api.xml.gpx11.TrkType;
+import com.routeanalyzer.api.xml.gpx11.TrksegType;
+import com.routeanalyzer.api.xml.gpx11.WptType;
 import com.routeanalyzer.api.xml.gpx11.trackpointextension.garmin.TrackPointExtensionT;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,11 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.routeanalyzer.api.common.CommonUtils.toPosition;
-import static com.routeanalyzer.api.common.CommonUtils.toTrackPoint;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
-import static java.util.Objects.nonNull;
-import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 
@@ -33,9 +35,9 @@ import static java.util.stream.Collectors.toList;
 public class GpxUploadFileService extends UploadFileService<GpxType> {
 
     @Autowired
-    public GpxUploadFileService(GPXService gpxService, ActivityOperations activityOperationsImpl,
-                                LapsOperations lapsOperationsImpl) {
-        super(gpxService, activityOperationsImpl, lapsOperationsImpl);
+    public GpxUploadFileService(final GPXService gpxService, final ActivityOperations activityOperationsImpl,
+                                final LapsOperations lapsOperationsImpl, final TrackPointOperations trackPointOperations) {
+        super(gpxService, activityOperationsImpl, lapsOperationsImpl, trackPointOperations);
     }
 
     /**
@@ -130,21 +132,11 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
     private List<TrackPoint> getTrackPoints(final TrksegType trkSetType, final AtomicInteger indexTrackPoints) {
         return trkSetType.getTrkpt()
                 .stream()
-                .map(wptType -> createTrackPoint(wptType, indexTrackPoints))
+                .map(wptType -> trackPointOperations.toTrackPoint(wptType, indexTrackPoints.incrementAndGet())
+                        .map(trackPoint -> addExtensions(wptType, trackPoint)))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(toList());
-    }
-
-    private Optional<TrackPoint> createTrackPoint(final WptType wptType, final AtomicInteger indexTrackPoints) {
-        return toPosition(wptType)
-                .filter(__ -> nonNull(wptType.getTime()))
-                .flatMap(position -> of(wptType)
-                        .map(WptType::getTime)
-                        .flatMap(DateUtils::toZonedDateTime)
-                        .map(dateTime ->
-                                toTrackPoint(dateTime, indexTrackPoints.incrementAndGet(), position, wptType.getEle())))
-                .map(trackPoint -> addExtensions(wptType, trackPoint));
     }
 
     private TrackPoint addExtensions(final WptType wptType, final TrackPoint trackPoint) {

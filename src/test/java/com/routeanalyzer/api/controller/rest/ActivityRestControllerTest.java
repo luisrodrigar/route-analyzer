@@ -17,19 +17,32 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static com.routeanalyzer.api.common.Constants.*;
+import static com.routeanalyzer.api.common.Constants.COLORS_LAP_PATH;
+import static com.routeanalyzer.api.common.Constants.EXPORT_AS_PATH;
+import static com.routeanalyzer.api.common.Constants.GET_ACTIVITY_PATH;
+import static com.routeanalyzer.api.common.Constants.JOIN_LAPS_PATH;
+import static com.routeanalyzer.api.common.Constants.REMOVE_LAP_PATH;
+import static com.routeanalyzer.api.common.Constants.REMOVE_POINT_PATH;
+import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
+import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
+import static com.routeanalyzer.api.common.Constants.SPLIT_LAP_PATH;
 import static com.routeanalyzer.api.common.JsonUtils.toJson;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Optional.of;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static utils.TestUtils.*;
+import static utils.TestUtils.ACTIVITY_GPX_ID;
+import static utils.TestUtils.ACTIVITY_TCX_ID;
+import static utils.TestUtils.toActivity;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebMvcTest(ActivityRestController.class)

@@ -3,13 +3,19 @@ package com.routeanalyzer.api.it;
 import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
+import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -22,11 +28,29 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.routeanalyzer.api.common.Constants.*;
+import static com.routeanalyzer.api.common.Constants.COLORS_LAP_PATH;
+import static com.routeanalyzer.api.common.Constants.EXPORT_AS_PATH;
+import static com.routeanalyzer.api.common.Constants.GET_ACTIVITY_PATH;
+import static com.routeanalyzer.api.common.Constants.JOIN_LAPS_PATH;
+import static com.routeanalyzer.api.common.Constants.REMOVE_LAP_PATH;
+import static com.routeanalyzer.api.common.Constants.REMOVE_POINT_PATH;
+import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
+import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
+import static com.routeanalyzer.api.common.Constants.SPLIT_LAP_PATH;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.assertj.core.api.Assertions.assertThat;
-import static utils.TestUtils.*;
+import static utils.TestUtils.ACTIVITY_GPX_ID;
+import static utils.TestUtils.ACTIVITY_TCX_1_ID;
+import static utils.TestUtils.ACTIVITY_TCX_2_ID;
+import static utils.TestUtils.ACTIVITY_TCX_3_ID;
+import static utils.TestUtils.ACTIVITY_TCX_4_ID;
+import static utils.TestUtils.ACTIVITY_TCX_5_ID;
+import static utils.TestUtils.ACTIVITY_TCX_6_ID;
+import static utils.TestUtils.ACTIVITY_TCX_ID;
+import static utils.TestUtils.NOT_EXIST_1_ID;
+import static utils.TestUtils.NOT_EXIST_2_ID;
+import static utils.TestUtils.toActivity;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test.properties")
@@ -58,6 +82,11 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
     private Resource removeLapsTcxJsonResource;
 
     private HttpEntity<Activity> requestEntity = new HttpEntity<>(new Activity(), new HttpHeaders());
+
+    @AfterClass
+    public static void shutDown() {
+        mongoDbContainer.stop();
+    }
 
     @Test
     public void getGpxActivityByIdTest() throws Exception {

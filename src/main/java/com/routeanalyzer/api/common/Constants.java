@@ -34,7 +34,6 @@ public class Constants {
             "Problem trying to delete/get the activity/file :: Amazon S3 Problem";
     public static final String IO_EXCEPTION_MESSAGE = "Problem trying to get the file :: Input/Output Problem";
     public static final String BAD_REQUEST_MESSAGE = "Some parameters are not valid";
-    public static final String BAD_TYPE_MESSAGE = "Xml file type not found";
     public static final String ACTIVITY_NOT_FOUND = "Activity not could be found";
     public static final String FILE_NOT_FOUND = "File could not be found";
     public static final String COLORS_ASSIGNED_EXCEPTION = "Not colors assigned to activity's laps";

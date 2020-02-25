@@ -65,12 +65,6 @@ public class DateUtils {
                 .getOrNull();
     }
 
-    private static Optional<Instant> toInstant(LocalDateTime localDateTime) {
-        return ofNullable(localDateTime)
-                .map(dateTime -> dateTime.atZone(ZoneOffset.UTC))
-                .map(ZonedDateTime::toInstant);
-    }
-
     public static double millisToSeconds(double milliSeconds){
         return milliSeconds / 1000.0;
     }

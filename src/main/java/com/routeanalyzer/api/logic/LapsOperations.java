@@ -1,7 +1,6 @@
 package com.routeanalyzer.api.logic;
 
 import com.routeanalyzer.api.model.Lap;
-import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 
 public interface LapsOperations {
@@ -18,12 +17,14 @@ public interface LapsOperations {
 	 * Getting the track point regarding a lap, a position, a time millis and the
 	 * index which was created (not the one regarding to the position in the track list array).
 	 * @param lap
-	 * @param position
+	 * @param latitude
+	 * @param longitude
 	 * @param time
 	 * @param index
 	 * @return track point with the conditions defined in the params
 	 */
-	TrackPoint getTrackPoint(Lap lap, Position position, Long time, Integer index);
+	TrackPoint getTrackPoint(final Lap lap, final String latitude, final String longitude, final Long time,
+							 final Integer index);
 
 	/**
 	 * Split the lap from the init index of track list to end index of track list.
@@ -41,12 +42,13 @@ public interface LapsOperations {
 	/**
 	 * Exists any track point in the lap with the information defined in the params
 	 * @param lap
-	 * @param position
+	 * @param latitude
+	 * @param longitude
 	 * @param timeInMillis
 	 * @param index
 	 * @return true or false (exists or not)
 	 */
-	boolean fulfillCriteriaPositionTime(Lap lap, Position position, Long timeInMillis, Integer index);
+	boolean fulfillCriteriaPositionTime(Lap lap, String latitude, String longitude, Long timeInMillis, Integer index);
 
 	/**
 	 * Calculate altitude (if it does not exist in track points) and aggregate values.

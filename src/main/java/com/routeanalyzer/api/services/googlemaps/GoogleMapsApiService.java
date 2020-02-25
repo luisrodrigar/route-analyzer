@@ -19,6 +19,7 @@ import java.util.function.Predicate;
 
 import static com.routeanalyzer.api.common.CommonUtils.joinByComma;
 import static com.routeanalyzer.api.common.CommonUtils.not;
+import static com.routeanalyzer.api.common.CommonUtils.toStringValue;
 import static com.routeanalyzer.api.common.Constants.POSITIONS_DELIMITER;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
@@ -104,7 +105,7 @@ public class GoogleMapsApiService implements ElevationService {
 	}
 
 	private String calculateMapValue(GoogleMapsAPIResult gmResult) {
-		return String.valueOf(gmResult.getElevation());
+		return toStringValue(gmResult.getElevation());
 	}
 
 	private Map<String, String> addStatusToResponse(Map<String, String> resultMap, GoggleMapsAPIResponse gmResponse) {

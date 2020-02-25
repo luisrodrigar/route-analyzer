@@ -2,7 +2,6 @@ package com.routeanalyzer.api.logic;
 
 import com.routeanalyzer.api.logic.file.upload.UploadFileService;
 import com.routeanalyzer.api.model.Activity;
-import com.routeanalyzer.api.model.Position;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -82,8 +81,9 @@ public interface ActivityOperations {
 	 *            activity
 	 * @param indexLap:
 	 *            index of the lap
-	 * @param position:
+	 * @param latitude:
 	 *            latitude position
+	 * @param longitude:
 	 *            longitude position
 	 * @param time:
 	 *            time in milliseconds
@@ -91,8 +91,8 @@ public interface ActivityOperations {
 	 *            index of the position in the array
 	 * @return index of a track point
 	 */
-	int indexOfTrackPoint(final Activity activity, final Integer indexLap, final Position position, final Long time,
-						  final Integer index);
+	int indexOfTrackPoint(final Activity activity, final Integer indexLap, final String latitude,
+						  final String longitude, final Long time, final Integer index);
 
 	/**
 	 * Set regular and light color to each activity's lap
