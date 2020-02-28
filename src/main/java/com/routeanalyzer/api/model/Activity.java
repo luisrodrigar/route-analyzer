@@ -2,7 +2,12 @@ package com.routeanalyzer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -35,13 +40,6 @@ public class Activity implements Serializable {
 	@Field
 	@Builder.Default
 	private List<Lap> laps = Lists.newArrayList();
-
-	public boolean addLap(Lap lap){
-		int sizeBeforeAdding = laps.size();
-		laps.add(lap);
-		return sizeBeforeAdding + 1 == laps.size();
-	}
-
 
 	@Override
 	public boolean equals(Object o) {

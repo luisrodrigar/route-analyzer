@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.logic.file.upload.impl;
 
-import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
@@ -90,9 +89,9 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
     private Supplier<ZonedDateTime> getFirstDateTimeTrackPoint(final TrkType trkType) {
         return () -> ofNullable(trkType)
                 .map(TrkType::getTrkseg)
-                .map(CommonUtils::getFirstElement)
+                .map(trkSegTypeList -> trkSegTypeList.get(0))
                 .map(TrksegType::getTrkpt)
-                .map(CommonUtils::getFirstElement)
+                .map(wptTypeList -> wptTypeList.get(0))
                 .map(WptType::getTime)
                 .flatMap(DateUtils::toZonedDateTime)
                 .orElse(null);
@@ -123,7 +122,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
     private ZonedDateTime getStartDateTimeLap(final TrksegType trksegType) {
         return ofNullable(trksegType)
                 .map(TrksegType::getTrkpt)
-                .map(CommonUtils::getFirstElement)
+                .map(wptTypeList -> wptTypeList.get(0))
                 .map(WptType::getTime)
                 .flatMap(DateUtils::toZonedDateTime)
                 .orElse(null);
