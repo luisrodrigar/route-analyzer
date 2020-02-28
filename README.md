@@ -1,5 +1,8 @@
 # Route Analyzer API
-Provides some endpoints with the purpose of analyzing and processing an activity route.
+Provides some endpoints with the purpose of analyzing and processing an activity route.<br />
+The activity route's type files allow are:
+- TCX [Training Center XML Schema](https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd)
+- GPX 1.1 [GPs eXchange Format Schema](https://www.topografix.com/GPX/1/1/gpx.xsd)
 ## Getting started
 This project is using:
  - Java 8: [Java Link](https://www.java.com/es/download/)
