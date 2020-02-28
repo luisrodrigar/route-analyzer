@@ -49,6 +49,6 @@ All this information is available in more detail on Swagger: [Route Analyzer API
   - **[PUT]`/{id}/color/laps`**: set color laps
 ## Deployment
 Deployed with [Heroku](www.heroku.com)<br />
-This application [Route Analyzer Web](https://routeanalyzer.herokuapp.com/) consumes this API
+[Route Analyzer Web](https://routeanalyzer.herokuapp.com/) consumes this API
 ## Author
 **Luis Angel Rodriguez Garcia** - GitHub: [luisrodrigar](https://github.com/luisrodrigar)
