@@ -5,10 +5,10 @@ The activity route's type files allow are:
 - GPX 1.1 [GPs eXchange Format Schema](https://www.topografix.com/GPX/1/1/gpx.xsd)
 ## Getting started
 This project is using:
- - Java 8: [Java Link](https://www.java.com/es/download/)
- - Maven  [Maven Link](http://maven.apache.org/download.cgi)
- - Mongo database: [Mongo Link](https://docs.mongodb.com/manual/administration/install-community/)
- - Lombok: [Lombok Project](https://projectlombok.org)
+ - [Java 8](https://www.java.com/es/download/)
+ - [Mongo Database](https://docs.mongodb.com/manual/administration/install-community/)
+ - [Maven](http://maven.apache.org/download.cgi)
+ - [Lombok Project](https://projectlombok.org)
 ### Installation
 #### Build
 To clean and build the project: 
