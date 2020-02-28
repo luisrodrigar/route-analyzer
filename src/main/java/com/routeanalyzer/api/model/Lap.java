@@ -2,7 +2,12 @@ package com.routeanalyzer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -47,12 +52,6 @@ public class Lap implements Comparable<Lap>, Serializable {
 		this.maximumHeartRate = maximumHeartRate;
 		this.intensity = intensity;
 		this.triggerMethod = triggerMethod;
-	}
-
-	public boolean addTrack(TrackPoint track){
-		int sizeBeforeAdding = this.tracks.size();
-		this.tracks.add(track);
-		return this.tracks.size() == sizeBeforeAdding+1;
 	}
 
 	@Override

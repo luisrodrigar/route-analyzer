@@ -17,10 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import static com.routeanalyzer.api.common.CommonUtils.joinByComma;
 import static com.routeanalyzer.api.common.CommonUtils.not;
 import static com.routeanalyzer.api.common.CommonUtils.toStringValue;
+import static com.routeanalyzer.api.common.Constants.COMMA_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.POSITIONS_DELIMITER;
+import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.Objects.isNull;
@@ -70,7 +71,8 @@ public class GoogleMapsApiService implements ElevationService {
 				.map(TrackPoint::getPosition)
 				.filter(position -> nonNull(position.getLatitudeDegrees()))
 				.filter(position -> nonNull(position.getLongitudeDegrees()))
-				.map(position -> joinByComma(position.getLatitudeDegrees(), position.getLongitudeDegrees()))
+				.map(position ->
+						format("%s%s%s", position.getLatitudeDegrees(), COMMA_DELIMITER, position.getLongitudeDegrees()))
 				.orElse(null);
 	}
 
@@ -100,7 +102,7 @@ public class GoogleMapsApiService implements ElevationService {
 				.map(GoogleMapsAPIResult::getLocation)
 				.filter(gmLocation -> nonNull(gmLocation.getLat()))
 				.filter(gmLocation -> nonNull(gmLocation.getLng()))
-				.map(gmLocation -> joinByComma(gmLocation.getLat(), gmLocation.getLng()))
+				.map(gmLocation -> format("%s%s%s", gmLocation.getLat(), COMMA_DELIMITER, gmLocation.getLng()))
 				.orElse(null);
 	}
 

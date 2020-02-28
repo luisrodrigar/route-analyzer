@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.controller;
 
-import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.facade.ActivityFacade;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.exception.ActivityColorsNotAssignedException;
@@ -10,9 +9,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 @Validated
@@ -25,7 +34,8 @@ public class ActivityRestController {
 	private final ActivityFacade activityFacade;
 
 	@GetMapping(value = "/{id}")
-	public Activity getActivityById(@PathVariable @NotBlank String id) throws ActivityNotFoundException {
+	public Activity getActivityById(@PathVariable @NotBlank @Pattern(regexp = "^[a-f\\d]{24}$") String id)
+			throws ActivityNotFoundException {
 		return activityFacade.getActivityById(id);
 	}
 
@@ -34,7 +44,10 @@ public class ActivityRestController {
 										  @PathVariable @Pattern(regexp = "gpx|tcx", message = "Message type should be gpx or tcx.")
 						   final String type) throws ActivityNotFoundException {
 		return activityFacade.exportAs(id, type)
-				.map(CommonUtils::createOKApplicationOctetResponse)
+				.map(file -> ResponseEntity
+						.ok()
+						.contentType(MediaType.APPLICATION_OCTET_STREAM)
+						.body(file))
 				.orElseThrow(() -> new IllegalArgumentException("Not possible to export"));
 	}
 

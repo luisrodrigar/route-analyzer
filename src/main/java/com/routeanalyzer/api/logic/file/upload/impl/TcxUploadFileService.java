@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.logic.file.upload.impl;
 
-import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
@@ -263,7 +262,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                 }));
         return IntStream.range(indexStart.get(), MathUtils.increaseUnit(indexEnd.get()))
                 .mapToObj(index -> ofNullable(trackTList)
-                        .map(CommonUtils::getFirstElement)
+                        .map(trackTs -> trackTs.get(0))
                         .map(TrackT::getTrackpoint)
                         .map(trackPointTs -> trackPointTs.get(index))
                         .flatMap(trT -> of(indexTrackPoints)

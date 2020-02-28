@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.logic.impl;
 
-import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.LapsOperations;
 import com.routeanalyzer.api.logic.TrackPointOperations;
@@ -311,7 +310,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	private Optional<TrackPoint> getFirstTrackPoint(Lap lap){
 		return getOptLapField(lap, Lap::getTracks)
 				.filter(isNotEmpty)
-				.map(CommonUtils::getFirstElement);
+				.map(trackPointList -> trackPointList.get(0));
 	}
 
 	private List<TrackPoint> joinTrackPointLaps(Lap lapLeft, Lap lapRight) {
