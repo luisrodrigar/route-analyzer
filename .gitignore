@@ -24,5 +24,6 @@ bin/
 .project
 .classpath
 .idea
+.DS_STORE
 
 /src/test/resources/mongodb/mongo-volume/*
