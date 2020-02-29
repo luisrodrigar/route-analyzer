@@ -4,7 +4,7 @@ The activity route's type files allow are:
 - TCX [Training Center XML Schema](https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd)
 - GPX 1.1 [GPs eXchange Format Schema](https://www.topografix.com/GPX/1/1/gpx.xsd)
 ## Getting started
-This project is using:
+This project uses:
  - [Java 8](https://www.java.com/es/download/)
  - [Mongo Database](https://docs.mongodb.com/manual/administration/install-community/)
  - [Maven](http://maven.apache.org/download.cgi)

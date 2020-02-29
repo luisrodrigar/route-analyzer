@@ -11,6 +11,7 @@
 *.zip
 *.tar.gz
 *.rar
+*.iml
 
 # Directories #
 target/
@@ -23,6 +24,5 @@ bin/
 .project
 .classpath
 .idea
-*.iml
 
 /src/test/resources/mongodb/mongo-volume/*
