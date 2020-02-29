@@ -72,13 +72,13 @@ public class GpxUploadServiceImplTest {
     @BeforeClass
     public static void setUp() {
         gpxObject = createValidGpxType();
-        activityGpxTest = toActivity("utils/upload-file-gpx-test.json");
-        gpxType = toGpxRootModel("utils/gpx-test.xml");
+        activityGpxTest = toActivity("expected/file/upload-file-gpx-test.json");
+        gpxType = toGpxRootModel("input/gpx-test.xml");
     }
 
     @Before
     public void setUpInputStream() {
-        gpxXmlInputStream = getStreamResource("utils/gpx-test.xml");
+        gpxXmlInputStream = getStreamResource("input/gpx-test.xml");
     }
 
     @Test

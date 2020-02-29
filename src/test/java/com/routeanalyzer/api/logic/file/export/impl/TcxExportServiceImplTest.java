@@ -37,8 +37,8 @@ public class TcxExportServiceImplTest {
 
     @BeforeClass
     public static void setUp() {
-        activityTcxTest = toActivity("utils/json-activity-tcx.json");
-        tcxXmlString = new String(getFileBytes("utils/tcx-test.xml"), StandardCharsets.UTF_8);
+        activityTcxTest = toActivity("input/json-activity-tcx.json");
+        tcxXmlString = new String(getFileBytes("expected/file/tcx-test.xml"), StandardCharsets.UTF_8);
     }
 
     @Test

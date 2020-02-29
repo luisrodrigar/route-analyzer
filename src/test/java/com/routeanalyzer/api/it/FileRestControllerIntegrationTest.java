@@ -11,7 +11,6 @@ import com.routeanalyzer.api.services.OriginalActivityRepository;
 import io.vavr.control.Try;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,9 +100,9 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
         googleApiWireMockClass.stop();
     }
 
-    @Value("classpath:controller/coruna.gpx.xml")
+    @Value("classpath:input/coruna.gpx.xml")
     private Resource gpxXmlResource;
-    @Value("classpath:controller/oviedo.tcx.xml")
+    @Value("classpath:input/oviedo.tcx.xml")
     private Resource tcxXmlResource;
 
     @Autowired
@@ -148,7 +147,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
     public void uploadGPXFileTest() {
         // Given
         LinkedMultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
-        parameters.add("file", new ClassPathResource(format("%s/%s", "controller", CORUNA_XML_FILE)));
+        parameters.add("file", new ClassPathResource(format("%s/%s", "input", CORUNA_XML_FILE)));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -178,7 +177,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
     public void uploadTCXFileTest() {
         // Given
         LinkedMultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
-        parameters.add("file", new ClassPathResource(format("%s/%s", "controller", OVIEDO_XML_FILE)));
+        parameters.add("file", new ClassPathResource(format("%s/%s", "input", OVIEDO_XML_FILE)));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -214,7 +213,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
                         .withBodyFile(ELEVATION_STUBBING_RESPONSE)));
 
         LinkedMultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
-        parameters.add("file", new ClassPathResource(format("%s/%s", "controller", GPX_WITHOUT_ELEVATION_FILE)));
+        parameters.add("file", new ClassPathResource(format("%s/%s", "input", GPX_WITHOUT_ELEVATION_FILE)));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -260,7 +259,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
         // Given
         String unknownXmlFile = "kml";
         LinkedMultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
-        parameters.add("file", new ClassPathResource(format("%s/%s", "controller", OVIEDO_XML_FILE)));
+        parameters.add("file", new ClassPathResource(format("%s/%s", "input", OVIEDO_XML_FILE)));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);

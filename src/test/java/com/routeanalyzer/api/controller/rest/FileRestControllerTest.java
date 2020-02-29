@@ -51,15 +51,15 @@ public class FileRestControllerTest {
 	private Activity gpxActivity;
 	private Activity tcxActivity;
 
-	@Value("classpath:controller/coruna.gpx.xml")
+	@Value("classpath:input/coruna.gpx.xml")
 	private Resource gpxXmlResource;
-	@Value("classpath:controller/oviedo.tcx.xml")
+	@Value("classpath:input/oviedo.tcx.xml")
 	private Resource tcxXmlResource;
 
 
-	@Value("classpath:utils/json-activity-tcx.json")
+	@Value("classpath:expected/json-activity-tcx.json")
 	private Resource tcxJsonResource;
-	@Value("classpath:utils/json-activity-gpx.json")
+	@Value("classpath:expected/json-activity-gpx.json")
 	private Resource gpxJsonResource;
 
 	@Before

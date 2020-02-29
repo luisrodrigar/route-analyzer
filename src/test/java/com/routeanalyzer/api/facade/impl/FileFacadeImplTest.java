@@ -53,8 +53,8 @@ public class FileFacadeImplTest {
     public void uploadGpxFile() {
         // Given
         MultipartFile multipartFile = new MockMultipartFile("file", "",
-                APPLICATION_XML_VALUE, TestUtils.getFileBytes("controller/coruna.gpx.xml"));
-        Activity activity = TestUtils.toActivity("utils/upload-file-gpx-test.json");
+                APPLICATION_XML_VALUE, TestUtils.getFileBytes("input/coruna.gpx.xml"));
+        Activity activity = TestUtils.toActivity("expected/file/upload-file-gpx-test.json");
         activity.setId(ACTIVITY_GPX_ID);
         List<Activity> activities = asList(activity);
         doReturn(of(activities)).when(activityOperations).upload(multipartFile, gpxService);
@@ -77,8 +77,8 @@ public class FileFacadeImplTest {
     public void uploadTcxFile() {
         // Given
         MultipartFile multipartFile = new MockMultipartFile("file", "",
-                APPLICATION_XML_VALUE, TestUtils.getFileBytes("controller/oviedo.tcx.xml"));
-        Activity activity = TestUtils.toActivity("utils/upload-file-tcx-test.json");
+                APPLICATION_XML_VALUE, TestUtils.getFileBytes("input/oviedo.tcx.xml"));
+        Activity activity = TestUtils.toActivity("expected/file/upload-file-tcx-test.json");
         activity.setId(ACTIVITY_TCX_ID);
         List<Activity> activities = asList(activity);
         doReturn(of(activities)).when(activityOperations).upload(multipartFile, tcxService);
@@ -100,7 +100,7 @@ public class FileFacadeImplTest {
     public void uploadGpxErrorHappenedProcessingFile() throws FileOperationNotExecutedException {
         // Given
         MultipartFile multipartFile = new MockMultipartFile("file", "",
-                APPLICATION_XML_VALUE, TestUtils.getFileBytes("controller/oviedo.tcx.xml"));
+                APPLICATION_XML_VALUE, TestUtils.getFileBytes("input/oviedo.tcx.xml"));
         doReturn(empty()).when(activityOperations).upload(multipartFile, tcxService);
 
         // When

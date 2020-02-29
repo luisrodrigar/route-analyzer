@@ -37,8 +37,8 @@ public class GpxExportServiceImplTest {
 
     @BeforeClass
     public static void setUp() {
-        activityGpxTest = toActivity("utils/upload-file-gpx-test.json");
-        gpxXmlString = new String(getFileBytes("utils/gpx-test.xml"), StandardCharsets.UTF_8);
+        activityGpxTest = toActivity("input/json-activity-gpx.json");
+        gpxXmlString = new String(getFileBytes("expected/file/gpx-test.xml"), StandardCharsets.UTF_8);
     }
 
     @Test

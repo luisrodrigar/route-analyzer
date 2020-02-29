@@ -5,7 +5,6 @@ import com.routeanalyzer.api.model.Position;
 import com.routeanalyzer.api.model.TrackPoint;
 import com.routeanalyzer.api.services.googlemaps.model.GoggleMapsAPIResponse;
 import io.vavr.control.Try;
-import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,6 +37,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.cloud.contract.wiremock.WireMockSpring.options;
+import static utils.TestUtils.getFileBytes;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleMapsApiServiceTest {
@@ -49,9 +49,8 @@ public class GoogleMapsApiServiceTest {
     private static final String ELEVATION_STUBBING_ERROR_RESPONSE = "stubbing-googlemaps-elevations-error.json";
     private static final String POSITIONS = "7.3212,1.3419|4.3212,2.3419|3.6012,0.3419";
     private static final String POSITIONS_URL_ENCODED = "7.3212,1.3419%7C4.3212,2.3419%7C3.6012,0.3419";
-    private static final String DATA_RESOURCE = "expected/result-googlemaps-elevations-map.json";
-    private static final String ERROR_DATA_RESOURCE = "expected/result-googlemaps-elevations" +
-            "-error.json";
+    private static final String DATA_RESOURCE = "expected/googlemaps/result-elevations-map.json";
+    private static final String ERROR_DATA_RESOURCE = "expected/googlemaps/result-elevations-error.json";
 
     @Rule
     public WireMockClassRule googleApiWireMock = new WireMockClassRule(options()
@@ -94,10 +93,8 @@ public class GoogleMapsApiServiceTest {
                 .willReturn(ok()
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBodyFile(ELEVATION_STUBBING_RESPONSE)));
-        Map expectedResult = Try.of(() -> GoogleMapsApiServiceTest.class.getClassLoader().getResourceAsStream(DATA_RESOURCE))
-                .flatMap(inputStream -> Try.of(() -> IOUtils.toByteArray(inputStream)))
-                .flatMap(byteArray -> Try.of(() -> objectMapper.readValue(byteArray, Map.class)))
-                .get();
+        Map expectedResult = Try.of(() -> objectMapper.readValue(getFileBytes(DATA_RESOURCE), Map.class)).get();
+
         // When
         Map<String, String> mapResults = elevationService.getAltitude(POSITIONS);
 
@@ -116,11 +113,7 @@ public class GoogleMapsApiServiceTest {
                 .willReturn(ok()
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBodyFile(ELEVATION_STUBBING_ERROR_RESPONSE)));
-        Map errorResult = Try.of(() -> GoogleMapsApiServiceTest.class
-                .getClassLoader().getResourceAsStream(ERROR_DATA_RESOURCE))
-                .flatMap(inputStream -> Try.of(() -> IOUtils.toByteArray(inputStream)))
-                .flatMap(byteArray -> Try.of(() -> objectMapper.readValue(byteArray, Map.class)))
-                .get();
+        Map errorResult = Try.of(() -> objectMapper.readValue(getFileBytes(ERROR_DATA_RESOURCE), Map.class)).get();
 
         // When
         Map<String, String> mapResults = elevationService.getAltitude(POSITIONS);

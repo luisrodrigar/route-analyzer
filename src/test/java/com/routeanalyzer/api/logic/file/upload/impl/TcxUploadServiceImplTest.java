@@ -70,12 +70,12 @@ public class TcxUploadServiceImplTest {
     @BeforeClass
     public static void setUp() {
         tcxObject = createValidTrainingCenterType();
-        activityTcxTest = toActivity("utils/upload-file-tcx-test.json");
+        activityTcxTest = toActivity("expected/file/upload-file-tcx-test.json");
     }
 
     @Before
     public void setInputStream() {
-        tcxXmlInputStream = getStreamResource("utils/tcx-test.xml");
+        tcxXmlInputStream = getStreamResource("input/tcx-test.xml");
     }
 
     @Test

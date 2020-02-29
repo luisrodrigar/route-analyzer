@@ -1,0 +1,86 @@
+{
+  "id": null,
+  "device": "Garmin Connect",
+  "sourceXmlType": "gpx",
+  "date": "2018-02-27T14:16:13+01:00",
+  "laps": [
+    {
+      "startTime": "2018-02-27T14:16:13.000+01:00",
+      "index": "1",
+      "tracks": [
+        {
+          "date": "2018-02-27T14:16:13+01:00",
+          "index":  "1",
+          "position": {
+            "latitudeDegrees": "42.6131970",
+            "longitudeDegrees": "-6.5732170"
+          },
+          "altitudeMeters": "557.3",
+          "heartRateBpm":  "96"
+        },
+        {
+          "date": "2018-02-27T14:16:18+01:00",
+          "index":  "2",
+          "position": {
+            "latitudeDegrees": "42.6132170",
+            "longitudeDegrees": "-6.5733730"
+          },
+          "altitudeMeters": "557.3",
+          "heartRateBpm":  "96"
+        },
+        {
+          "date": "2018-02-27T14:16:20+01:00",
+          "index":  "3",
+          "position": {
+            "latitudeDegrees": "42.6132120",
+            "longitudeDegrees": "-6.5734430"
+          },
+          "altitudeMeters": "557.3",
+          "heartRateBpm":  "96"
+        }
+      ]
+    },
+    {
+      "startTime": "2018-02-27T14:16:30+01:00",
+      "index": "2",
+      "tracks": [
+        {
+          "date": "2018-02-27T14:16:30.000+01:00",
+          "index":  "1",
+          "position": {
+            "latitudeDegrees": "42.6132120",
+            "longitudeDegrees": "-6.5738250"
+          },
+          "altitudeMeters": "557.3",
+          "heartRateBpm":  "106"
+        },
+        {
+          "date": "2018-02-27T14:16:33+01:00",
+          "index":  "2",
+          "position": {
+            "latitudeDegrees": "42.6132120",
+            "longitudeDegrees": "-6.5739120"
+          },
+          "altitudeMeters": "557.3",
+          "heartRateBpm":  "109"
+        }
+      ]
+    },
+    {
+      "startTime": "2018-02-27T14:17:30+01:00",
+      "index": "3",
+      "tracks": [
+        {
+          "date": "2018-02-27T14:17:30+01:00",
+          "index": "1",
+          "position": {
+            "latitudeDegrees": "42.6132120",
+            "longitudeDegrees": "-6.5738250"
+          },
+          "altitudeMeters": "557.3",
+          "heartRateBpm": "120"
+        }
+      ]
+    }
+  ]
+}

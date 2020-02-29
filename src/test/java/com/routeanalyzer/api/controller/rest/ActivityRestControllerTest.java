@@ -55,21 +55,21 @@ public class ActivityRestControllerTest {
 
 	private Activity gpxActivity, tcxActivity;
 
-	@Value("classpath:utils/json-activity-tcx.json")
+	@Value("classpath:expected/json-activity-tcx.json")
 	private Resource tcxJsonResource;
-	@Value("classpath:utils/json-activity-gpx.json")
+	@Value("classpath:expected/json-activity-gpx.json")
 	private Resource gpxJsonResource;
-	@Value("classpath:controller/split-lap-tcx.json")
+	@Value("classpath:expected/activity/split-lap-tcx.json")
 	private Resource splitTcxJsonResource;
-	@Value("classpath:controller/remove-point-tcx.json")
+	@Value("classpath:expected/activity/remove-point-tcx.json")
 	private Resource removePointTcxJsonResource;
-	@Value("classpath:controller/join-laps-tcx.json")
+	@Value("classpath:expected/activity/join-laps-tcx.json")
 	private Resource joinLapsTcxJsonResource;
-	@Value("classpath:controller/lap-colors-tcx.json")
+	@Value("classpath:expected/activity/lap-colors-tcx.json")
 	private Resource lapColorsTcxJsonResource;
-	@Value("classpath:controller/remove-lap-tcx.json")
+	@Value("classpath:expected/activity/remove-lap-tcx.json")
 	private Resource removeLapTcxJsonResource;
-	@Value("classpath:controller/remove-laps-tcx.json")
+	@Value("classpath:expected/activity/remove-laps-tcx.json")
 	private Resource removeLapsTcxJsonResource;
 
 	@Before

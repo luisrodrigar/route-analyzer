@@ -47,13 +47,13 @@ public class ActivityFacadeImplTest {
 
     @BeforeClass
     public static void setUp() {
-        tcxActivity = toActivity("utils/json-activity-tcx.json");
+        tcxActivity = toActivity("expected/json-activity-tcx.json");
     }
 
     @Test
     public void getGpxActivityById() {
         // Given
-        Activity gpxActivity = toActivity("utils/json-activity-gpx.json");
+        Activity gpxActivity = toActivity("expected/json-activity-gpx.json");
         doReturn(of(gpxActivity)).when(mongoRepository).findById(ACTIVITY_GPX_ID);
 
         // When
@@ -128,7 +128,7 @@ public class ActivityFacadeImplTest {
         // Given
         String xmlFile = "Gpx xml file";
 
-        Activity gpxActivity = toActivity("utils/json-activity-gpx.json");
+        Activity gpxActivity = toActivity("expected/json-activity-gpx.json");
         doReturn(of(gpxActivity)).when(mongoRepository).findById(ACTIVITY_GPX_ID);
         doReturn(xmlFile).when(activityOperations).exportByType(eq(SOURCE_GPX_XML), eq(gpxActivity));
 
@@ -150,7 +150,7 @@ public class ActivityFacadeImplTest {
         String longitudePointToDelete = "-6.5733730";
         Long timeInMillisPointToDelete = 1519737378000L;
         Integer indexPointToDelete = 2;
-        Activity removePointActivity = toActivity("controller/remove-point-tcx.json");
+        Activity removePointActivity = toActivity("expected/activity/remove-point-tcx.json");
         doReturn(of(tcxActivity)).when(mongoRepository).findById(eq(ACTIVITY_TCX_ID));
         doReturn(removePointActivity).when(activityOperations).removePoint(eq(tcxActivity), eq(latitudePointToDelete),
                 eq(longitudePointToDelete), eq(timeInMillisPointToDelete), eq(indexPointToDelete));
@@ -256,7 +256,7 @@ public class ActivityFacadeImplTest {
         List<Integer> indexes = asList(Integer.parseInt(index));
         List<String> timesStr = asList(timeMillis);
         List<String> indexesStr = asList(index);
-        Activity removeLapActivity = toActivity("controller/remove-lap-tcx.json");
+        Activity removeLapActivity = toActivity("expected/activity/remove-lap-tcx.json");
         doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
         doReturn(removeLapActivity).when(activityOperations).removeLaps(tcxActivity, times, indexes);
         doReturn(removeLapActivity).when(mongoRepository).save(removeLapActivity);
@@ -282,7 +282,7 @@ public class ActivityFacadeImplTest {
         List<Integer> indexes = asList(Integer.parseInt(index1), Integer.parseInt(index2));
         List<String> timesStr = asList(timeMillis1, timeMillis2);
         List<String> indexesStr = asList(index1, index2);
-		Activity lapsRemovedActivity = toActivity("controller/remove-laps-tcx.json");
+		Activity lapsRemovedActivity = toActivity("expected/activity/remove-laps-tcx.json");
 		doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
         doReturn(lapsRemovedActivity).when(activityOperations).removeLaps(tcxActivity, times, indexes);
         doReturn(lapsRemovedActivity).when(mongoRepository).save(lapsRemovedActivity);
@@ -301,7 +301,7 @@ public class ActivityFacadeImplTest {
     @Test
     public void joinLaps() {
 		// Given
-		Activity joinLapsActivity = toActivity("controller/join-laps-tcx.json");
+		Activity joinLapsActivity = toActivity("expected/activity/join-laps-tcx.json");
 		Integer index1 = 0;
 		Integer index2 = 1;
         doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
@@ -355,7 +355,7 @@ public class ActivityFacadeImplTest {
     @Test
     public void splitLap() {
         // Given
-        Activity splitActivity = toActivity("controller/split-lap-tcx.json");
+        Activity splitActivity = toActivity("expected/activity/split-lap-tcx.json");
         String lat = "42.6132170";
         String lng = "-6.5733730";
         Long timeMillis = 1519737378000L;
@@ -415,7 +415,7 @@ public class ActivityFacadeImplTest {
     @Test
     public void setColorLap() {
         // Given
-		Activity lapColorsActivity = toActivity("controller/lap-colors-tcx.json");
+		Activity lapColorsActivity = toActivity("expected/activity/lap-colors-tcx.json");
         String data = "abc012-0a1b2c@123abc-0e9d8c";
         doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
         doReturn(lapColorsActivity).when(activityOperations).setColorsGetActivity(tcxActivity, data);
