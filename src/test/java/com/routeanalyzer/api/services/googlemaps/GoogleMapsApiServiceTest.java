@@ -44,7 +44,8 @@ public class GoogleMapsApiServiceTest {
 
     private static final String LOCALHOST_HOST_NAME = "localhost";
     private static final String ELEVATION_ENDPOINT = "/maps/api/elevation/json?locations=%s&key=%s";
-    private static final String API_KEY = "BIzeSu0Etz13LA1c031BFUeuNsRZ1xO4uYiM0fB";
+    private static final String API_KEY = "ENCRYPTED_KEY";
+    private static final String ENCRYPTED_API_KEY = "wCoqZ2hkjKf44HXOAOrlBw==";
     private static final String ELEVATION_STUBBING_RESPONSE = "stubbing-googlemaps-elevations-response.json";
     private static final String ELEVATION_STUBBING_ERROR_RESPONSE = "stubbing-googlemaps-elevations-error.json";
     private static final String POSITIONS = "7.3212,1.3419|4.3212,2.3419|3.6012,0.3419";

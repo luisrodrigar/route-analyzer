@@ -27,17 +27,17 @@ public class AWSConfiguration {
 
     @Bean
     public AmazonS3 s3client() {
-        return createCredentials(properties.getAccessKeyId(), properties.getSecretAccessKey())
+        return createCredentials(properties.getDecodeAccessKeyId(), properties.getDecodeSecretAccessKey())
                 .map(this::createAmazonS3HTTPProtocol)
                 .orElse(null);
     }
 
-    private Optional<BasicAWSCredentials> createCredentials(String encryptedAwsId, String encryptedAwsKey) {
-        return ofNullable(encryptedAwsId)
+    private Optional<BasicAWSCredentials> createCredentials(String accessKeyId, String secretAccessKey) {
+        return ofNullable(accessKeyId)
                 .filter(StringUtils::isNotEmpty)
-                .flatMap(__ -> ofNullable(encryptedAwsKey)
+                .flatMap(__ -> ofNullable(secretAccessKey)
                         .filter(StringUtils::isNotEmpty)
-                        .map(___ -> new BasicAWSCredentials(decrypt(encryptedAwsId), decrypt(encryptedAwsKey))));
+                        .map(___ -> new BasicAWSCredentials(accessKeyId, secretAccessKey)));
     }
 
     private AmazonS3 createAmazonS3HTTPProtocol(BasicAWSCredentials awsCredentials) {

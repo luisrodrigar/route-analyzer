@@ -51,10 +51,7 @@ public final class Encrypter {
                 .toJavaOptional()
                 .map(cipher -> {
                     Try.run(() -> cipher.init(mode, skeySpec, iv))
-                            .recover(error -> {
-                                log.error(error.getMessage(), error);
-                                return null;
-                            });
+                            .onFailure(err -> log.error("Error initializing the cipher object", err));
                     return cipher;
                 });
     }
@@ -62,14 +59,18 @@ public final class Encrypter {
     private static byte[] decodeString(String encrypted, Cipher cipher) {
         return ofNullable(encrypted)
                 .map(Base64::decodeBase64)
-                .flatMap(decodeStr -> Try.of(() -> cipher.doFinal(decodeStr)).toJavaOptional())
+                .flatMap(decodeStr -> Try.of(() -> cipher.doFinal(decodeStr))
+                        .onFailure(err -> log.error("Error trying to get the decoded string", err))
+                        .toJavaOptional())
                 .orElse(null);
     }
 
     private static String encodeString(String decrypted, Cipher cipher) {
         return ofNullable(decrypted)
                 .map(String::getBytes)
-                .flatMap(bytes -> Try.of( () -> cipher.doFinal(bytes)).toJavaOptional())
+                .flatMap(bytes -> Try.of( () -> cipher.doFinal(bytes))
+                        .onFailure(err -> log.error("Error trying to get the encoded string", err))
+                        .toJavaOptional())
                 .map(Base64::encodeBase64String)
                 .orElse(null);
     }

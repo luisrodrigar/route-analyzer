@@ -40,7 +40,7 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
 
     @Override
     public MongoClient mongoClient() {
-        return MongoClients.create(new ConnectionString(properties.getMongoUri()));
+        return MongoClients.create(new ConnectionString(properties.getMongoUri() + getDatabaseName()));
     }
 
     @Bean

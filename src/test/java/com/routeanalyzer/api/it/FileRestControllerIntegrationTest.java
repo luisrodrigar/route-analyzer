@@ -72,7 +72,8 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
     private static final String GPX_WITHOUT_ELEVATION_FILE = "gpx-without-elevation.xml";
     private static final String LOCALHOST_HOST_NAME = "localhost";
     private static final String GOOGLE_MAPS_ENDPOINT_PATH = "/maps/api/elevation/json";
-    private static final String API_KEY = "BIzeSu0Etz13LA1c031BFUeuNsRZ1xO4uYiM0fB";
+    private static final String API_KEY = "AIzaSyDEtc96UC9co31AFUNuNsPZ1xV4SYEMwfA";
+    private static final String ENCRYPTED_API_KEY = "uQp1FZQnVlXmwrp7me9xmcOfrp+CvXIAPmm0c2hyGdzjNnFtxpMiGvA+fDYxJAUk";
 
     private static final String ELEVATION_ENDPOINT = "/maps/api/elevation/json?locations=%s&key=%s";
     private static final String ELEVATION_STUBBING_RESPONSE = "stubbing-googlemaps-elevations-integration-response.json";
@@ -93,13 +94,6 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
             new DockerComposeContainer(new File(DOCKER_COMPOSE_MONGO_DB))
                     .withExposedService(MONGO_CONTAINER_NAME, MONGO_PORT);
 
-    @AfterClass
-    public static void shutDown() {
-        mongoDbContainer.stop();
-        localStackS3.stop();
-        googleApiWireMockClass.stop();
-    }
-
     @Value("classpath:input/coruna.gpx.xml")
     private Resource gpxXmlResource;
     @Value("classpath:input/oviedo.tcx.xml")
@@ -110,6 +104,15 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
     @Autowired
     private ActivityMongoRepository activityMongoRepository;
 
+    @AfterClass
+    public static void shutDown() {
+        mongoDbContainer.stop();
+        localStackS3.stop();
+        googleApiWireMockClass.stop();
+        mongoDbContainer.close();
+        localStackS3.close();
+    }
+
     static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext ctx) {
@@ -119,7 +122,7 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
                     "google-maps-api.elevation-host: " +
                             format("%s:%d",LOCALHOST_HOST_NAME, googleApiWireMockClass.port()),
                     "google-maps-api.elevation-endpoint: " + GOOGLE_MAPS_ENDPOINT_PATH,
-                    "google-maps-api.api-key: " + API_KEY
+                    "google-maps-api.encrypted-api-key: " + ENCRYPTED_API_KEY
             ).applyTo(ctx);
         }
     }
