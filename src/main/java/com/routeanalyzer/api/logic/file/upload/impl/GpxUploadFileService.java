@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static com.routeanalyzer.api.common.CommonUtils.not;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -45,7 +46,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
      * @return a list with the activities of the xml document (gpx).
      */
     @Override
-    public List<Activity> toListActivities(GpxType gpxType) {
+    public List<Activity> toListActivities(final GpxType gpxType) {
         return ofNullable(gpxType)
                 .map(GpxType::getTrk)
                 .map(trackLapsList -> trackLapsList.stream()
@@ -152,6 +153,13 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
     }
 
     private Optional<Integer> getHeartRateExtensionValue(final List<Object> extensions) {
+        return ofNullable(toJAXBElementExtensionsValue(extensions))
+                .filter(not(List::isEmpty))
+                .map(this::getHeartRateValue)
+                .orElseGet(() -> getHeartRateValue(extensions));
+    }
+
+    private Optional<Integer> getHeartRateValue(final List<Object> extensions) {
         return extensions.stream()
                 .filter(TrackPointExtensionT.class::isInstance)
                 .map(TrackPointExtensionT.class::cast)
@@ -159,4 +167,5 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                 .map(Short::intValue)
                 .findFirst();
     }
+
 }

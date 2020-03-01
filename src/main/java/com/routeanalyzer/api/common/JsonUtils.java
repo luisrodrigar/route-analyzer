@@ -22,7 +22,7 @@ public class JsonUtils {
      * @param object: any object of any class to transform to String
      * @return json document with the info of the object
      */
-    public static Try<String> toJson(Object object) {
+    public static Try<String> toJson(final Object object) {
         return Try.of(() -> objectMapper.writeValueAsString(object))
                 .onFailure(err -> log.error("Error trying to convert from class to json string", err));
     }
@@ -34,7 +34,7 @@ public class JsonUtils {
      * @param <T> output class type
      * @return object with the info of the json document
      */
-    public static <T> Try<T> fromJson(String jsonStr, Class<T> clazz) {
+    public static <T> Try<T> fromJson(final String jsonStr, final Class<T> clazz) {
         return Try.of(() -> objectMapper.readValue(jsonStr, clazz))
                 .onFailure(err -> log.error("Error trying to convert from json string {} to class {} ", jsonStr,
                         clazz, err));

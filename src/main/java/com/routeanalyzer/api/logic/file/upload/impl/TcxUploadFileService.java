@@ -31,7 +31,6 @@ import com.routeanalyzer.api.xml.tcx.activityextension.ActivityTrackpointExtensi
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.xml.bind.JAXBElement;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +41,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
+import static com.routeanalyzer.api.common.CommonUtils.not;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
@@ -51,8 +51,8 @@ import static java.util.stream.Collectors.toList;
 public class TcxUploadFileService extends UploadFileService<TrainingCenterDatabaseT> {
 
     @Autowired
-    public TcxUploadFileService(TCXService tcxService, ActivityOperations activityOperationsImpl,
-                                LapsOperations lapsOperationsImpl, TrackPointOperations trackPointOperations) {
+    public TcxUploadFileService(final TCXService tcxService, final ActivityOperations activityOperationsImpl,
+                                final LapsOperations lapsOperationsImpl, final TrackPointOperations trackPointOperations) {
         super(tcxService, activityOperationsImpl, lapsOperationsImpl, trackPointOperations);
     }
 
@@ -66,7 +66,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
      * @return list of activities which contains the xml document.
      */
     @Override
-    public List<Activity> toListActivities(TrainingCenterDatabaseT tcxType) {
+    public List<Activity> toListActivities(final TrainingCenterDatabaseT tcxType) {
         return ofNullable(tcxType)
                 .map(TrainingCenterDatabaseT::getActivities)
                 .map(this::toActivities)
@@ -77,7 +77,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
 
     }
 
-    private List<Activity> toActivities(ActivityListT activityListT) {
+    private List<Activity> toActivities(final ActivityListT activityListT) {
         return activityListT.getActivity()
                 .stream()
                 .map(this::toActivity)
@@ -184,7 +184,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                 .map(trackPoint -> setTrackPointExtensions(trackpointT, trackPoint));
     }
 
-    private List<Activity> toActivities(CourseListT courseListT) {
+    private List<Activity> toActivities(final CourseListT courseListT) {
         return courseListT.getCourse()
                 .stream()
                 .map(this::toActivity)
@@ -281,11 +281,14 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
     }
 
     private Optional<Double> getAverageSpeedExtensionValue(final ExtensionsT extensionsT) {
-        return extensionsT.getAny()
-                .stream()
-                .filter(JAXBElement.class::isInstance)
-                .map(JAXBElement.class::cast)
-                .map(JAXBElement::getValue)
+        return ofNullable(toJAXBElementExtensionsValue(extensionsT.getAny()))
+                .filter(not(List::isEmpty))
+                .map(this::getAvgSpeedValue)
+                .orElseGet(() -> getAvgSpeedValue(extensionsT.getAny()));
+    }
+
+    private Optional<Double> getAvgSpeedValue(final List<Object> extensions) {
+        return extensions.stream()
                 .filter(ActivityLapExtensionT.class::isInstance)
                 .map(ActivityLapExtensionT.class::cast)
                 .map(ActivityLapExtensionT::getAvgSpeed)
@@ -293,7 +296,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                 .findFirst();
     }
 
-    private TrackPoint setTrackPointExtensions(TrackpointT xmlTrackPoint, TrackPoint trackPoint) {
+    private TrackPoint setTrackPointExtensions(final TrackpointT xmlTrackPoint, final TrackPoint trackPoint) {
         return ofNullable(xmlTrackPoint)
                 .map(TrackpointT::getExtensions)
                 .map(ExtensionsT::getAny)
@@ -308,8 +311,14 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
     }
 
     private Optional<BigDecimal> getSpeedExtensionValue(final List<Object> extensions) {
+        return ofNullable(toJAXBElementExtensionsValue(extensions))
+                .filter(not(List::isEmpty))
+                .map(this::getSpeedValue)
+                .orElseGet(() -> getSpeedValue(extensions));
+    }
+
+    private Optional<BigDecimal> getSpeedValue(final List<Object> extensions) {
         return extensions.stream()
-                .filter(Objects::nonNull)
                 .filter(ActivityTrackpointExtensionT.class::isInstance)
                 .map(ActivityTrackpointExtensionT.class::cast)
                 .map(ActivityTrackpointExtensionT::getSpeed)
@@ -317,4 +326,5 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                 .map(MathUtils::toBigDecimal)
                 .findFirst();
     }
+
 }

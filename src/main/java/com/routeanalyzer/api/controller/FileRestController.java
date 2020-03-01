@@ -42,10 +42,10 @@ public class FileRestController {
 	 */
 	@PostMapping("/upload")
 	@ResponseStatus(HttpStatus.CREATED)
-	public List<String> uploadFile(@RequestParam("file") MultipartFile multiPart,
+	public List<String> uploadFile(@RequestParam("file") final MultipartFile multiPart,
 								   @RequestParam("type")
 								   @Pattern(regexp = "gpx|tcx",
-										   message = "Message type should be gpx or tcx.") String type)
+										   message = "Message type should be gpx or tcx.") final String type)
 			throws FileOperationNotExecutedException {
 		return fileFacade.uploadFile(multiPart, type);
 	}

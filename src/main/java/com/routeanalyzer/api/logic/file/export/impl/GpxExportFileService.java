@@ -34,12 +34,12 @@ import static java.util.Optional.ofNullable;
 public class GpxExportFileService extends ExportFileService<GpxType> {
 
     @Autowired
-    public GpxExportFileService(GPXService gpxService) {
+    public GpxExportFileService(final GPXService gpxService) {
         super(gpxService);
     }
 
     @Override
-    public Optional<JAXBElement<GpxType>> convertToXmlObjects(Activity activity) {
+    public Optional<JAXBElement<GpxType>> convertToXmlObjects(final Activity activity) {
         return ofNullable(activity)
                 .map(Activity::getLaps)
                 .flatMap(this::toOptionalTrkType)
@@ -119,7 +119,7 @@ public class GpxExportFileService extends ExportFileService<GpxType> {
         return wpt;
     };
 
-    private Optional<TrkType> toOptionalTrkType(List<Lap> laps) {
+    private Optional<TrkType> toOptionalTrkType(final List<Lap> laps) {
         return of(laps.stream()
                 .map(this::toTrkSegTypes)
                 .filter(Objects::nonNull)
@@ -127,7 +127,7 @@ public class GpxExportFileService extends ExportFileService<GpxType> {
                 .map(addTrkSegType);
     }
 
-    private TrksegType toTrkSegTypes(Lap lap) {
+    private TrksegType toTrkSegTypes(final Lap lap) {
         return ofNullable(lap)
                 .map(Lap::getTracks)
                 .map(trackPoints ->

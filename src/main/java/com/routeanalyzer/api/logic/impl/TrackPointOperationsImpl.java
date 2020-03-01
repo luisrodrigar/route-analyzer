@@ -34,7 +34,8 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 	private final PositionOperations positionOperations;
 
 	@Override
-	public boolean isThisTrack(TrackPoint track, String latitude, String longitude, Long timeInMillis, Integer index) {
+	public boolean isThisTrack(final TrackPoint track, final String latitude, final String longitude,
+							   final Long timeInMillis, final Integer index) {
 		// Position: latitude and longitude
 		boolean isPosition = ofNullable(track)
 				.map(TrackPoint::getPosition)
@@ -51,7 +52,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 	}
 
 	@Override
-	public Double calculateDistance(TrackPoint origin, TrackPoint end) {
+	public Double calculateDistance(final TrackPoint origin, final TrackPoint end) {
 		// Check track point positions are informed
 		return ofNullable(origin)
 				.map(TrackPoint::getPosition)
@@ -62,7 +63,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 	}
 
 	@Override
-	public Double calculateSpeed(TrackPoint origin, TrackPoint end) {
+	public Double calculateSpeed(final TrackPoint origin, final TrackPoint end) {
 		return ofNullable(origin)
 				.flatMap(__ -> ofNullable(end)
 						.map(___ -> calculateTime(origin, end))
@@ -146,7 +147,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 	}
 
 	@Override
-	public TrackPoint toTrackPoint(TrackpointT trackpointT, int index) {
+	public TrackPoint toTrackPoint(final TrackpointT trackpointT, final int index) {
 		return positionOperations.toPosition(trackpointT)
 				.filter(__ -> nonNull(trackpointT.getTime()))
 				.map(position -> ofNullable(trackpointT)
@@ -170,7 +171,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 						null, null, null));
 	}
 
-	private Long calculateTime(TrackPoint origin, TrackPoint end) {
+	private Long calculateTime(final TrackPoint origin, final TrackPoint end) {
 		return ofNullable(origin)
 				.map(TrackPoint::getDate)
 				.flatMap(DateUtils::toTimeMillis)
@@ -183,8 +184,8 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 				.orElse(null);
 	}
 
-	private boolean isEqualsValueTrack(TrackPoint track, Function<TrackPoint, Object> methodGetter,
-									   Function<Object, Long> transformMethod, long expectedValue) {
+	private boolean isEqualsValueTrack(final TrackPoint track, Function<TrackPoint, Object> methodGetter,
+									   final Function<Object, Long> transformMethod, final long expectedValue) {
 		return ofNullable(track)
 				.map(methodGetter)
 				.map(transformMethod)

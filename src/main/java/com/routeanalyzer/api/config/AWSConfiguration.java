@@ -32,7 +32,7 @@ public class AWSConfiguration {
                 .orElse(null);
     }
 
-    private Optional<BasicAWSCredentials> createCredentials(String accessKeyId, String secretAccessKey) {
+    private Optional<BasicAWSCredentials> createCredentials(final String accessKeyId, final String secretAccessKey) {
         return ofNullable(accessKeyId)
                 .filter(StringUtils::isNotEmpty)
                 .flatMap(__ -> ofNullable(secretAccessKey)
@@ -40,7 +40,7 @@ public class AWSConfiguration {
                         .map(___ -> new BasicAWSCredentials(accessKeyId, secretAccessKey)));
     }
 
-    private AmazonS3 createAmazonS3HTTPProtocol(BasicAWSCredentials awsCredentials) {
+    private AmazonS3 createAmazonS3HTTPProtocol(final BasicAWSCredentials awsCredentials) {
         ClientConfiguration config = new ClientConfiguration();
         config.setProtocol(Protocol.HTTP);
         return AmazonS3ClientBuilder.standard()

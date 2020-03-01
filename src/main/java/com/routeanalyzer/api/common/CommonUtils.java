@@ -19,7 +19,7 @@ public class CommonUtils {
 
 	// List Utils
 
-	public static <T> List<T> toListOfType(List<String> listStrings, Function<String, T> convertTo) {
+	public static <T> List<T> toListOfType(final List<String> listStrings, final Function<String, T> convertTo) {
 		Function<String, Optional<T>> checkConvertTo = str ->  Try.of(() -> convertTo.apply(str))
 				.onFailure(err -> log.error("Error trying to convert to a List of types using {}", convertTo, err))
 				.toJavaOptional();
@@ -34,13 +34,13 @@ public class CommonUtils {
 
 	// Boolean utils
 
-	public static <T> Predicate<T> not(Predicate<T> t) {
+	public static <T> Predicate<T> not(final Predicate<T> t) {
 		return t.negate();
 	}
 
 	// String utils
 
-	public static String toStringValue(Object value) {
+	public static String toStringValue(final Object value) {
 		return ofNullable(value)
 				.map(String::valueOf)
 				.orElse(null);

@@ -26,7 +26,8 @@ public interface TrackPointOperations {
 	 * @param index
 	 * @return true or false
 	 */
-	boolean isThisTrack(TrackPoint track, String latitude, String longitude, Long timeInMillis, Integer index);
+	boolean isThisTrack(final TrackPoint track, final String latitude, final String longitude, final Long timeInMillis,
+						final Integer index);
 
 	/**
 	 * Distance between two track points.
@@ -37,7 +38,7 @@ public interface TrackPointOperations {
 	 *            position
 	 * @return distance in meters
 	 */
-	Double calculateDistance(TrackPoint origin, TrackPoint end);
+	Double calculateDistance(final TrackPoint origin, final TrackPoint end);
 
 	/**
 	 * Speed calculated with the distance information of both track points.
@@ -47,7 +48,7 @@ public interface TrackPointOperations {
 	 * @param end
 	 * @return speed meters per second
 	 */
-	Double calculateSpeed(TrackPoint origin, TrackPoint end);
+	Double calculateSpeed(final TrackPoint origin, final TrackPoint end);
 
 	/**
 	 * Created track point based on the zoned date time, index, position and altitude
@@ -156,7 +157,7 @@ public interface TrackPointOperations {
 	 * @param indexTrackPoint: index
 	 * @return track point
 	 */
-	TrackPoint toTrackPoint(TrackpointT trackpointT, int indexTrackPoint);
+	TrackPoint toTrackPoint(final TrackpointT trackpointT, final int indexTrackPoint);
 
 	/**
 	 * Create track point from way point and index

@@ -52,7 +52,8 @@ public class FileFacadeImpl implements FileFacade {
                 .orElseThrow(() -> new FileNotFoundException(id, type));
     }
 
-    private Optional<List<Activity>> uploadAndSave(MultipartFile multiPartFile, UploadFileService fileService) {
+    private Optional<List<Activity>> uploadAndSave(final MultipartFile multiPartFile,
+                                                   final UploadFileService fileService) {
         return activityOperations.upload(multiPartFile, fileService)
                 .map(activities -> mongoRepository.saveAll(activities))
                 .map(activities -> activityOperations.pushToS3(activities, multiPartFile));

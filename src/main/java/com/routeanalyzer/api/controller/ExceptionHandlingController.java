@@ -2,7 +2,11 @@ package com.routeanalyzer.api.controller;
 
 import com.amazonaws.AmazonClientException;
 import com.routeanalyzer.api.common.JsonUtils;
-import com.routeanalyzer.api.model.exception.*;
+import com.routeanalyzer.api.model.exception.ActivityColorsNotAssignedException;
+import com.routeanalyzer.api.model.exception.ActivityNotFoundException;
+import com.routeanalyzer.api.model.exception.ActivityOperationNoExecutedException;
+import com.routeanalyzer.api.model.exception.FileNotFoundException;
+import com.routeanalyzer.api.model.exception.FileOperationNotExecutedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,7 +20,15 @@ import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 
-import static com.routeanalyzer.api.common.Constants.*;
+import static com.routeanalyzer.api.common.Constants.ACTIVITY_NOT_FOUND;
+import static com.routeanalyzer.api.common.Constants.AMAZON_CLIENT_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.BAD_REQUEST_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.COLORS_ASSIGNED_EXCEPTION;
+import static com.routeanalyzer.api.common.Constants.FILE_NOT_FOUND;
+import static com.routeanalyzer.api.common.Constants.IO_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.JAXB_EXCEPTION_MESSAGE;
+import static com.routeanalyzer.api.common.Constants.OPERATION_NOT_EXECUTED;
+import static com.routeanalyzer.api.common.Constants.SAX_PARSE_EXCEPTION_MESSAGE;
 
 @Slf4j
 @RestControllerAdvice
@@ -118,7 +130,7 @@ public class ExceptionHandlingController {
         return createErrorBody(true, OPERATION_NOT_EXECUTED, exception);
     }
 
-    private Response createErrorBody(boolean isError, String description, Exception exception) {
+    private Response createErrorBody(final boolean isError, final String description, final Exception exception) {
         return Response.builder()
                 .error(isError)
                 .description(description)

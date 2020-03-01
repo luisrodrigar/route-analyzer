@@ -22,7 +22,7 @@ import static java.util.Optional.ofNullable;
 public class PositionOperationsImpl implements PositionOperations {
 
     @Override
-    public boolean isThisPosition(Position position, String latitudeDegrees, String longitudeDegrees) {
+    public boolean isThisPosition(final Position position, final String latitudeDegrees, final String longitudeDegrees) {
         Predicate<Position> isSameLatitude = isSameCoordinate(latitudeDegrees, Position::getLatitudeDegrees);
         Predicate<Position> isSameLongitude = isSameCoordinate(longitudeDegrees, Position::getLongitudeDegrees);
         return ofNullable(position)
@@ -35,7 +35,7 @@ public class PositionOperationsImpl implements PositionOperations {
     }
 
     @Override
-    public Optional<Double> calculateDistance(Position origin, Position end) {
+    public Optional<Double> calculateDistance(final Position origin, final Position end) {
         Predicate<Position> isCoordinatesNotNull = position -> nonNull(position.getLatitudeDegrees())
                 && nonNull(position.getLongitudeDegrees());
         return ofNullable(origin)
@@ -46,44 +46,44 @@ public class PositionOperationsImpl implements PositionOperations {
     }
 
     @Override
-    public Position toPosition(String latitude, String longitude) {
+    public Position toPosition(final String latitude, final String longitude) {
         return toPosition(toBigDecimal(latitude), toBigDecimal(longitude))
                 .orElse(null);
     }
 
     @Override
-    public Optional<Position> toOptPosition(String latitude, String longitude) {
+    public Optional<Position> toOptPosition(final String latitude, final String longitude) {
         return ofNullable(toBigDecimal(latitude))
                 .flatMap(latitudeBD -> ofNullable(toBigDecimal(longitude))
                         .map(longitudeBD -> new Position(latitudeBD, longitudeBD)));
     }
 
     @Override
-    public Position toPosition(Double latitude, Double longitude) {
+    public Position toPosition(final Double latitude, final Double longitude) {
         return toPosition(toStringValue(latitude), toStringValue(longitude));
     }
 
     @Override
-    public Optional<Position> toPosition(WptType wptType) {
+    public Optional<Position> toPosition(final WptType wptType) {
         return ofNullable(wptType)
                 .flatMap(__ -> toPosition(wptType.getLat(), wptType.getLon()));
     }
 
     @Override
-    public Optional<Position> toPosition(TrackpointT trackpointT) {
+    public Optional<Position> toPosition(final TrackpointT trackpointT) {
         return ofNullable(trackpointT)
                 .map(TrackpointT::getPosition)
                 .map(positionT -> toPosition(positionT.getLatitudeDegrees(), positionT.getLongitudeDegrees()));
     }
 
     @Override
-    public Optional<Position> toPosition(BigDecimal latParam, BigDecimal lngParam) {
+    public Optional<Position> toPosition(final BigDecimal latParam, final BigDecimal lngParam) {
         return ofNullable(latParam)
                 .flatMap(latitude -> ofNullable(lngParam)
                         .map(longitude -> new Position(latitude, longitude)));
     }
 
-    private double metersBetweenPositions(Position origin, Position end) {
+    private double metersBetweenPositions(final Position origin, final Position end) {
         return MathUtils.metersBetweenCoordinates(origin.getLatitudeDegrees(), origin.getLongitudeDegrees(),
                 end.getLatitudeDegrees(), end.getLongitudeDegrees());
     }

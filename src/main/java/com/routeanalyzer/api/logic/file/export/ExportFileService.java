@@ -10,7 +10,7 @@ public abstract class ExportFileService<T> {
 
     private AbstractXMLService<T> xmlService;
 
-    public ExportFileService(AbstractXMLService<T> xmlService) {
+    public ExportFileService(final AbstractXMLService<T> xmlService) {
         this.xmlService = xmlService;
     }
 
@@ -19,11 +19,11 @@ public abstract class ExportFileService<T> {
      * @param act: activity to export
      * @return String object with the data in the specific xml type.
      */
-    public String export(Activity act) {
+    public String export(final Activity act) {
         return convertToXmlObjects(act)
                 .map(xmlFile -> xmlService.createXML(xmlFile).get())
                 .orElseThrow(() -> new IllegalArgumentException("Not possible to convert activity to xml."));
     }
 
-    public abstract Optional<JAXBElement<T>> convertToXmlObjects(Activity activity);
+    public abstract Optional<JAXBElement<T>> convertToXmlObjects(final Activity activity);
 }

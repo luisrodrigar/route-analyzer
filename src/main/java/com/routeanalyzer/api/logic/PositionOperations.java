@@ -16,7 +16,7 @@ public interface PositionOperations {
      * @param longitudeDegrees string
      * @return
      */
-    boolean isThisPosition(Position position, String latitudeDegrees, String longitudeDegrees);
+    boolean isThisPosition(final Position position, final String latitudeDegrees, final String longitudeDegrees);
 
     /**
      * Distance between two positions. Degrees to radians and then, radians to
@@ -28,7 +28,7 @@ public interface PositionOperations {
      *            position
      * @return distance in meters
      */
-    Optional<Double> calculateDistance(Position origin, Position end);
+    Optional<Double> calculateDistance(final Position origin, final Position end);
 
     /**
      * Create position based on latitude and longitude string values
@@ -36,7 +36,7 @@ public interface PositionOperations {
      * @param longitude
      * @return position created
      */
-    Position toPosition(String latitude, String longitude);
+    Position toPosition(final String latitude, final String longitude);
 
     /**
      * Create optional position based on latitude and longitude
@@ -44,7 +44,7 @@ public interface PositionOperations {
      * @param longitude
      * @return optional position created
      */
-    Optional<Position> toOptPosition(String latitude, String longitude);
+    Optional<Position> toOptPosition(final String latitude, final String longitude);
 
     /**
      * Create position based on latitude and longitude numeric values
@@ -52,21 +52,21 @@ public interface PositionOperations {
      * @param longitude: longitude
      * @return position created
      */
-    Position toPosition(Double latitude, Double longitude);
+    Position toPosition(final Double latitude, final Double longitude);
 
     /**
      * Create position based on a way point
      * @param wptType: way point type from gpx type
      * @return optional position created
      */
-    Optional<Position> toPosition(WptType wptType);
+    Optional<Position> toPosition(final WptType wptType);
 
     /**
      * Create position based on a pointT from tcx xml file
      * @param trackpointT: way point type from tcx type
      * @return optional position created
      */
-    Optional<Position> toPosition(TrackpointT trackpointT);
+    Optional<Position> toPosition(final TrackpointT trackpointT);
 
     /**
      * Create position based on latitude and longitude big decimal values
@@ -74,6 +74,6 @@ public interface PositionOperations {
      * @param longitude: longitude param
      * @return optional position created
      */
-    Optional<Position> toPosition(BigDecimal latitude, BigDecimal longitude);
+    Optional<Position> toPosition(final BigDecimal latitude, final BigDecimal longitude);
 
 }

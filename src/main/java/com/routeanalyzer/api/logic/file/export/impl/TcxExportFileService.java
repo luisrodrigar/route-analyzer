@@ -41,12 +41,12 @@ import static java.util.Optional.ofNullable;
 public class TcxExportFileService extends ExportFileService<TrainingCenterDatabaseT> {
 
     @Autowired
-    public TcxExportFileService(TCXService tcxService) {
+    public TcxExportFileService(final TCXService tcxService) {
         super(tcxService);
     }
 
     @Override
-    public Optional<JAXBElement<TrainingCenterDatabaseT>> convertToXmlObjects(Activity activity) {
+    public Optional<JAXBElement<TrainingCenterDatabaseT>> convertToXmlObjects(final Activity activity) {
         return ofNullable(activity)
                 .map(Activity::getLaps)
                 .map(this::toTcxLaps)
@@ -139,7 +139,7 @@ public class TcxExportFileService extends ExportFileService<TrainingCenterDataba
         return activityT;
     };
 
-    private List<ActivityLapT> toTcxLaps(List<Lap> optLapList) {
+    private List<ActivityLapT> toTcxLaps(final List<Lap> optLapList) {
         ObjectFactory extensionFactory =
                 new ObjectFactory();
         return of(optLapList).map(List::stream)
@@ -196,7 +196,7 @@ public class TcxExportFileService extends ExportFileService<TrainingCenterDataba
                 ).orElseGet(Collections::emptyList);
     }
 
-    private TrackT toTrackT(Optional<List<TrackPoint>> optTrackPointList) {
+    private TrackT toTrackT(final Optional<List<TrackPoint>> optTrackPointList) {
         ObjectFactory extensionFactory =
                 new ObjectFactory();
         TrackT trackT = new TrackT();

@@ -76,7 +76,8 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	}
 
 	@Override
-	public Activity splitLap(Activity activity, String lat, String lng, Long timeInMillis, Integer indexTrackPoint) {
+	public Activity splitLap(final Activity activity, final String lat, final String lng, final Long timeInMillis,
+							 final Integer indexTrackPoint) {
 		return ofNullable(activity)
 				.map(Activity::getLaps)
 				.flatMap(laps -> ofNullable(indexOfALap(activity, lat, lng, timeInMillis, indexTrackPoint))
@@ -133,7 +134,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	 * @return activity with the joined laps
 	 */
 	@Override
-	public Activity joinLaps(Activity activity, Integer index1, Integer index2) {
+	public Activity joinLaps(final Activity activity, final Integer index1, final Integer index2) {
 		ofNullable(activity)
 				.orElseThrow(() -> new IllegalArgumentException("Activity"));
 		List<Integer> sortedIndexes = sortingPositiveValues(index1, index2);
@@ -147,7 +148,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	}
 
 	@Override
-	public Activity removeLaps(Activity act, List<Long> startTimeList, List<Integer> indexLapList) {
+	public Activity removeLaps(final Activity act, final List<Long> startTimeList, final List<Integer> indexLapList) {
 		Predicate<Object> isIndexIncluded = indexLap -> ofNullable(indexLapList)
 				.map(indexLapListParam -> indexLapListParam.stream()
 						.anyMatch(indexLapEle -> indexLapEle.equals(indexLap)))
@@ -193,7 +194,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	}
 
 	@Override
-	public Activity setColorsGetActivity(Activity activity, String dataColors) {
+	public Activity setColorsGetActivity(final Activity activity, final String dataColors) {
 		// [color1(hex)-lightColor1(hex)]@[color2(hex)-lightColor2(hex)]@[...]...
 		AtomicInteger indexLap = new AtomicInteger();
 		ofNullable(activity)
@@ -205,7 +206,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	}
 
 	@Override
-	public String exportByType(String type, Activity activity) {
+	public String exportByType(final String type, final Activity activity) {
 		return Match(type.toLowerCase()).option(
 				Case($(is(SOURCE_TCX_XML)), tcxFile -> tcxExportService.export(activity)),
 				Case($(is(SOURCE_GPX_XML)), gpxFile -> gpxExportService.export(activity)))
@@ -244,7 +245,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 				.map(streamLines -> streamLines.collect(joining("\n")));
 	}
 
-	private Activity removeLap(Activity activity, Integer indexLap) {
+	private Activity removeLap(final Activity activity, final Integer indexLap) {
 		Function<Lap, Activity> removeLap = lap -> {
 			activity.getLaps().remove(lap);
 			return activity;
@@ -255,7 +256,8 @@ public class ActivityOperationsImpl implements ActivityOperations {
 				.orElse(activity);
 	}
 
-	private Activity removeGeneralPoint(Activity activity, Integer indexLap, Integer indexCurrentTrackPoint) {
+	private Activity removeGeneralPoint(final Activity activity, final Integer indexLap,
+										final Integer indexCurrentTrackPoint) {
 		Predicate<List<TrackPoint>> isNotLastTrackPoint = trackList -> of(trackList)
 				.map(List::size)
 				.map(MathUtils::decreaseUnit)
@@ -322,7 +324,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 								.ifPresent(lapToSetIndex::setIndex));
 	}
 
-	public void calculateDistanceSpeedValues(Activity activity) {
+	public void calculateDistanceSpeedValues(final Activity activity) {
 		boolean hasActivityDateTrackPointValues = hasActivityTrackPointsValue(activity,
 				track -> !Objects.isNull(track.getDate()));
 		if (hasActivityDateTrackPointValues) {
@@ -339,7 +341,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 		}
 	}
 
-	private void calculateDistanceMeters(Activity activity) {
+	private void calculateDistanceMeters(final Activity activity) {
 		List<Lap> laps = activity.getLaps();
 		laps.forEach(lap -> {
 			int indexLap = laps.indexOf(lap);
@@ -356,7 +358,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 		});
 	}
 
-	private void calculateSpeedValues(Activity activity) {
+	private void calculateSpeedValues(final Activity activity) {
 		List<Lap> laps = activity.getLaps();
 		laps.forEach(lap -> {
 			int indexLap = laps.indexOf(lap);
@@ -373,7 +375,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 		});
 	}
 
-	private boolean hasActivityTrackPointsValue(Activity activity, Function<TrackPoint, Boolean> function) {
+	private boolean hasActivityTrackPointsValue(final Activity activity, final Function<TrackPoint, Boolean> function) {
 		return activity.getLaps().stream()
 				.map(lap -> lap.getTracks().stream().map(function).reduce(Boolean::logicalAnd))
 				.map(isValue -> isValue.orElse(false)).reduce(Boolean::logicalAnd).orElse(false);
@@ -396,7 +398,8 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	 *            index of the lap in the array
 	 * @return index of the lap
 	 */
-	private Integer indexOfALap(Activity activity, String latitude, String longitude, Long timeInMillis, Integer index) {
+	private Integer indexOfALap(final Activity activity, final String latitude, final String longitude,
+								final Long timeInMillis, final Integer index) {
 		Predicate<Lap> isThisLap = lap ->
 				lapsOperationsService.fulfillCriteriaPositionTime(lap, latitude, longitude, timeInMillis, index);
 		return ofNullable(activity)

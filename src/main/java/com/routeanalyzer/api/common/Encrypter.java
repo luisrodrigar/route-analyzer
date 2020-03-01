@@ -24,7 +24,7 @@ import static javax.crypto.Cipher.ENCRYPT_MODE;
 @Slf4j
 @UtilityClass
 public final class Encrypter {
-    public static String encrypt(String value) {
+    public static String encrypt(final String value) {
         SecretKeySpec secretKeySpec = new SecretKeySpec(KEY_TO_ENCRYPT.getBytes(UTF_8), "AES");
         IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes());
 
@@ -34,7 +34,7 @@ public final class Encrypter {
                 .orElse(null);
     }
 
-    public static String decrypt(String encrypted) {
+    public static String decrypt(final String encrypted) {
         SecretKeySpec secretKeySpec = new SecretKeySpec(KEY_TO_ENCRYPT.getBytes(UTF_8), "AES");
         IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes());
 
@@ -46,7 +46,8 @@ public final class Encrypter {
                 .orElse(null);
     }
 
-    private static Optional<Cipher> initializeCipher(int mode, String type, SecretKeySpec skeySpec, IvParameterSpec iv) {
+    private static Optional<Cipher> initializeCipher(final int mode, final String type, final SecretKeySpec skeySpec,
+                                                     final IvParameterSpec iv) {
         return Try.of(() -> Cipher.getInstance(type))
                 .toJavaOptional()
                 .map(cipher -> {
@@ -56,7 +57,7 @@ public final class Encrypter {
                 });
     }
 
-    private static byte[] decodeString(String encrypted, Cipher cipher) {
+    private static byte[] decodeString(final String encrypted, final Cipher cipher) {
         return ofNullable(encrypted)
                 .map(Base64::decodeBase64)
                 .flatMap(decodeStr -> Try.of(() -> cipher.doFinal(decodeStr))
@@ -65,7 +66,7 @@ public final class Encrypter {
                 .orElse(null);
     }
 
-    private static String encodeString(String decrypted, Cipher cipher) {
+    private static String encodeString(final String decrypted, final Cipher cipher) {
         return ofNullable(decrypted)
                 .map(String::getBytes)
                 .flatMap(bytes -> Try.of( () -> cipher.doFinal(bytes))

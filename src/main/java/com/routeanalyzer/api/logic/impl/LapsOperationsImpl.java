@@ -45,7 +45,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	private final TrackPointOperations trackPointOperationsService;
 
 	@Override
-	public Lap joinLaps(Lap lapLeft, Lap lapRight) {
+	public Lap joinLaps(final Lap lapLeft, final Lap lapRight) {
 		// Join the track points of the two laps
 		List<TrackPoint> tracks = joinTrackPointLaps(lapLeft, lapRight);
 
@@ -71,13 +71,13 @@ public class LapsOperationsImpl implements LapsOperations {
 
 		return newLap;
 	}
-	private void recalculateJoinedLap(List<TrackPoint> trackPoints) {
+	private void recalculateJoinedLap(final List<TrackPoint> trackPoints) {
 		IntStream.range(trackPoints.get(0).getIndex(), trackPoints.size() + trackPoints.get(0).getIndex())
 				.forEach(index -> trackPoints.get(index-trackPoints.get(0).getIndex()).setIndex(index));
 	}
 
 	@Override
-	public void calculateLapValues(Lap lap) {
+	public void calculateLapValues(final Lap lap) {
 		// Fill altitude fields
 		calculateAltitude(lap);
 		// Fill aggregate heart rate fields
@@ -85,7 +85,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public void calculateAltitude(Lap lap) {
+	public void calculateAltitude(final Lap lap) {
 		String okStatus = "OK";
 		Predicate<Map<String, String>> isOKResponse = elevations -> okStatus.equalsIgnoreCase(elevations.get("status"));
 		Predicate<Lap> nonHasAltitudeValues = (lapParam) ->
@@ -110,7 +110,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public void calculateDistanceLap(Lap lap, TrackPoint previousLapLastTrackPoint) {
+	public void calculateDistanceLap(final Lap lap, final TrackPoint previousLapLastTrackPoint) {
 		ofNullable(lap)
 				.map(Lap::getTracks)
 				.ifPresent(trackPoints -> trackPoints.forEach(trackPoint ->
@@ -137,7 +137,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public void calculateSpeedLap(Lap lap, TrackPoint previousLapLastTrackPoint) {
+	public void calculateSpeedLap(final Lap lap, final TrackPoint previousLapLastTrackPoint) {
 		ofNullable(lap)
 				.map(Lap::getTracks)
 				.ifPresent(trackPoints -> trackPoints.forEach(trackPoint ->
@@ -163,7 +163,8 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public boolean fulfillCriteriaPositionTime(Lap lap, String latitude, String longitude, Long timeInMillis, Integer index) {
+	public boolean fulfillCriteriaPositionTime(final Lap lap, final String latitude, final String longitude,
+											   final Long timeInMillis, final Integer index) {
 		return getOptLapField(lap, Lap::getTracks)
 				.map(tracks -> tracks.stream().anyMatch(track ->
 						trackPointOperationsService.isThisTrack(track, latitude, longitude, timeInMillis, index)))
@@ -183,7 +184,8 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public Lap createSplitLap(Lap lap, int initTrackPointIndex, int endTrackPointIndex, int newLapIndex) {
+	public Lap createSplitLap(final Lap lap, final int initTrackPointIndex, final int endTrackPointIndex,
+							  final int newLapIndex) {
 		Function<List<TrackPoint>, Function<Lap, Lap>> getSetterIndexTrackPoints = trackPoints -> newLap -> {
 			ofNullable(newLap)
 					.ifPresent(newLapParam -> ofNullable(trackPoints)
@@ -241,7 +243,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public void resetTotals(Lap lap) {
+	public void resetTotals(final Lap lap) {
 		ofNullable(lap)
 				.ifPresent(lapParam -> {
 					lapParam.setTotalTimeSeconds(null);
@@ -250,7 +252,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public void resetAggregateValues(Lap lap) {
+	public void resetAggregateValues(final Lap lap) {
 		ofNullable(lap)
 				.ifPresent(lapParam -> {
 					lapParam.setAverageHearRate(null);
@@ -261,23 +263,23 @@ public class LapsOperationsImpl implements LapsOperations {
 	}
 
 	@Override
-	public void setTotalValuesLap(Lap lap) {
+	public void setTotalValuesLap(final Lap lap) {
 		setTotalTimeSecondsLap(lap);
 		setTotalDistanceLap(lap);
 	}
 
 	@Override
-	public void calculateAggregateValuesLap(Lap lap) {
+	public void calculateAggregateValuesLap(final Lap lap) {
 		calculateAggregateHeartRate(lap);
 		calculateAggregateSpeed(lap);
 	}
 
 	@Override
-	public Lap setColorLap(Lap lap, String lapColors) {
+	public Lap setColorLap(final Lap lap, final String lapColors) {
 		return assignColorToLap(lap, toHexColors(lapColors));
 	}
 
-	private List<String> toHexColors(String lapColors) {
+	private List<String> toHexColors(final String lapColors) {
 		// [color(hex)-lightColor(hex)] number without #
 		Function<String, String> addHexPrefix = color -> STARTED_HEX_CHAR + color;
 		return asList(lapColors.split(COLOR_DELIMITER)).stream()
@@ -285,7 +287,7 @@ public class LapsOperationsImpl implements LapsOperations {
 				.collect(toList());
 	}
 
-	private Lap assignColorToLap(Lap lap, List<String> colors) {
+	private Lap assignColorToLap(final Lap lap, final List<String> colors) {
 		lap.setColor(colors.get(0));
 		lap.setLightColor(colors.get(1));
 		return lap;
@@ -295,7 +297,7 @@ public class LapsOperationsImpl implements LapsOperations {
 
 	private Predicate<List<TrackPoint>> isNotEmpty = trackPointList -> !trackPointList.isEmpty();
 
-	private Optional<TrackPoint> getLastTrackPoint(Lap lap){
+	private Optional<TrackPoint> getLastTrackPoint(final Lap lap){
 		return getOptLapField(lap, Lap::getTracks)
 				.flatMap(trackPointList -> ofNullable(trackPointList)
 						.filter(isNotEmpty)
@@ -307,28 +309,30 @@ public class LapsOperationsImpl implements LapsOperations {
 						.map(trackPointList::get));
 	}
 
-	private Optional<TrackPoint> getFirstTrackPoint(Lap lap){
+	private Optional<TrackPoint> getFirstTrackPoint(final Lap lap){
 		return getOptLapField(lap, Lap::getTracks)
 				.filter(isNotEmpty)
 				.map(trackPointList -> trackPointList.get(0));
 	}
 
-	private List<TrackPoint> joinTrackPointLaps(Lap lapLeft, Lap lapRight) {
+	private List<TrackPoint> joinTrackPointLaps(final Lap lapLeft, final Lap lapRight) {
 		return Stream.concat(getTrackPoints(lapLeft).stream(), getTrackPoints(lapRight).stream())
 				.collect(Collectors.toList());
 	}
 
-	private Optional<Double> sumDoubleFieldLaps(Lap lapLeft, Lap lapRight, Function<Lap, Double> methodGetter) {
+	private Optional<Double> sumDoubleFieldLaps(final Lap lapLeft, final Lap lapRight,
+												final Function<Lap, Double> methodGetter) {
 		return Stream.of(getOptLapField(lapLeft, methodGetter), getOptLapField(lapRight, methodGetter))
 				.reduce(Optional.empty(), (l1, l2) -> !l1.isPresent() ? l2 : !l2.isPresent() ? l1 : Optional.of(l1.get() + l2.get()));
 	}
 
-	private Optional<Integer> sumIntFieldLaps(Lap lapLeft, Lap lapRight, Function<Lap, Integer> methodGetter) {
+	private Optional<Integer> sumIntFieldLaps(final Lap lapLeft, final Lap lapRight,
+											  final Function<Lap, Integer> methodGetter) {
 		return Stream.of(getOptLapField(lapLeft, methodGetter), getOptLapField(lapRight, methodGetter))
 				.reduce(Optional.empty(), (l1, l2) -> !l1.isPresent() ? l2 : !l2.isPresent() ? l1 : Optional.of(l1.get() + l2.get()));
 	}
 
-	private String getIntensity(Lap lapLeft, Lap lapRight) {
+	private String getIntensity(final Lap lapLeft, final Lap lapRight) {
 		return ofNullable(lapLeft)
 				.map(Lap::getIntensity)
 				.map(intensityLapLeft -> ofNullable(lapRight)
@@ -347,14 +351,14 @@ public class LapsOperationsImpl implements LapsOperations {
 						.orElse(null));
 	}
 
-	private void calculateSplitLapValues(Lap lap){
+	private void calculateSplitLapValues(final Lap lap){
 		setTotalValuesLap(lap);
 		calculateAggregateValuesLap(lap);
 	}
 
 	// Reset methods
 
-	private Lap resetValues(Lap lap) {
+	private Lap resetValues(final Lap lap) {
 		this.resetAggregateValues(lap);
 		this.resetTotals(lap);
 		lap.setColor(null);
@@ -362,7 +366,7 @@ public class LapsOperationsImpl implements LapsOperations {
 		return lap;
 	}
 
-	private void setTotalDistanceLap(Lap lap) {
+	private void setTotalDistanceLap(final Lap lap) {
 		getLastTrackPoint(lap)
 				.map(TrackPoint::getDistanceMeters)
 				.flatMap(distanceMetersLast -> getFirstTrackPoint(lap)
@@ -373,7 +377,7 @@ public class LapsOperationsImpl implements LapsOperations {
 						.ifPresent(lap::setDistanceMeters));
 	}
 
-	private void setTotalTimeSecondsLap(Lap lap) {
+	private void setTotalTimeSecondsLap(final Lap lap) {
 		getLastTrackPoint(lap)
 				.map(TrackPoint::getDate)
 				.flatMap(timeMillisLastTrack -> getFirstTrackPoint(lap)
@@ -390,7 +394,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * 
 	 * @param lap
 	 */
-	private void calculateAggregateSpeed(Lap lap) {
+	private void calculateAggregateSpeed(final Lap lap) {
 		ToDoubleFunction<TrackPoint> getSpeedDoubleValue = trackPoint -> trackPoint.getSpeed().doubleValue();
 		Comparator<TrackPoint> comparatorSpeed = Comparator.comparingDouble(getSpeedDoubleValue)
 				.thenComparingDouble(getSpeedDoubleValue);
@@ -410,7 +414,7 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * 
 	 * @param lap
 	 */
-	private void calculateAggregateHeartRate(Lap lap) {
+	private void calculateAggregateHeartRate(final Lap lap) {
 		// Heart rate comparator
 		Comparator<TrackPoint> comparatorHeartRate = Comparator.comparingInt(TrackPoint::getHeartRateBpm)
 				.thenComparingInt(TrackPoint::getHeartRateBpm);
@@ -429,10 +433,10 @@ public class LapsOperationsImpl implements LapsOperations {
 				setMaxHeartRate, setAvgHeartRate);
 	}
 
-	private void calculateLapAggregateValue(Lap lap, Function<TrackPoint, Object> getterValueMethod,
-											Function<Lap, Optional<Number>> getMaxValueLap,
-											Function<Lap, OptionalDouble> getAvgValueLap,
-											Consumer<Number> setMaxValue, Consumer<Number> setAvgValue) {
+	private void calculateLapAggregateValue(final Lap lap, Function<TrackPoint, Object> getterValueMethod,
+											final Function<Lap, Optional<Number>> getMaxValueLap,
+											final Function<Lap, OptionalDouble> getAvgValueLap,
+											final Consumer<Number> setMaxValue, Consumer<Number> setAvgValue) {
 		// Check if the lap has heart rate data
 		Predicate<Lap> hasLapValues = lapParam -> lapTrackPointValueHasCondition(lapParam, getterValueMethod,
 				Objects::nonNull);
@@ -459,11 +463,11 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * @param <T> encapsulated in an Optional value
 	 * @return
 	 */
-	private <T> Optional<T> getOptLapField(Lap lap, Function<Lap, T> methodGetter) {
+	private <T> Optional<T> getOptLapField(final Lap lap, final Function<Lap, T> methodGetter) {
 		return ofNullable(lap).map(methodGetter);
 	}
 
-	private List<TrackPoint> getTrackPoints(Lap lap) {
+	private List<TrackPoint> getTrackPoints(final Lap lap) {
 		return getOptLapField(lap, Lap::getTracks).orElseGet(Collections::emptyList);
 	}
 
@@ -474,8 +478,9 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * @param condition
 	 * @return
 	 */
-	private boolean lapTrackPointValueHasCondition(Lap lap, Function<TrackPoint,
-			Object> function, Predicate<Object> condition) {
+	private boolean lapTrackPointValueHasCondition(final Lap lap,
+												   final Function<TrackPoint, Object> function,
+												   final Predicate<Object> condition) {
 		return getTrackPoints(lap).stream().map(function).allMatch(condition);
 	}
 
@@ -485,14 +490,14 @@ public class LapsOperationsImpl implements LapsOperations {
 	 * @param comparator
 	 * @return
 	 */
-	private Optional<TrackPoint> getMaxValueTrackPoint(Lap lap, Comparator<TrackPoint> comparator) {
+	private Optional<TrackPoint> getMaxValueTrackPoint(final Lap lap, final Comparator<TrackPoint> comparator) {
 		return getTrackPoints(lap).stream().max(comparator);
 	}
 
 	/**
 	 * 
 	 */
-	private OptionalDouble getAvgValueTrackPoint(Lap lap, ToDoubleFunction<TrackPoint> function) {
+	private OptionalDouble getAvgValueTrackPoint(final Lap lap, final ToDoubleFunction<TrackPoint> function) {
 		return getTrackPoints(lap).stream().mapToDouble(function).average();
 	}
 

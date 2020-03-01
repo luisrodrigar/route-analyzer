@@ -18,57 +18,57 @@ public class MathUtils {
 
     // Mathematics operations
 
-    public static BigDecimal toBigDecimal(String number) {
+    public static BigDecimal toBigDecimal(final String number) {
         return ofNullable(number)
                 .filter(StringUtils::isNotEmpty)
                 .map(BigDecimal::new)
                 .orElse(null);
     }
 
-    public static BigDecimal toBigDecimal(Double number) {
+    public static BigDecimal toBigDecimal(final Double number) {
         return ofNullable(number).map(BigDecimal::new).orElse(null);
     }
 
-    public static double round(double number, int round) {
+    public static double round(final double number, final int round) {
         double roundNumber = Math.pow(10, round);
         return Math.round(number * roundNumber) / roundNumber;
     }
 
-    public static double degrees2Radians(BigDecimal degrees) {
+    public static double degrees2Radians(final BigDecimal degrees) {
         return degrees.doubleValue() * Math.PI / 180.0;
     }
 
-    public static Integer increaseUnit(Integer num) {
+    public static Integer increaseUnit(final Integer num) {
         return num + 1;
     }
 
-    public static Integer decreaseUnit(Integer num) {
+    public static Integer decreaseUnit(final Integer num) {
         return num - 1;
     }
 
     // Logical operations
 
-    public static boolean isPositiveNonZero(Double value) {
+    public static boolean isPositiveNonZero(final Double value) {
         return value > 0;
     }
 
-    public static boolean isPositiveNonZero(Integer value) {
+    public static boolean isPositiveNonZero(final Integer value) {
         return value > 0;
     }
 
-    public static boolean isPositiveNonZero(Long value) {
+    public static boolean isPositiveNonZero(final Long value) {
         return value > 0;
     }
 
-    public static boolean isPositiveOrZero(Integer value) {
+    public static boolean isPositiveOrZero(final Integer value) {
         return value >= 0;
     }
 
-    public static boolean isPositiveHeartRate(HeartRateInBeatsPerMinuteT heartRate) {
+    public static boolean isPositiveHeartRate(final HeartRateInBeatsPerMinuteT heartRate) {
         return heartRate.getValue() > 0;
     }
 
-    public static List<Integer> sortingPositiveValues(Integer indexLeft, Integer indexRight) {
+    public static List<Integer> sortingPositiveValues(final Integer indexLeft, final Integer indexRight) {
         return ofNullable(indexLeft)
                 .filter(__ -> isPositiveOrZero(indexLeft))
                 .filter(__ -> isPositiveOrZero(indexRight))
@@ -84,13 +84,14 @@ public class MathUtils {
         return asList(smallerNumber, biggerNumber);
     }
 
-    public static double metersBetweenCoordinates(BigDecimal latP1, BigDecimal lngP1, BigDecimal latP2,
-                                                  BigDecimal lngP2) {
+    public static double metersBetweenCoordinates(final BigDecimal latP1, final BigDecimal lngP1, final BigDecimal latP2,
+                                                  final BigDecimal lngP2) {
         return metersBetweenCoordinates(degrees2Radians(latP1), degrees2Radians(lngP1), degrees2Radians(latP2),
                 degrees2Radians(lngP2));
     }
 
-    public static double metersBetweenCoordinates(double latP1, double lngP1, double latP2, double lngP2) {
+    public static double metersBetweenCoordinates(final double latP1, final double lngP1, final double latP2,
+                                                  final double lngP2) {
         // Point P
         double rho1 = EARTHS_RADIUS_METERS * Math.cos(latP1);
         double z1 = EARTHS_RADIUS_METERS * Math.sin(latP1);

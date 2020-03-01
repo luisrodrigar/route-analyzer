@@ -34,7 +34,7 @@ public class ActivityRestController {
 	private final ActivityFacade activityFacade;
 
 	@GetMapping(value = "/{id}")
-	public Activity getActivityById(@PathVariable @NotBlank @Pattern(regexp = "^[a-f\\d]{24}$") String id)
+	public Activity getActivityById(@PathVariable @NotBlank @Pattern(regexp = "^[a-f\\d]{24}$") final String id)
 			throws ActivityNotFoundException {
 		return activityFacade.getActivityById(id);
 	}
@@ -72,21 +72,21 @@ public class ActivityRestController {
 	}
 
 	@PutMapping(value = "/{id}/split/lap")
-	public Activity splitLap(@PathVariable @Pattern(regexp = "^[a-f\\d]{24}$") String id,
+	public Activity splitLap(@PathVariable @Pattern(regexp = "^[a-f\\d]{24}$") final String id,
 							 @RequestParam @Pattern(regexp = "^([0-9.-]+).+?([0-9.-]+)$",
-									 message = "Latitude parameter not valid") String lat,
+									 message = "Latitude parameter not valid") final String lat,
 							 @RequestParam @Pattern(regexp = "^([0-9.-]+).+?([0-9.-]+)$",
-									 message = "Longitude parameter not valid") String lng,
-							 @RequestParam @Min(0L) Long timeInMillis,
-							 @RequestParam @Min(0) Integer index)
+									 message = "Longitude parameter not valid") final String lng,
+							 @RequestParam @Min(0L) final Long timeInMillis,
+							 @RequestParam @Min(0) final Integer index)
 			throws ActivityNotFoundException, ActivityOperationNoExecutedException {
 		return activityFacade.splitLap(id, lat, lng, timeInMillis, index);
 	}
 
 	@PutMapping(value = "/{id}/remove/laps")
-	public Activity removeLaps(@PathVariable  @Pattern(regexp = "^[a-f\\d]{24}$") String id,
-							   @RequestParam(name = "date") @Size(min = 1) List<String> startTimeLaps,
-							   @RequestParam(name = "index") @Size(min = 1) List<String> indexLaps)
+	public Activity removeLaps(@PathVariable  @Pattern(regexp = "^[a-f\\d]{24}$") final String id,
+							   @RequestParam(name = "date") @Size(min = 1) final List<String> startTimeLaps,
+							   @RequestParam(name = "index") @Size(min = 1) final List<String> indexLaps)
 			throws ActivityNotFoundException, ActivityOperationNoExecutedException {
 		return activityFacade.removeLaps(id, startTimeLaps, indexLaps);
 	}
@@ -94,8 +94,7 @@ public class ActivityRestController {
 	@PutMapping(value = "/{id}/color/laps")
 	public Activity setColorLap(@PathVariable @Pattern(regexp = "^[a-f\\d]{24}$") final String id,
 								@RequestParam @Pattern(regexp = "^([a-fA-F\\d]{6}-[a-fA-F\\d]{6})((@" +
-										"([a-fA-F\\d]{6}-[a-fA-F\\d]{6}))*)")
-								final String data)
+										"([a-fA-F\\d]{6}-[a-fA-F\\d]{6}))*)") final String data)
 			throws ActivityNotFoundException, ActivityColorsNotAssignedException {
 		return activityFacade.setColorLap(id, data);
 	}
