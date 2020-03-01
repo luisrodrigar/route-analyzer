@@ -11,8 +11,8 @@ public class EncrypterTest {
     public static final String DECODED_STR = "rTDAasfasgASDFASFasfasa";
     public static final String ENCODED_STR = "LSE+bVLIUmXOyhadEwDQ0mhhJ2hs0IHjePuQgH9Zpn8=";
 
-    public static final String LONG_DECODED_STR = "AIzaSyDEtc96UC9co31AFUNuNsPZ1xV4SYEMwfA";
-    public static final String LONG_ENCODED_STR = "uQp1FZQnVlXmwrp7me9xmcOfrp+CvXIAPmm0c2hyGdzjNnFtxpMiGvA+fDYxJAUk";
+    public static final String LONG_DECODED_STR = "LONG_ENCRYPTED_PASSWORD_FOR_TESTING_PURPOSE_ROUTE_ANALYZER";
+    public static final String LONG_ENCODED_STR = "BTmeDtfSftCUaPqzpuhPXdLKRpKQkWiGdZLQon+KgztrpZJ/49TL6x6eZVSR5CPQVc0Rz6B1c7lLjX/fvMikvQ==";
 
     @Test
     public void encryptTest() {

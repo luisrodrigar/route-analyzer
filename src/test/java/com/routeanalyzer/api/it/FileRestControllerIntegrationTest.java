@@ -72,8 +72,8 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
     private static final String GPX_WITHOUT_ELEVATION_FILE = "gpx-without-elevation.xml";
     private static final String LOCALHOST_HOST_NAME = "localhost";
     private static final String GOOGLE_MAPS_ENDPOINT_PATH = "/maps/api/elevation/json";
-    private static final String API_KEY = "AIzaSyDEtc96UC9co31AFUNuNsPZ1xV4SYEMwfA";
-    private static final String ENCRYPTED_API_KEY = "uQp1FZQnVlXmwrp7me9xmcOfrp+CvXIAPmm0c2hyGdzjNnFtxpMiGvA+fDYxJAUk";
+    private static final String API_KEY = "LONG_ENCRYPTED_PASSWORD_FOR_TESTING_PURPOSE_ROUTE_ANALYZER";
+    private static final String ENCRYPTED_API_KEY = "BTmeDtfSftCUaPqzpuhPXdLKRpKQkWiGdZLQon+KgztrpZJ/49TL6x6eZVSR5CPQVc0Rz6B1c7lLjX/fvMikvQ==";
 
     private static final String ELEVATION_ENDPOINT = "/maps/api/elevation/json?locations=%s&key=%s";
     private static final String ELEVATION_STUBBING_RESPONSE = "stubbing-googlemaps-elevations-integration-response.json";
