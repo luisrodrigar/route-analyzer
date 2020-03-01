@@ -6,7 +6,8 @@ import com.routeanalyzer.api.xml.gpx11.WptType;
 import com.routeanalyzer.api.xml.tcx.HeartRateInBeatsPerMinuteT;
 import com.routeanalyzer.api.xml.tcx.PositionT;
 import com.routeanalyzer.api.xml.tcx.TrackpointT;
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+import io.vavr.control.Try;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -22,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.GregorianCalendar;
 import java.util.Optional;
 
 import static java.util.Optional.of;
@@ -30,6 +33,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 
+@Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class TrackPointOperationsImplTest {
 
@@ -400,7 +404,10 @@ public class TrackPointOperationsImplTest {
 	@Test
 	public void toTrackPointXmlGregorianCalendarDataTest() {
 		// Given
-		XMLGregorianCalendar xmlGregorianCalendar = new XMLGregorianCalendarImpl();
+		XMLGregorianCalendar xmlGregorianCalendar = Try.of(() -> DatatypeFactory.newInstance())
+				.onFailure(err -> log.error("It couldn't be created the xml data type factory", err))
+				.map(datatypeFactory -> datatypeFactory.newXMLGregorianCalendar(new GregorianCalendar()))
+				.getOrNull();
 		xmlGregorianCalendar.setDay(25);
 		xmlGregorianCalendar.setMonth(2);
 		xmlGregorianCalendar.setYear(2020);
@@ -538,7 +545,10 @@ public class TrackPointOperationsImplTest {
 	@Test
 	public void toTrackPointMapperFromTrackPointTAndIndex() {
 		// Given
-		XMLGregorianCalendar xmlGregorianCalendar = new XMLGregorianCalendarImpl();
+		XMLGregorianCalendar xmlGregorianCalendar = Try.of(() -> DatatypeFactory.newInstance())
+				.onFailure(err -> log.error("It couldn't be created the xml data type factory", err))
+				.map(datatypeFactory -> datatypeFactory.newXMLGregorianCalendar(new GregorianCalendar()))
+				.getOrNull();
 		xmlGregorianCalendar.setDay(25);
 		xmlGregorianCalendar.setMonth(2);
 		xmlGregorianCalendar.setYear(2020);
@@ -589,7 +599,10 @@ public class TrackPointOperationsImplTest {
 	@Test
 	public void toTrackPointMapperFromWptTypeAndIndex() {
 		// Given
-		XMLGregorianCalendar xmlGregorianCalendar = new XMLGregorianCalendarImpl();
+		XMLGregorianCalendar xmlGregorianCalendar = Try.of(() -> DatatypeFactory.newInstance())
+				.onFailure(err -> log.error("It couldn't be created the xml data type factory", err))
+				.map(datatypeFactory -> datatypeFactory.newXMLGregorianCalendar(new GregorianCalendar()))
+				.getOrNull();
 		xmlGregorianCalendar.setDay(25);
 		xmlGregorianCalendar.setMonth(2);
 		xmlGregorianCalendar.setYear(2020);
