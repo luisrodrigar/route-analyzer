@@ -152,7 +152,7 @@ public class ActivityFacadeImplTest {
         Integer indexPointToDelete = 2;
         Activity removePointActivity = toActivity("expected/activity/remove-point-tcx.json");
         doReturn(of(tcxActivity)).when(mongoRepository).findById(eq(ACTIVITY_TCX_ID));
-        doReturn(removePointActivity).when(activityOperations).removePoint(eq(tcxActivity), eq(latitudePointToDelete),
+        doReturn(of(removePointActivity)).when(activityOperations).removePoint(eq(tcxActivity), eq(latitudePointToDelete),
                 eq(longitudePointToDelete), eq(timeInMillisPointToDelete), eq(indexPointToDelete));
         doReturn(removePointActivity).when(mongoRepository).save(eq(removePointActivity));
 
@@ -197,7 +197,7 @@ public class ActivityFacadeImplTest {
         Long timeInMillisPointToDelete = 1519737378000L;
         Integer indexPointToDelete = 2;
         doReturn(of(tcxActivity)).when(mongoRepository).findById(eq(ACTIVITY_TCX_ID));
-        doReturn(null).when(activityOperations).removePoint(eq(tcxActivity), eq(latitudePointToDelete), eq(longitudePointToDelete),
+        doReturn(empty()).when(activityOperations).removePoint(eq(tcxActivity), eq(latitudePointToDelete), eq(longitudePointToDelete),
                 eq(timeInMillisPointToDelete), eq(indexPointToDelete));
 
         // When
@@ -236,7 +236,7 @@ public class ActivityFacadeImplTest {
         List<Long> times = asList(timeInMillis);
         List<Integer> indexes = asList(index);
         doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
-        doReturn(null).when(activityOperations).removeLaps(tcxActivity, times, indexes);
+        doReturn(empty()).when(activityOperations).removeLaps(tcxActivity, times, indexes);
 
         // When
         activityFacade.removeLaps(ACTIVITY_TCX_ID, asList(String.valueOf(timeInMillis)), asList(String.valueOf(index)));
@@ -258,7 +258,7 @@ public class ActivityFacadeImplTest {
         List<String> indexesStr = asList(index);
         Activity removeLapActivity = toActivity("expected/activity/remove-lap-tcx.json");
         doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
-        doReturn(removeLapActivity).when(activityOperations).removeLaps(tcxActivity, times, indexes);
+        doReturn(of(removeLapActivity)).when(activityOperations).removeLaps(tcxActivity, times, indexes);
         doReturn(removeLapActivity).when(mongoRepository).save(removeLapActivity);
 
         // When
@@ -284,7 +284,7 @@ public class ActivityFacadeImplTest {
         List<String> indexesStr = asList(index1, index2);
 		Activity lapsRemovedActivity = toActivity("expected/activity/remove-laps-tcx.json");
 		doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
-        doReturn(lapsRemovedActivity).when(activityOperations).removeLaps(tcxActivity, times, indexes);
+        doReturn(of(lapsRemovedActivity)).when(activityOperations).removeLaps(tcxActivity, times, indexes);
         doReturn(lapsRemovedActivity).when(mongoRepository).save(lapsRemovedActivity);
 
 		// When
@@ -361,7 +361,7 @@ public class ActivityFacadeImplTest {
         Long timeMillis = 1519737378000L;
         Integer index = 2;
         doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
-        doReturn(splitActivity).when(activityOperations).splitLap(eq(tcxActivity),
+        doReturn(of(splitActivity)).when(activityOperations).splitLap(eq(tcxActivity),
                 eq(lat), eq(lng), eq(timeMillis), eq(index));
         doReturn(splitActivity).when(mongoRepository).save(splitActivity);
         // When
@@ -401,7 +401,7 @@ public class ActivityFacadeImplTest {
         Long timeMillis = 1519737378000L;
         Integer index = 2;
         doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
-        doReturn(null).when(activityOperations).splitLap(eq(tcxActivity),
+        doReturn(empty()).when(activityOperations).splitLap(eq(tcxActivity),
                 eq(lat), eq(lng), eq(timeMillis), eq(index));
         // When
         activityFacade.splitLap(ACTIVITY_TCX_ID, lat, lng, timeMillis, index);
@@ -418,7 +418,7 @@ public class ActivityFacadeImplTest {
 		Activity lapColorsActivity = toActivity("expected/activity/lap-colors-tcx.json");
         String data = "abc012-0a1b2c@123abc-0e9d8c";
         doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
-        doReturn(lapColorsActivity).when(activityOperations).setColorsGetActivity(tcxActivity, data);
+        doReturn(of(lapColorsActivity)).when(activityOperations).setColorsGetActivity(tcxActivity, data);
         doReturn(lapColorsActivity).when(mongoRepository).save(lapColorsActivity);
 
 		// When
@@ -455,7 +455,7 @@ public class ActivityFacadeImplTest {
         // Given
         String data = "primero-primero2@segundo-segundo2";
         doReturn(of(tcxActivity)).when(mongoRepository).findById(ACTIVITY_TCX_ID);
-        doReturn(null).when(activityOperations).setColorsGetActivity(tcxActivity, data);
+        doReturn(empty()).when(activityOperations).setColorsGetActivity(tcxActivity, data);
 
         // When
         activityFacade.setColorLap(ACTIVITY_TCX_ID, data);

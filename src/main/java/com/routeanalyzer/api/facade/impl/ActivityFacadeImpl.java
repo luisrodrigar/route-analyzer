@@ -41,7 +41,7 @@ public class ActivityFacadeImpl implements ActivityFacade {
                                 final Integer index)
             throws ActivityNotFoundException, ActivityOperationNoExecutedException{
         return of(getActivityById(id))
-                .map(activity -> activityOperationsService.removePoint(activity, lat, lng, timeInMillis, index))
+                .flatMap(activity -> activityOperationsService.removePoint(activity, lat, lng, timeInMillis, index))
                 .map(mongoRepository::save)
                 .orElseThrow(() -> new ActivityOperationNoExecutedException(id, "removePoint"));
     }
@@ -60,7 +60,7 @@ public class ActivityFacadeImpl implements ActivityFacade {
                              final Integer index)
             throws ActivityNotFoundException, ActivityOperationNoExecutedException {
         return  of(getActivityById(id))
-                .map(activity -> activityOperationsService.splitLap(activity, lat, lng, timeInMillis, index))
+                .flatMap(activity -> activityOperationsService.splitLap(activity, lat, lng, timeInMillis, index))
                 .map(mongoRepository::save)
                 .orElseThrow(() -> new ActivityOperationNoExecutedException(id, "splitLap"));
     }
@@ -70,7 +70,7 @@ public class ActivityFacadeImpl implements ActivityFacade {
             throws ActivityNotFoundException, ActivityOperationNoExecutedException {
         List<Integer> indexes = toListOfType(indexLaps, Integer::parseInt);
         return of(getActivityById(id))
-                .map(activity -> of(toListOfType(startTimeLaps, Long::valueOf))
+                .flatMap(activity -> of(toListOfType(startTimeLaps, Long::valueOf))
                         .filter(not(List::isEmpty))
                         .map(dates -> activityOperationsService.removeLaps(activity, dates, indexes))
                         .orElseGet(() -> activityOperationsService.removeLaps(activity, null, indexes)))
@@ -82,7 +82,7 @@ public class ActivityFacadeImpl implements ActivityFacade {
     public Activity setColorLap(final String id, final String data) throws ActivityNotFoundException,
             ActivityColorsNotAssignedException {
         return of(getActivityById(id))
-                .map(activity -> activityOperationsService.setColorsGetActivity(activity, data))
+                .flatMap(activity -> activityOperationsService.setColorsGetActivity(activity, data))
                 .map(mongoRepository::save)
                 .orElseThrow(() -> new ActivityColorsNotAssignedException(id));
     }

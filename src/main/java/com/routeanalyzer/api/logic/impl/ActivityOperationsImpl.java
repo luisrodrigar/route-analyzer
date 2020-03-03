@@ -1,6 +1,6 @@
 package com.routeanalyzer.api.logic.impl;
 
-import com.routeanalyzer.api.common.DateUtils;
+import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.logic.LapsOperations;
@@ -20,6 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,12 +29,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.Constants.LAP_DELIMITER;
 import static com.routeanalyzer.api.common.Constants.SOURCE_GPX_XML;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
+import static com.routeanalyzer.api.common.DateUtils.toTimeMillis;
 import static com.routeanalyzer.api.common.MathUtils.isPositiveOrZero;
 import static com.routeanalyzer.api.common.MathUtils.sortingPositiveValues;
 import static io.vavr.API.$;
@@ -41,10 +43,12 @@ import static io.vavr.API.Match;
 import static io.vavr.Predicates.is;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static java.util.Objects.nonNull;
 
 @Slf4j
 @Service
@@ -57,33 +61,25 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	private final GpxExportFileService gpxExportService;
 
 	@Override
-	public Activity removePoint(final Activity act, final String lat, final String lng, final Long timeInMillis,
+	public Optional<Activity> removePoint(final Activity activity, final String lat, final String lng, final Long timeInMillis,
 								final Integer indexTrackPoint) {
-		return ofNullable(indexOfALap(act, lat, lng, timeInMillis, indexTrackPoint))
-				.flatMap(indexLap -> of(indexLap)
-						.map(indexLapParam ->
-								indexOfTrackPoint(act, indexLapParam, lat, lng, timeInMillis, indexTrackPoint))
-						.map(indexTrack -> of(indexTrack)
-								.flatMap(indexTrackParam -> of(indexLap)
-										.map(act.getLaps()::get)
-										.map(Lap::getTracks)
-										.map(List::size))
-								.filter(sizeTrackPoints -> sizeTrackPoints > 1)
-								.filter(__ -> isPositiveOrZero(indexTrack))
-								.map(__ -> this.removeGeneralPoint(act, indexLap, indexTrack))
-								.orElseGet(() -> this.removeLap(act, indexLap))))
-				.orElse(null);
+		return arrayIndexOfALap(activity, lat, lng, timeInMillis, indexTrackPoint)
+				.flatMap(indexLap -> indexOfTrackPoint(activity, indexLap, lat, lng, timeInMillis, indexTrackPoint)
+						.filter(indexTrack -> isPositiveOrZero(indexTrack))
+						.filter(indexTrack ->  activity.getLaps().get(indexLap).getTracks().size() > 1)
+						.map(indexTrack -> removeGeneralPoint(activity, indexLap, indexTrack))
+						.orElseGet(() -> removeLaps(activity,
+										singletonList(activity.getLaps().get(indexLap).getStartTime().toInstant().toEpochMilli()),
+										singletonList(activity.getLaps().get(indexLap).getIndex()))));
 	}
 
 	@Override
-	public Activity splitLap(final Activity activity, final String lat, final String lng, final Long timeInMillis,
+	public Optional<Activity> splitLap(final Activity activity, final String lat, final String lng, final Long timeInMillis,
 							 final Integer indexTrackPoint) {
 		return ofNullable(activity)
 				.map(Activity::getLaps)
-				.flatMap(laps -> ofNullable(indexOfALap(activity, lat, lng, timeInMillis, indexTrackPoint))
-						.flatMap(indexLap -> of(indexLap)
-								.map(indexLapParam ->
-										indexOfTrackPoint(activity, indexLapParam, lat, lng, timeInMillis, indexTrackPoint))
+				.flatMap(laps -> arrayIndexOfALap(activity, lat, lng, timeInMillis, indexTrackPoint)
+						.flatMap(indexLap -> indexOfTrackPoint(activity, indexLap, lat, lng, timeInMillis, indexTrackPoint)
 								.flatMap(indexPosition -> of(indexPosition)
 										.filter(MathUtils::isPositiveNonZero)
 										.flatMap(indexTrackParam -> of(indexLap)
@@ -93,10 +89,8 @@ public class ActivityOperationsImpl implements ActivityOperations {
 												.map(MathUtils::decreaseUnit))
 										.filter(lastPosition -> indexPosition < lastPosition)
 										.map(lastPosition -> indexPosition))
-								.flatMap(indexPosition -> ofNullable(indexLap)
-										.map(laps::get)
-										.flatMap(lap -> of(lap)
-												.map(SerializationUtils::clone)
+								.flatMap(indexPosition -> ofNullable(laps.get(indexLap))
+										.flatMap(lap -> ofNullable(SerializationUtils.clone(lap))
 												.map(lapSplitLeft -> lapsOperationsService.createSplitLap(lap, 0, indexPosition, lap.getIndex()))
 												.flatMap(lapSplitLeft -> of(lap)
 														.map(SerializationUtils::clone)
@@ -116,8 +110,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 																	laps.add(indexLap.intValue(), lapSplitLeft);
 																	laps.add(indexRightLapParam.intValue(), lapSplitRight);
 																	return activity;
-																})))))))
-				.orElse(null);
+																})))))));
 	}
 
 	/**
@@ -148,61 +141,42 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	}
 
 	@Override
-	public Activity removeLaps(final Activity act, final List<Long> startTimeList, final List<Integer> indexLapList) {
-		Predicate<Object> isIndexIncluded = indexLap -> ofNullable(indexLapList)
-				.map(indexLapListParam -> indexLapListParam.stream()
-						.anyMatch(indexLapEle -> indexLapEle.equals(indexLap)))
-				.orElse(false);
-		Predicate<Long> isTimeMillisIncluded = timeMillis -> ofNullable(startTimeList)
-				.map(startTimeListParam -> startTimeListParam.stream()
-						.anyMatch(timeMillisEle -> timeMillisEle.equals(timeMillis)))
-				.orElse(true);
-		ofNullable(act)
-				.map(Activity::getLaps)
-				.ifPresent(laps -> laps.stream()
-						.filter(lapParam -> ofNullable(lapParam)
-								.map(Lap::getIndex)
-								.filter(isIndexIncluded)
-								.isPresent())
-						.filter(lapParam -> ofNullable(lapParam)
-								.map(Lap::getStartTime)
-								.flatMap(DateUtils::toTimeMillis)
-								.filter(isTimeMillisIncluded)
-								.isPresent())
-						.collect(Collectors.toList())
-						.forEach(laps::remove));
-		return act;
+	public Optional<Activity> removeLaps(final Activity activity, final List<Long> startTimeList, final List<Integer> indexLapList) {
+		AtomicInteger newIndexesLap = new AtomicInteger(1);
+		AtomicInteger newIndexesTrackPoint = new AtomicInteger(1);
+		return getLapsToDelete(activity, startTimeList, indexLapList)
+				.flatMap(lapsToDelete -> of(lapsToDelete)
+						.map(List::size)
+						.map(numLapsToDelete -> {
+							activity.getLaps().removeAll(lapsToDelete);
+							activity.getLaps().forEach(lap -> lap.setIndex(newIndexesLap.getAndIncrement()));
+							activity.getLaps().forEach(lap -> lap.getTracks().forEach(trackPoint ->
+									trackPoint.setIndex(newIndexesTrackPoint.getAndIncrement())));
+							return activity;
+						}));
 	}
 
 	@Override
-	public int indexOfTrackPoint(final Activity activity, final Integer indexLap, final String latitude,
+	public Optional<Integer> indexOfTrackPoint(final Activity activity, final Integer indexLap, final String latitude,
 								 final String longitude, final Long time, final Integer index) {
-		Function<TrackPoint, Optional<Integer>> indexOfTrackPoint = trackPoint -> ofNullable(activity)
-				.map(Activity::getLaps)
-				.flatMap(laps -> ofNullable(indexLap)
-						.map(laps::get)
-						.map(Lap::getTracks)
-						.flatMap(tracks -> ofNullable(trackPoint)
-								.map(tracks::indexOf)));
 		return ofNullable(activity)
 				.map(Activity::getLaps)
 				.flatMap(laps -> ofNullable(indexLap)
 						.map(laps::get)
 						.map(lap -> lapsOperationsService.getTrackPoint(lap, latitude, longitude, time, index)))
-				.flatMap(indexOfTrackPoint)
-				.orElse(-1);
+				.map(trackPoint -> activity.getLaps()
+						.get(indexLap)
+						.getTracks()
+						.indexOf(trackPoint));
 	}
 
 	@Override
-	public Activity setColorsGetActivity(final Activity activity, final String dataColors) {
-		// [color1(hex)-lightColor1(hex)]@[color2(hex)-lightColor2(hex)]@[...]...
-		AtomicInteger indexLap = new AtomicInteger();
-		ofNullable(activity)
-				.map(Activity::getLaps)
-				.ifPresent(laps -> asList(dataColors.split(LAP_DELIMITER)).stream()
-						.forEach(lapColors -> lapsOperationsService
-								.setColorLap(laps.get(indexLap.getAndIncrement()), lapColors)));
-		return activity;
+	public Optional<Activity> setColorsGetActivity(final Activity activity, final String dataColors) {
+		return getColorsLaps(activity, dataColors)
+				.map(colorLaps -> {
+					activity.setLaps(colorLaps);
+					return activity;
+				});
 	}
 
 	@Override
@@ -224,7 +198,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	@Override
 	public List<Activity> pushToS3(final List<Activity> activities, final MultipartFile multiPart) {
 		return activities.stream()
-				.flatMap(activity -> Try.of(() -> multiPart.getBytes())
+				.flatMap(activity -> Try.of(multiPart::getBytes)
 						.onFailure(err -> log.error("Error trying to convert the file to bytes", err))
 						.flatMap(arrayBytes -> Try
 								.run(() -> aS3Service
@@ -245,24 +219,60 @@ public class ActivityOperationsImpl implements ActivityOperations {
 				.map(streamLines -> streamLines.collect(joining("\n")));
 	}
 
-	private Activity removeLap(final Activity activity, final Integer indexLap) {
-		Function<Lap, Activity> removeLap = lap -> {
-			activity.getLaps().remove(lap);
-			return activity;
-		};
-		return ofNullable(indexLap)
-				.map(activity.getLaps()::get)
-				.map(removeLap)
-				.orElse(activity);
+	private Optional<List<Lap>> getColorsLaps(final Activity activity, final String dataColors) {
+		// [color1(hex)-lightColor1(hex)]@[color2(hex)-lightColor2(hex)]@[...]...
+		AtomicInteger indexLap = new AtomicInteger();
+		return ofNullable(activity)
+				.map(Activity::getLaps)
+				.map(laps -> asList(dataColors.split(LAP_DELIMITER))
+						.stream()
+						.map(colorsLap -> lapsOperationsService.setColorLap(laps.get(indexLap.getAndIncrement()), colorsLap))
+						.collect(toList()));
 	}
 
-	private Activity removeGeneralPoint(final Activity activity, final Integer indexLap,
+	private Optional<List<Lap>> getLapsToDelete(final Activity activity, final List<Long> startTimeList,
+												final List<Integer> indexLapList) {
+		return ofNullable(activity)
+				.filter(__ -> nonNull(indexLapList) && nonNull(startTimeList))
+				.filter(__ -> !indexLapList.isEmpty() && !startTimeList.isEmpty())
+				.filter(__ -> indexLapList.size() == startTimeList.size())
+				.filter(__ -> indexLapList.stream().allMatch(MathUtils::isPositiveOrZero))
+				.filter(__ -> indexLapList.stream().allMatch(index -> index <= activity.getLaps().size()))
+				.map(Activity::getLaps)
+				.map(laps -> laps.stream()
+						.filter(lapParam ->
+								isIndexIncluded(lapParam, indexLapList) || isTimeInMillisIncluded(lapParam, startTimeList))
+						.collect(toList()));
+	}
+
+	private boolean isTimeInMillisIncluded(final Lap lap, final List<Long> times) {
+		return of(lap)
+				.map(Lap::getStartTime)
+				.map(ZonedDateTime::toInstant)
+				.map(Instant::toEpochMilli)
+				.filter(__ -> nonNull(times))
+				.filter(__ -> !times.isEmpty())
+				.filter(timeInMillis -> times.contains(timeInMillis))
+				.isPresent();
+	}
+
+	private boolean isIndexIncluded(final Lap lap, final List<Integer> indexes) {
+		return of(lap)
+				.map(Lap::getIndex)
+				.filter(__ -> nonNull(indexes))
+				.filter(__ -> !indexes.isEmpty())
+				.filter(index -> indexes.contains(index))
+				.isPresent();
+	}
+
+	private Optional<Activity> removeGeneralPoint(final Activity activity, final Integer indexLap,
 										final Integer indexCurrentTrackPoint) {
 		Predicate<List<TrackPoint>> isNotLastTrackPoint = trackList -> of(trackList)
 				.map(List::size)
 				.map(MathUtils::decreaseUnit)
 				.filter(lastIndexTrackPoint -> indexCurrentTrackPoint < lastIndexTrackPoint)
 				.isPresent();
+		AtomicInteger newIndexTrackPoints = new AtomicInteger(1);
 		return ofNullable(activity)
 				.map(Activity::getLaps)
 				.flatMap(laps -> ofNullable(indexLap)
@@ -289,9 +299,10 @@ public class ActivityOperationsImpl implements ActivityOperations {
 									calculateDistanceSpeedValues(activity);
 									lapsOperationsService.setTotalValuesLap(newLap);
 									lapsOperationsService.calculateAggregateValuesLap(newLap);
+									activity.getLaps().forEach(lap -> lap.getTracks().forEach(trackPoint ->
+											trackPoint.setIndex(newIndexTrackPoints.getAndIncrement())));
 									return activity;
-								})))
-				.orElse(activity);
+								})));
 	}
 
 
@@ -317,11 +328,10 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	private Function<Integer, Consumer<List<Lap>>> genericConsumerEachLap(Function<Integer, Integer> applyEachElement) {
 		return indexLap -> laps -> ofNullable(indexLap)
 				.map(laps::get)
-				.ifPresent(lapToSetIndex ->
-						ofNullable(lapToSetIndex)
-								.map(Lap::getIndex)
-								.map(applyEachElement)
-								.ifPresent(lapToSetIndex::setIndex));
+				.ifPresent(lapToSetIndex -> of(lapToSetIndex)
+						.map(Lap::getIndex)
+						.map(applyEachElement)
+						.ifPresent(lapToSetIndex::setIndex));
 	}
 
 	public void calculateDistanceSpeedValues(final Activity activity) {
@@ -396,10 +406,10 @@ public class ActivityOperationsImpl implements ActivityOperations {
 	 *            time in milliseconds
 	 * @param index:
 	 *            index of the lap in the array
-	 * @return index of the lap
+	 * @return optional index of the lap
 	 */
-	private Integer indexOfALap(final Activity activity, final String latitude, final String longitude,
-								final Long timeInMillis, final Integer index) {
+	private Optional<Integer> arrayIndexOfALap(final Activity activity, final String latitude, final String longitude,
+											   final Long timeInMillis, final Integer index) {
 		Predicate<Lap> isThisLap = lap ->
 				lapsOperationsService.fulfillCriteriaPositionTime(lap, latitude, longitude, timeInMillis, index);
 		return ofNullable(activity)
@@ -407,8 +417,7 @@ public class ActivityOperationsImpl implements ActivityOperations {
 				.flatMap(laps -> laps.stream()
 						.filter(isThisLap)
 						.findFirst()
-						.map(laps::indexOf))
-				.orElse(null);
+						.map(laps::indexOf));
 	}
 
 }

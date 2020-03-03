@@ -89,8 +89,8 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
     }
 
     private Activity toActivity(final ActivityT activityT) {
-        AtomicInteger indexLap = new AtomicInteger(0);
-        AtomicInteger indexTrackPoint = new AtomicInteger(0);
+        AtomicInteger indexLap = new AtomicInteger(1);
+        AtomicInteger indexTrackPoint = new AtomicInteger(1);
         return Activity.builder()
                 .sourceXmlType(SOURCE_TCX_XML)
                 .device(of(activityT)
@@ -152,7 +152,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
                         .map(ActivityLapT::getStartTime)
                         .flatMap(DateUtils::toZonedDateTime)
                         .orElse(null))
-                .index(indexLaps.incrementAndGet())
+                .index(indexLaps.getAndIncrement())
                 .totalTimeSeconds(of(activityLapT)
                         .map(ActivityLapT::getTotalTimeSeconds)
                         .filter(MathUtils::isPositiveNonZero)
@@ -180,7 +180,7 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
     private Optional<TrackPoint> toTrackPointModel(final TrackpointT trackpointT, final AtomicInteger indexTrackPoints) {
         return of(trackpointT)
                 .map(TrackpointT::getPosition)
-                .map(positionT -> trackPointOperations.toTrackPoint(trackpointT, indexTrackPoints.incrementAndGet()))
+                .map(positionT -> trackPointOperations.toTrackPoint(trackpointT, indexTrackPoints.getAndIncrement()))
                 .map(trackPoint -> setTrackPointExtensions(trackpointT, trackPoint));
     }
 

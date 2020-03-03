@@ -18,7 +18,9 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.routeanalyzer.api.common.DateUtils.toZonedDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,6 +31,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static java.util.Collections.singletonList;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ActivityOperationsImplTest {
@@ -181,10 +184,11 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
+		Optional<Activity> optResult = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
 				Lists.newArrayList(1));
 		// Then
-		assertThat(result).isNotNull();
+		assertThat(optResult).isNotEmpty();
+		Activity result = optResult.get();
 		assertThat(result).isEqualTo(activity);
 		assertThat(result.getLaps()).isNotEmpty();
 		assertThat(result.getLaps().size()).isEqualTo(3);
@@ -203,12 +207,9 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLaps(activity, null, Lists.newArrayList(0));
+		Optional<Activity> optResult = activityOperations.removeLaps(activity, null, Lists.newArrayList(0));
 		// Then
-		assertThat(result).isNotNull();
-		assertThat(result).isEqualTo(activity);
-		assertThat(result.getLaps()).doesNotContain(lap1);
-		assertThat(result.getLaps()).isEmpty();
+		assertThat(optResult).isEmpty();
 	}
 
 	@Test
@@ -222,10 +223,9 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21), Lists.newArrayList(1));
+		Optional<Activity> optResult = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21), Lists.newArrayList(1));
 		// Then
-		assertThat(result).isNotNull();
-		assertThat(result.getLaps()).isEmpty();
+		assertThat(optResult).isEmpty();
 	}
 
 	@Test
@@ -243,12 +243,10 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
+		Optional<Activity> optResult = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
 				Lists.newArrayList(120));
 		// Then
-		assertThat(result).isNotNull();
-		assertThat(result.getLaps()).isNotEmpty();
-		assertThat(result.getLaps().size()).isEqualTo(4);
+		assertThat(optResult).isEmpty();
 	}
 
 	@Test
@@ -266,12 +264,10 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
+		Optional<Activity> optResult = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
 				Lists.newArrayList(-1));
 		// Then
-		assertThat(result).isNotNull();
-		assertThat(result.getLaps()).isNotEmpty();
-		assertThat(result.getLaps().size()).isEqualTo(4);
+		assertThat(optResult).isEmpty();
 	}
 
 	@Test
@@ -289,11 +285,9 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLaps(activity, null, Lists.newArrayList(-1));
+		Optional<Activity> optResult = activityOperations.removeLaps(activity, null, singletonList(-1));
 		// Then
-		assertThat(result).isNotNull();
-		assertThat(result.getLaps()).isNotEmpty();
-		assertThat(result.getLaps().size()).isEqualTo(4);
+		assertThat(optResult).isEmpty();
 	}
 
 	@Test
@@ -311,11 +305,9 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap11), null);
+		Optional<Activity> optResult = activityOperations.removeLaps(activity, singletonList(timeMillisLap11), null);
 		// Then
-		assertThat(result).isNotNull();
-		assertThat(result.getLaps()).isNotEmpty();
-		assertThat(result.getLaps().size()).isEqualTo(4);
+		assertThat(optResult).isEmpty();
 	}
 
 	@Test
@@ -323,9 +315,9 @@ public class ActivityOperationsImplTest {
 		// Given
 		activity = null;
 		// When
-		Activity result = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap11), null);
+		Optional<Activity> optResult = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap11), null);
 		// Then
-		assertThat(result).isNull();
+		assertThat(optResult).isEmpty();
 	}
 
 	@Test
@@ -426,10 +418,12 @@ public class ActivityOperationsImplTest {
 				.getTrackPoint(eq(lap3), eq(latitude), eq(longitude), eq(timeMillisLap32), eq(1));
 
 		// When
-		int index = activityOperations.indexOfTrackPoint(activity, 2, latitude, longitude, timeMillisLap32, 1);
+		Optional<Integer> optIndex = activityOperations.indexOfTrackPoint(activity, 2, latitude, longitude, timeMillisLap32, 1);
 
 		// Then
 		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any(), any());
+		assertThat(optIndex).isNotEmpty();
+		Integer index = optIndex.get();
 		assertThat(index).isPositive();
 		assertThat(index).isEqualTo(1);
 	}
@@ -454,10 +448,12 @@ public class ActivityOperationsImplTest {
 				.getTrackPoint(lap3, latitude, longitude, null,1);
 
 		// When
-		int index = activityOperations.indexOfTrackPoint(activity,2, latitude, longitude,null,1);
+		Optional<Integer> optIndex = activityOperations.indexOfTrackPoint(activity,2, latitude, longitude,null,1);
 
 		// Then
 		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any(), any());
+		assertThat(optIndex).isNotEmpty();
+		Integer index = optIndex.get();
 		assertThat(index).isPositive();
 		assertThat(index).isEqualTo(1);
 	}
@@ -482,10 +478,12 @@ public class ActivityOperationsImplTest {
 				.getTrackPoint(lap3, latitude, longitude, timeMillisLap31, null);
 
 		// When
-		int index = activityOperations.indexOfTrackPoint(activity, 2, latitude, longitude, timeMillisLap31, null);
+		Optional<Integer> optIndex = activityOperations.indexOfTrackPoint(activity, 2, latitude, longitude, timeMillisLap31, null);
 
 		// Then
 		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any(), any());
+		assertThat(optIndex).isNotEmpty();
+		Integer index = optIndex.get();
 		assertThat(index).isPositive();
 		assertThat(index).isEqualTo(1);
 	}
@@ -508,10 +506,12 @@ public class ActivityOperationsImplTest {
 				.getTrackPoint(lap3, null, null, timeMillisLap31,1);
 
 		// When
-		int index = activityOperations.indexOfTrackPoint(activity, 2, null, null, timeMillisLap31, 1);
+		Optional<Integer> optIndex = activityOperations.indexOfTrackPoint(activity, 2, null, null, timeMillisLap31, 1);
 
 		// Then
 		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any(), any());
+		assertThat(optIndex).isNotEmpty();
+		Integer index = optIndex.get();
 		assertThat(index).isPositive();
 		assertThat(index).isEqualTo(1);
 	}
@@ -522,11 +522,10 @@ public class ActivityOperationsImplTest {
 		activity = null;
 		String latitude = "46.452478";
 		String longitude = "-6.9501170";
-		int index = activityOperations.indexOfTrackPoint(activity, 2, latitude, longitude, timeMillisLap31, 1);
+		Optional<Integer> optIndex = activityOperations.indexOfTrackPoint(activity, 2, latitude, longitude, timeMillisLap31, 1);
 		// Then
 		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any(), any());
-		assertThat(index).isNegative();
-		assertThat(index).isEqualTo(-1);
+		assertThat(optIndex).isEmpty();
 	}
 
 	@Test
@@ -551,12 +550,13 @@ public class ActivityOperationsImplTest {
 				.getTrackPoint(lap3, latitude, longitude, timeMillisLap32, index32);
 
         // When
-        Activity act = activityOperations.removePoint(activity, latitude, longitude, timeMillisLap32, index32);
+        Optional<Activity> optAct = activityOperations.removePoint(activity, latitude, longitude, timeMillisLap32, index32);
 
         // Then
 		verify(lapsOperations).getTrackPoint(any(), any(), any(), any(), any());
 		verify(lapsOperations, times(3)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
-        assertThat(act).isNotNull();
+		assertThat(optAct).isNotEmpty();
+		Activity act = optAct.get();
         assertThat(act.getLaps()).isNotEmpty();
         assertThat(act.getLaps().get(2)).isNotNull();
         Lap lap = act.getLaps().get(2);
@@ -571,6 +571,8 @@ public class ActivityOperationsImplTest {
         laps.add(lap2);
         laps.add(lap3OneTrackPoint);
         laps.add(lap4);
+		String latitude = "40.3602900";
+		String longitude = "-8.8447600";
         activity = Activity.builder()
                 .laps(laps)
                 .idUser("foo")
@@ -578,21 +580,20 @@ public class ActivityOperationsImplTest {
                 .sport("sport")
                 .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
-		String latitude = "40.3602900";
-		String longitude = "-8.8447600";
 		doReturn(true).when(lapsOperations)
 				.fulfillCriteriaPositionTime(lap3OneTrackPoint, latitude, longitude, timeMillisLap31, index31);
 		doReturn(lap3OneTrackPoint.getTracks().get(0)).when(lapsOperations)
 				.getTrackPoint(lap3OneTrackPoint, latitude, longitude, timeMillisLap31, index31);
 
         // When
-        Activity act = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
-                timeMillisLap31, index31);
+		Optional<Activity> optAct = activityOperations.removePoint(activity, latitude, longitude, timeMillisLap31,
+				index31);
 
         // Then
 		verify(lapsOperations).getTrackPoint(any(), any(), any(), any(), any());
 		verify(lapsOperations, times(3)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
-        assertThat(act).isNotNull();
+		assertThat(optAct).isNotEmpty();
+		Activity act = optAct.get();
         assertThat(act.getLaps()).isNotEmpty();
         assertThat(act.getLaps().get(2)).isNotNull();
         assertThat(act.getLaps().size()).isEqualTo(3);
@@ -611,7 +612,7 @@ public class ActivityOperationsImplTest {
                 .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
         // When
-        Activity act = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
+		Optional<Activity> optAct = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
                 timeMillisLap31, index31);
 
         // Then
@@ -619,7 +620,7 @@ public class ActivityOperationsImplTest {
 		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
         verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
         verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any(), any());
-        assertThat(act).isNull();
+		assertThat(optAct).isEmpty();
     }
 
     @Test
@@ -644,17 +645,18 @@ public class ActivityOperationsImplTest {
 				.getTrackPoint(lap3OneTrackPoint, latitude, longitude, null, index31);
 
         // When
-        Activity act = activityOperations.removePoint(activity, latitude, longitude,null, index31);
+		Optional<Activity> optAct = activityOperations.removePoint(activity, latitude, longitude,null, index31);
 
         // Then
 		verify(lapsOperations).getTrackPoint(any(), any(), any(), isNull(), any());
 		verify(lapsOperations, times(3))
 				.fulfillCriteriaPositionTime(any(), any(), any(), isNull(), any());
-        assertThat(act).isNotNull();
-        assertThat(act.getLaps()).isNotEmpty();
-        assertThat(act.getLaps().get(2)).isNotNull();
-        assertThat(act.getLaps().size()).isEqualTo(3);
-        Lap lap = act.getLaps().get(2);
+        assertThat(optAct).isNotEmpty();
+        Activity result = optAct.get();
+        assertThat(result.getLaps()).isNotEmpty();
+        assertThat(result.getLaps().get(2)).isNotNull();
+        assertThat(result.getLaps().size()).isEqualTo(3);
+        Lap lap = result.getLaps().get(2);
         assertThat(lap).isEqualTo(lap4);
         assertThat(lap.getTracks().size()).isEqualTo(2);
     }
@@ -681,14 +683,15 @@ public class ActivityOperationsImplTest {
 				.getTrackPoint(lap2, latitude, longitude, timeMillisLap21, null);
 
         // When
-        Activity act = activityOperations.removePoint(activity, "44.3602900",  "-6.8447600",
+		Optional<Activity> optAct = activityOperations.removePoint(activity, "44.3602900",  "-6.8447600",
                 timeMillisLap21, null);
 
         // Then
 		verify(lapsOperations).getTrackPoint(any(), any(), any(), any(), isNull());
 		verify(lapsOperations, times(2))
 				.fulfillCriteriaPositionTime(any(), any(), any(), any(), isNull());
-        assertThat(act).isNotNull();
+		assertThat(optAct).isNotEmpty();
+		Activity act = optAct.get();
         assertThat(act.getLaps()).isNotEmpty();
         assertThat(act.getLaps().get(1)).isNotNull();
         Lap lap = act.getLaps().get(1);
@@ -712,13 +715,13 @@ public class ActivityOperationsImplTest {
                 .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
         // When
-        Activity act = activityOperations.removePoint(activity, "46.452478", "-6.9501170",
+		Optional<Activity> optAct = activityOperations.removePoint(activity, "46.452478", "-6.9501170",
                null, null);
 
         // Then
 		verify(lapsOperations, times(4)).fulfillCriteriaPositionTime(any(), any(), any(), isNull(), isNull());
 		verify(lapsOperations, never()).getTrackPoint(any(), any(), any(), any(), any());
-        assertThat(act).isNull();
+		assertThat(optAct).isEmpty();
     }
 
     @Test
@@ -747,12 +750,13 @@ public class ActivityOperationsImplTest {
 		doReturn(lap2).when(lapsOperations).createSplitLap(eq(lap1), eq(index21), eq(lap1.getTracks().size()), eq(lap1.getIndex() + 1));
 
 		// When
-		Activity act = activityOperations.splitLap(activity, latitude, longitude, timeMillisLap21, index21);
+		Optional<Activity> optAct = activityOperations.splitLap(activity, latitude, longitude, timeMillisLap21, index21);
 
 		// Then
 		verify(lapsOperations, times(1)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
 		verify(lapsOperations, times(1)).getTrackPoint(any(), any(), any(), any(), any());
-		assertThat(act).isNotNull();
+		assertThat(optAct).isNotEmpty();
+		Activity act = optAct.get();
 		assertThat(act.getLaps()).isNotEmpty();
 		List<Lap> laps = act.getLaps();
 		assertThat(laps.size()).isEqualTo(4);
@@ -766,13 +770,13 @@ public class ActivityOperationsImplTest {
 	public void splitLapNullActivityTest() {
 		// Given activity null
 		// When
-		Activity act = activityOperations.splitLap(null, "44.3602900", "-6.8447600",
+		Optional<Activity> optAct = activityOperations.splitLap(null, "44.3602900", "-6.8447600",
 				timeMillisLap21, index21);
 
 		// Then
 		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), any(), any(), any());
 		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), any(), any(), any());
-		assertThat(act).isNull();
+		assertThat(optAct).isEmpty();
 	}
 
 	@Test
@@ -786,12 +790,12 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity act = activityOperations.splitLap(activity, null, "-6.8447600", timeMillisLap21, index21);
+		Optional<Activity> optAct = activityOperations.splitLap(activity, null, "-6.8447600", timeMillisLap21, index21);
 
 		// Then
 		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), isNull(), any(), any(), any());
 		verify(lapsOperations, times(0)).getTrackPoint(any(), isNull(), any(), any(), any());
-		assertThat(act).isNull();
+		assertThat(optAct).isEmpty();
 	}
 
 	@Test
@@ -805,13 +809,13 @@ public class ActivityOperationsImplTest {
 				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
-		Activity act = activityOperations.splitLap(activity, "44.3602900", null,
+		Optional<Activity> optAct = activityOperations.splitLap(activity, "44.3602900", null,
 				timeMillisLap21, index21);
 
 		// Then
 		verify(lapsOperations, times(0)).fulfillCriteriaPositionTime(any(), any(), isNull(), any(), any());
 		verify(lapsOperations, times(0)).getTrackPoint(any(), any(), isNull(), any(), any());
-		assertThat(act).isNull();
+		assertThat(optAct).isEmpty();
 	}
 
 

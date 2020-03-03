@@ -27,7 +27,7 @@ public interface ActivityOperations {
 	 *            order of creation
 	 * @return activity or null if there was any error.
 	 */
-	Activity removePoint(final Activity act, final String lat, final String lng, final Long timeInMillis,
+	Optional<Activity> removePoint(final Activity act, final String lat, final String lng, final Long timeInMillis,
 						 final Integer indexTrackPoint);
 	
 	/**
@@ -46,7 +46,7 @@ public interface ActivityOperations {
 	 *            of the track point which will be the divider
 	 * @return activity with the new laps.
 	 */
-	Activity splitLap(final Activity activity, final String lat, final String lng, final Long timeInMillis,
+	Optional<Activity> splitLap(final Activity activity, final String lat, final String lng, final Long timeInMillis,
 					  final Integer indexTrackPoint);
 
 	/**
@@ -60,12 +60,12 @@ public interface ActivityOperations {
 
 	/**
 	 * Delete a lap from an activity
-	 * @param act
+	 * @param activity
 	 * @param startTime optional (if it is not informed, just pay attention to the index lap)
 	 * @param indexLap
 	 * @return
 	 */
-	Activity removeLaps(final Activity act, final List<Long> startTime, final List<Integer> indexLap);
+	Optional<Activity> removeLaps(final Activity activity, final List<Long> startTime, final List<Integer> indexLap);
 
 	/**
 	 * Calculate total distance and speed of an activity.
@@ -91,7 +91,7 @@ public interface ActivityOperations {
 	 *            index of the position in the array
 	 * @return index of a track point
 	 */
-	int indexOfTrackPoint(final Activity activity, final Integer indexLap, final String latitude,
+	Optional<Integer> indexOfTrackPoint(final Activity activity, final Integer indexLap, final String latitude,
 						  final String longitude, final Long time, final Integer index);
 
 	/**
@@ -100,7 +100,7 @@ public interface ActivityOperations {
 	 * @param dataColors separated each color lap by ',' regular and light color lap separated by '#'
 	 * @return activity with the colors applied
 	 */
-	Activity setColorsGetActivity(final Activity activity, final String dataColors);
+	Optional<Activity> setColorsGetActivity(final Activity activity, final String dataColors);
 
 	/**
 	 * Parser and transform the xml file to data model List
