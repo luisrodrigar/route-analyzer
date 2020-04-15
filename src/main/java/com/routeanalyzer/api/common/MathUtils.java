@@ -26,7 +26,10 @@ public class MathUtils {
     }
 
     public static BigDecimal toBigDecimal(final Double number) {
-        return ofNullable(number).map(BigDecimal::new).orElse(null);
+        return ofNullable(number)
+                .filter(Double::isFinite)
+                .map(BigDecimal::new)
+                .orElse(null);
     }
 
     public static double round(final double number, final int round) {
@@ -70,7 +73,7 @@ public class MathUtils {
 
     public static List<Integer> sortingPositiveValues(final Integer indexLeft, final Integer indexRight) {
         return ofNullable(indexLeft)
-                .filter(__ -> isPositiveOrZero(indexLeft))
+                .filter(MathUtils::isPositiveOrZero)
                 .filter(__ -> isPositiveOrZero(indexRight))
                 .map(__ -> indexLeft.compareTo(indexRight) > 0
                         ? swapValues(indexLeft, indexRight) : asList(indexLeft, indexRight))
@@ -86,8 +89,8 @@ public class MathUtils {
 
     public static double metersBetweenCoordinates(final BigDecimal latP1, final BigDecimal lngP1, final BigDecimal latP2,
                                                   final BigDecimal lngP2) {
-        return metersBetweenCoordinates(degrees2Radians(latP1), degrees2Radians(lngP1), degrees2Radians(latP2),
-                degrees2Radians(lngP2));
+        return metersBetweenCoordinates(degrees2Radians(latP1), degrees2Radians(lngP1),
+                degrees2Radians(latP2), degrees2Radians(lngP2));
     }
 
     public static double metersBetweenCoordinates(final double latP1, final double lngP1, final double latP2,
