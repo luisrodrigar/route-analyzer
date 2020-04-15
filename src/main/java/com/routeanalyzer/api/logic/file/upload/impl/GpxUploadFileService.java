@@ -140,7 +140,8 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
     }
 
     private TrackPoint addExtensions(final WptType wptType, final TrackPoint trackPoint) {
-        return ofNullable(wptType.getExtensions())
+        return ofNullable(wptType)
+                .map(WptType::getExtensions)
                 .map(ExtensionsType::getAny)
                 .map(extensions -> addHeartRate(extensions, trackPoint))
                 .orElse(trackPoint);
@@ -153,7 +154,8 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
     }
 
     private Optional<Integer> getHeartRateExtensionValue(final List<Object> extensions) {
-        return ofNullable(toJAXBElementExtensionsValue(extensions))
+        return ofNullable(extensions)
+                .map(this::toJAXBElementExtensionsValue)
                 .filter(not(List::isEmpty))
                 .map(this::getHeartRateValue)
                 .orElseGet(() -> getHeartRateValue(extensions));

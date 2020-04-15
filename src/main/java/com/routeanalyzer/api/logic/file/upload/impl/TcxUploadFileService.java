@@ -43,6 +43,7 @@ import java.util.stream.IntStream;
 
 import static com.routeanalyzer.api.common.CommonUtils.not;
 import static com.routeanalyzer.api.common.Constants.SOURCE_TCX_XML;
+import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -281,10 +282,15 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
     }
 
     private Optional<Double> getAverageSpeedExtensionValue(final ExtensionsT extensionsT) {
-        return ofNullable(toJAXBElementExtensionsValue(extensionsT.getAny()))
+        return ofNullable(extensionsT)
+                .map(ExtensionsT::getAny)
+                .map(this::toJAXBElementExtensionsValue)
                 .filter(not(List::isEmpty))
                 .map(this::getAvgSpeedValue)
-                .orElseGet(() -> getAvgSpeedValue(extensionsT.getAny()));
+                .orElseGet(() -> ofNullable(extensionsT)
+                        .map(ExtensionsT::getAny)
+                        .map(this::getAvgSpeedValue)
+                        .orElse(empty()));
     }
 
     private Optional<Double> getAvgSpeedValue(final List<Object> extensions) {
@@ -311,7 +317,8 @@ public class TcxUploadFileService extends UploadFileService<TrainingCenterDataba
     }
 
     private Optional<BigDecimal> getSpeedExtensionValue(final List<Object> extensions) {
-        return ofNullable(toJAXBElementExtensionsValue(extensions))
+        return ofNullable(extensions)
+                .map(this::toJAXBElementExtensionsValue)
                 .filter(not(List::isEmpty))
                 .map(this::getSpeedValue)
                 .orElseGet(() -> getSpeedValue(extensions));
