@@ -113,6 +113,6 @@ public class MathUtils {
 
         double theta = Math.acos(cosTheta);
 
-        return EARTHS_RADIUS_METERS * theta;
+        return Math.abs(EARTHS_RADIUS_METERS * theta);
     }
 }
