@@ -4,7 +4,7 @@ import com.routeanalyzer.api.controller.ActivityRestController;
 import com.routeanalyzer.api.facade.ActivityFacade;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.exception.ActivityNotFoundException;
-import com.routeanalyzer.api.model.exception.ActivityOperationNoExecutedException;
+import com.routeanalyzer.api.model.exception.ActivityOperationNotExecutedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -420,7 +420,7 @@ public class ActivityRestControllerTest {
 		String lng = "-6.5739970";
 		String timeMillis = "1519737395000";
 		String index = "3";
-		doThrow(new ActivityOperationNoExecutedException(ACTIVITY_TCX_ID, "splitLap"))
+		doThrow(new ActivityOperationNotExecutedException(ACTIVITY_TCX_ID, "splitLap"))
 				.when(activityFacade).splitLap(ACTIVITY_TCX_ID, lat, lng, Long.valueOf(timeMillis),
 				Integer.valueOf(index));
 		//When

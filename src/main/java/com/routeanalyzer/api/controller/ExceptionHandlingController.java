@@ -4,7 +4,7 @@ import com.amazonaws.AmazonClientException;
 import com.routeanalyzer.api.common.JsonUtils;
 import com.routeanalyzer.api.model.exception.ActivityColorsNotAssignedException;
 import com.routeanalyzer.api.model.exception.ActivityNotFoundException;
-import com.routeanalyzer.api.model.exception.ActivityOperationNoExecutedException;
+import com.routeanalyzer.api.model.exception.ActivityOperationNotExecutedException;
 import com.routeanalyzer.api.model.exception.FileNotFoundException;
 import com.routeanalyzer.api.model.exception.FileOperationNotExecutedException;
 import lombok.extern.slf4j.Slf4j;
@@ -91,7 +91,7 @@ public class ExceptionHandlingController {
     }
 
     @ResponseBody
-    @ExceptionHandler(ActivityOperationNoExecutedException.class)
+    @ExceptionHandler(ActivityOperationNotExecutedException.class)
     @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
     Response handleOperationNotExecutedException(final Exception exception) {
         log.warn("Params error happened: ", exception);

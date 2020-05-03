@@ -4,7 +4,7 @@ import com.routeanalyzer.api.facade.ActivityFacade;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.exception.ActivityColorsNotAssignedException;
 import com.routeanalyzer.api.model.exception.ActivityNotFoundException;
-import com.routeanalyzer.api.model.exception.ActivityOperationNoExecutedException;
+import com.routeanalyzer.api.model.exception.ActivityOperationNotExecutedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +59,7 @@ public class ActivityRestController {
 										message = "Longitude parameter not valid") final String lng,
 								@RequestParam @Min(0L) final Long timeInMillis,
 								@RequestParam @Min(0) final Integer index)
-			throws ActivityNotFoundException, ActivityOperationNoExecutedException {
+			throws ActivityNotFoundException, ActivityOperationNotExecutedException {
 		return activityFacade.removePoint(id, lat, lng, timeInMillis, index);
 	}
 
@@ -67,7 +67,7 @@ public class ActivityRestController {
 	public Activity joinLaps(@PathVariable @Pattern(regexp = "^[a-f\\d]{24}$") @NotNull final String id,
 							 @RequestParam(name = "index1") @NotNull @Min(0) final Integer indexLeft,
 							 @RequestParam(name = "index2") @NotNull @Min(0) final Integer indexRight)
-			throws ActivityNotFoundException, ActivityOperationNoExecutedException {
+			throws ActivityNotFoundException, ActivityOperationNotExecutedException {
 		return activityFacade.joinLaps(id, indexLeft, indexRight);
 	}
 
@@ -79,7 +79,7 @@ public class ActivityRestController {
 									 message = "Longitude parameter not valid") final String lng,
 							 @RequestParam @Min(0L) final Long timeInMillis,
 							 @RequestParam @Min(0) final Integer index)
-			throws ActivityNotFoundException, ActivityOperationNoExecutedException {
+			throws ActivityNotFoundException, ActivityOperationNotExecutedException {
 		return activityFacade.splitLap(id, lat, lng, timeInMillis, index);
 	}
 
@@ -87,7 +87,7 @@ public class ActivityRestController {
 	public Activity removeLaps(@PathVariable  @Pattern(regexp = "^[a-f\\d]{24}$") final String id,
 							   @RequestParam(name = "date") @Size(min = 1) final List<String> startTimeLaps,
 							   @RequestParam(name = "index") @Size(min = 1) final List<String> indexLaps)
-			throws ActivityNotFoundException, ActivityOperationNoExecutedException {
+			throws ActivityNotFoundException, ActivityOperationNotExecutedException {
 		return activityFacade.removeLaps(id, startTimeLaps, indexLaps);
 	}
 

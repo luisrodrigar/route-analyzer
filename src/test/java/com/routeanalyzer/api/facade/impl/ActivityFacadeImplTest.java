@@ -6,7 +6,7 @@ import com.routeanalyzer.api.logic.ActivityOperations;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.exception.ActivityColorsNotAssignedException;
 import com.routeanalyzer.api.model.exception.ActivityNotFoundException;
-import com.routeanalyzer.api.model.exception.ActivityOperationNoExecutedException;
+import com.routeanalyzer.api.model.exception.ActivityOperationNotExecutedException;
 import io.vavr.control.Try;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -170,7 +170,7 @@ public class ActivityFacadeImplTest {
 
     @Test(expected = ActivityNotFoundException.class)
     public void removePointNonExistentActivity() throws ActivityNotFoundException,
-            ActivityOperationNoExecutedException {
+            ActivityOperationNotExecutedException {
         // Given
         String latitudePointToDelete = "42.6132170";
         String longitudePointToDelete = "-6.5733730";
@@ -188,9 +188,9 @@ public class ActivityFacadeImplTest {
         verify(mongoRepository, never()).save(any());
     }
 
-    @Test(expected = ActivityOperationNoExecutedException.class)
+    @Test(expected = ActivityOperationNotExecutedException.class)
     public void removeIssueRemovingPointActivity() throws ActivityNotFoundException,
-            ActivityOperationNoExecutedException {
+            ActivityOperationNotExecutedException {
         // Given
         String latitudePointToDelete = "42.6132170";
         String longitudePointToDelete = "-6.5733730";
@@ -212,7 +212,7 @@ public class ActivityFacadeImplTest {
     }
 
     @Test(expected = ActivityNotFoundException.class)
-    public void removeLapNonExistentActivity() throws ActivityNotFoundException, ActivityOperationNoExecutedException {
+    public void removeLapNonExistentActivity() throws ActivityNotFoundException, ActivityOperationNotExecutedException {
         // Give
         Long timeInMillis = 1519737390000L;
         Integer index = 2;
@@ -227,9 +227,9 @@ public class ActivityFacadeImplTest {
         verify(mongoRepository, never()).save(any());
     }
 
-    @Test(expected = ActivityOperationNoExecutedException.class)
+    @Test(expected = ActivityOperationNotExecutedException.class)
     public void removeLapOperationProblemActivity() throws ActivityNotFoundException,
-            ActivityOperationNoExecutedException {
+            ActivityOperationNotExecutedException {
         // Give
         Long timeInMillis = 1519737390000L;
         Integer index = 2;
@@ -320,7 +320,7 @@ public class ActivityFacadeImplTest {
     }
 
     @Test(expected = ActivityNotFoundException.class)
-    public void joinLapsActivityNotFound() throws ActivityNotFoundException, ActivityOperationNoExecutedException {
+    public void joinLapsActivityNotFound() throws ActivityNotFoundException, ActivityOperationNotExecutedException {
         // Given
         Integer index1 = 1;
         Integer index2 = 2;
@@ -335,8 +335,8 @@ public class ActivityFacadeImplTest {
         verify(mongoRepository, never()).save(any());
     }
 
-    @Test(expected = ActivityOperationNoExecutedException.class)
-    public void joinLapsOperationError() throws ActivityNotFoundException, ActivityOperationNoExecutedException {
+    @Test(expected = ActivityOperationNotExecutedException.class)
+    public void joinLapsOperationError() throws ActivityNotFoundException, ActivityOperationNotExecutedException {
         // Given
         Integer index1 = 1;
         Integer index2 = 2;
@@ -376,7 +376,7 @@ public class ActivityFacadeImplTest {
     }
 
     @Test(expected = ActivityNotFoundException.class)
-    public void splitLapNonExistentActivity() throws ActivityNotFoundException, ActivityOperationNoExecutedException {
+    public void splitLapNonExistentActivity() throws ActivityNotFoundException, ActivityOperationNotExecutedException {
         // Given
         String lat = "42.6132170";
         String lng = "-6.5733730";
@@ -393,8 +393,8 @@ public class ActivityFacadeImplTest {
         verify(mongoRepository, never()).save(any());
     }
 
-    @Test(expected = ActivityOperationNoExecutedException.class)
-    public void splitLapOperationNotExecuted() throws ActivityNotFoundException, ActivityOperationNoExecutedException {
+    @Test(expected = ActivityOperationNotExecutedException.class)
+    public void splitLapOperationNotExecuted() throws ActivityNotFoundException, ActivityOperationNotExecutedException {
         // Given
         String lat = "42.6132170";
         String lng = "-6.5733730";
