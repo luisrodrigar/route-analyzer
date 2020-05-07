@@ -25,5 +25,5 @@ public abstract class ExportFileService<T> {
                 .orElseThrow(() -> new IllegalArgumentException("Not possible to convert activity to xml."));
     }
 
-    public abstract Optional<JAXBElement<T>> convertToXmlObjects(final Activity activity);
+    protected abstract Optional<JAXBElement<T>> convertToXmlObjects(final Activity activity);
 }

@@ -39,7 +39,7 @@ public class GpxExportFileService extends ExportFileService<GpxType> {
     }
 
     @Override
-    public Optional<JAXBElement<GpxType>> convertToXmlObjects(final Activity activity) {
+    protected Optional<JAXBElement<GpxType>> convertToXmlObjects(final Activity activity) {
         return ofNullable(activity)
                 .map(Activity::getLaps)
                 .flatMap(this::toOptionalTrkType)

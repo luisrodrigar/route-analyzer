@@ -46,7 +46,7 @@ public class TcxExportFileService extends ExportFileService<TrainingCenterDataba
     }
 
     @Override
-    public Optional<JAXBElement<TrainingCenterDatabaseT>> convertToXmlObjects(final Activity activity) {
+    protected Optional<JAXBElement<TrainingCenterDatabaseT>> convertToXmlObjects(final Activity activity) {
         return ofNullable(activity)
                 .map(Activity::getLaps)
                 .map(this::toTcxLaps)
