@@ -94,6 +94,7 @@ public class PositionOperationsImpl implements PositionOperations {
                 .map(BigDecimal::new)
                 .flatMap(coordinateBD -> ofNullable(positionParam)
                         .map(coordinateGetter)
+                        .map(BigDecimal::stripTrailingZeros)
                         .map(coordinateBD::equals))
                 .orElse(false);
     }
