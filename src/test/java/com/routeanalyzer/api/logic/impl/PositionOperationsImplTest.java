@@ -117,6 +117,58 @@ public class PositionOperationsImplTest {
     }
 
     @Test
+    public void isSamePositionWithTrailingZeros() {
+        String latitudeWithoutTrailingZeros = "40.4165";
+        String longitudeWithoutTrailingZeros = "-3.70256";
+        Position position = Position.builder()
+                .latitudeDegrees(new BigDecimal("40.4165000"))
+                .longitudeDegrees(new BigDecimal("-3.7025600"))
+                .build();
+        boolean isEqual = positionOperations.isThisPosition(position, latitudeWithoutTrailingZeros,
+                longitudeWithoutTrailingZeros);
+        assertThat(isEqual).isTrue();
+    }
+
+    @Test
+    public void isSamePositionWithoutTrailingZeros() {
+        String latitudeWithoutTrailingZeros = "40.4165000";
+        String longitudeWithoutTrailingZeros = "-3.7025600";
+        Position position = Position.builder()
+                .latitudeDegrees(new BigDecimal("40.4165"))
+                .longitudeDegrees(new BigDecimal("-3.70256"))
+                .build();
+        boolean isEqual = positionOperations.isThisPosition(position, latitudeWithoutTrailingZeros,
+                longitudeWithoutTrailingZeros);
+        assertThat(isEqual).isTrue();
+    }
+
+    @Test
+    public void isSamePositionWithLeadingZeros() {
+        String latitudeWithoutTrailingZeros = "40.4165000";
+        String longitudeWithoutTrailingZeros = "3.7025600";
+        Position position = Position.builder()
+                .latitudeDegrees(new BigDecimal("040.4165000"))
+                .longitudeDegrees(new BigDecimal("03.7025600"))
+                .build();
+        boolean isEqual = positionOperations.isThisPosition(position, latitudeWithoutTrailingZeros,
+                longitudeWithoutTrailingZeros);
+        assertThat(isEqual).isTrue();
+    }
+
+    @Test
+    public void isSamePositionWithoutLeadingZeros() {
+        String latitudeWithoutTrailingZeros = "040.4165000";
+        String longitudeWithoutTrailingZeros = "03.7025600";
+        Position position = Position.builder()
+                .latitudeDegrees(new BigDecimal("40.4165000"))
+                .longitudeDegrees(new BigDecimal("3.7025600"))
+                .build();
+        boolean isEqual = positionOperations.isThisPosition(position, latitudeWithoutTrailingZeros,
+                longitudeWithoutTrailingZeros);
+        assertThat(isEqual).isTrue();
+    }
+
+    @Test
     public void calculateDistanceTest() {
         // When
         Optional<Double> distanceOvdPark = positionOperations.calculateDistance(oviedo, park);

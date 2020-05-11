@@ -92,6 +92,7 @@ public class PositionOperationsImpl implements PositionOperations {
                                                  final Function<Position, BigDecimal> coordinateGetter) {
         return positionParam -> ofNullable(coordinateDegrees)
                 .map(BigDecimal::new)
+                .map(BigDecimal::stripTrailingZeros)
                 .flatMap(coordinateBD -> ofNullable(positionParam)
                         .map(coordinateGetter)
                         .map(BigDecimal::stripTrailingZeros)
