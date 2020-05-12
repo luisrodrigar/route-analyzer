@@ -32,34 +32,38 @@ public class DateUtils {
                 .map(Instant::toEpochMilli);
     }
 
-    public static Optional<ZonedDateTime> toZonedDateTime(final XMLGregorianCalendar xmlGregorianCalendar) {
+    public static Optional<ZonedDateTime> toUtcZonedDateTime(final XMLGregorianCalendar xmlGregorianCalendar) {
         return ofNullable(xmlGregorianCalendar)
                 .map(XMLGregorianCalendar::toGregorianCalendar)
-                .flatMap(DateUtils::toZonedDateTime);
+                .flatMap(DateUtils::toUtcZonedDateTime);
     }
 
-    public static Optional<ZonedDateTime> toZonedDateTime(final GregorianCalendar xmlGregorianCalendar) {
+    public static Optional<ZonedDateTime> toUtcZonedDateTime(final GregorianCalendar xmlGregorianCalendar) {
         return ofNullable(xmlGregorianCalendar)
                 .map(GregorianCalendar::getTime)
                 .map(Date::toInstant)
-                .flatMap(DateUtils::toZonedDateTime);
+                .flatMap(DateUtils::toUtcZonedDateTime);
     }
 
-    public static Optional<ZonedDateTime> toZonedDateTime(final Long timeMillis) {
+    public static Optional<ZonedDateTime> toUtcZonedDateTime(final Long timeMillis) {
         return ofNullable(timeMillis)
                 .map(Instant::ofEpochMilli)
-                .flatMap(DateUtils::toZonedDateTime);
+                .flatMap(DateUtils::toUtcZonedDateTime);
     }
 
-    public static Optional<ZonedDateTime> toZonedDateTime(final Instant instant) {
+    public static Optional<ZonedDateTime> toUtcZonedDateTime(final Instant instant) {
         return ofNullable(instant)
                 .map(__ -> ZonedDateTime.ofInstant(instant, ZoneId.of("UTC")));
     }
 
     public static GregorianCalendar createGregorianCalendar(final Date date) {
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.setTime(date);
-        return gregorianCalendar;
+        return ofNullable(date)
+                .map(__ -> {
+                    GregorianCalendar gregorianCalendar = new GregorianCalendar();
+                    gregorianCalendar.setTime(date);
+                    return gregorianCalendar;
+                })
+                .orElse(null);
     }
 
     public static XMLGregorianCalendar createXmlGregorianCalendar(final GregorianCalendar gregorianCalendar) {
@@ -67,7 +71,9 @@ public class DateUtils {
                 .getOrNull();
     }
 
-    public static double millisToSeconds(final double milliSeconds){
-        return milliSeconds / 1000.0;
+    public static Double millisToSeconds(final Double milliSeconds){
+        return ofNullable(milliSeconds)
+                .map(__ -> milliSeconds / 1000.0)
+                .orElse(null);
     }
 }

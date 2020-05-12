@@ -83,7 +83,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
     private ZonedDateTime getMetadataDate(final MetadataType metadataType, final TrkType trkType) {
         return ofNullable(metadataType)
                 .map(MetadataType::getTime)
-                .flatMap(DateUtils::toZonedDateTime)
+                .flatMap(DateUtils::toUtcZonedDateTime)
                 .orElseGet(getFirstDateTimeTrackPoint(trkType));
     }
 
@@ -94,7 +94,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                 .map(TrksegType::getTrkpt)
                 .map(wptTypeList -> wptTypeList.get(0))
                 .map(WptType::getTime)
-                .flatMap(DateUtils::toZonedDateTime)
+                .flatMap(DateUtils::toUtcZonedDateTime)
                 .orElse(null);
     }
 
@@ -125,7 +125,7 @@ public class GpxUploadFileService extends UploadFileService<GpxType> {
                 .map(TrksegType::getTrkpt)
                 .map(wptTypeList -> wptTypeList.get(0))
                 .map(WptType::getTime)
-                .flatMap(DateUtils::toZonedDateTime)
+                .flatMap(DateUtils::toUtcZonedDateTime)
                 .orElse(null);
     }
 

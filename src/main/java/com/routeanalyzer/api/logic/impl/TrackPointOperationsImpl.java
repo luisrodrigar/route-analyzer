@@ -1,6 +1,5 @@
 package com.routeanalyzer.api.logic.impl;
 
-import com.routeanalyzer.api.common.CommonUtils;
 import com.routeanalyzer.api.common.DateUtils;
 import com.routeanalyzer.api.common.MathUtils;
 import com.routeanalyzer.api.logic.PositionOperations;
@@ -21,7 +20,7 @@ import java.util.function.Function;
 
 import static com.routeanalyzer.api.common.CommonUtils.toStringValue;
 import static com.routeanalyzer.api.common.DateUtils.toTimeMillis;
-import static com.routeanalyzer.api.common.DateUtils.toZonedDateTime;
+import static com.routeanalyzer.api.common.DateUtils.toUtcZonedDateTime;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static io.vavr.Predicates.is;
 import static java.util.Objects.nonNull;
@@ -115,7 +114,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 	public TrackPoint toTrackPoint(final XMLGregorianCalendar xmlGregorianCalendar, final int index,
 								   final Position position, final String altitude, final String distance,
 								   final String speed, final Integer heartRate) {
-		return toZonedDateTime(xmlGregorianCalendar)
+		return toUtcZonedDateTime(xmlGregorianCalendar)
 				.map(zonedDateTime -> toTrackPoint(zonedDateTime, index, position, altitude, distance, speed, heartRate))
 				.orElse(null);
 	}
@@ -124,7 +123,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 	public TrackPoint toTrackPoint(final long timeMillis, final int index, final Position position,
 								   final String altitude, final String distance, final String speed,
 								   final Integer heartRate) {
-		return toZonedDateTime(timeMillis)
+		return toUtcZonedDateTime(timeMillis)
 				.map(zonedDateTime -> toTrackPoint(zonedDateTime, index, position, altitude, distance, speed, heartRate))
 				.orElse(null);
 	}
@@ -141,7 +140,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 	public TrackPoint toTrackPoint(final long timeMillis, final int index, final String latitude,
 								   final String longitude, final String altitude, final String distance,
 								   final String speed, final Integer heartRate) {
-		return toZonedDateTime(timeMillis)
+		return toUtcZonedDateTime(timeMillis)
 				.map(zonedDateTime -> toTrackPoint(zonedDateTime, index, latitude, longitude, altitude, distance, speed, heartRate))
 				.orElse(null);
 	}
@@ -171,7 +170,7 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 						null, null, null));
 	}
 
-	private Long calculateTime(final TrackPoint origin, final TrackPoint end) {
+	private Double calculateTime(final TrackPoint origin, final TrackPoint end) {
 		return ofNullable(origin)
 				.map(TrackPoint::getDate)
 				.flatMap(DateUtils::toTimeMillis)
@@ -179,8 +178,8 @@ public class TrackPointOperationsImpl implements TrackPointOperations {
 						.map(TrackPoint::getDate)
 						.flatMap(DateUtils::toTimeMillis)
 						.map(endTime -> endTime - initTime)
+						.map(Double::valueOf)
 						.map(DateUtils::millisToSeconds))
-				.map(Double::longValue)
 				.orElse(null);
 	}
 

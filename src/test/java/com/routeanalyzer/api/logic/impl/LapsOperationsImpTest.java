@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.routeanalyzer.api.common.DateUtils.toZonedDateTime;
+import static com.routeanalyzer.api.common.DateUtils.toUtcZonedDateTime;
 import static com.routeanalyzer.api.common.MathUtils.toBigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -213,14 +213,14 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(2)
                 .totalTimeSeconds(50.0)
                 .intensity("LOW")
                 .build();
         lapRight = Lap.builder().tracks(trackPointsRight)
                 .distanceMeters(150.0)
-                .startTime(toZonedDateTime(timeMillisRight1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisRight1).orElse(null))
                 .index(3)
                 .totalTimeSeconds(50.0)
                 .intensity("HIGH")
@@ -253,14 +253,14 @@ public class LapsOperationsImpTest {
         trackPointsRight.stream().forEach(resetSpeedValues);
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .totalTimeSeconds(50.0)
                 .intensity("HIGH")
                 .build();
         lapRight = Lap.builder().tracks(trackPointsRight)
                 .distanceMeters(150.0)
-                .startTime(toZonedDateTime(timeMillisRight1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisRight1).orElse(null))
                 .index(1)
                 .totalTimeSeconds(50.0)
                 .intensity(null)
@@ -288,7 +288,7 @@ public class LapsOperationsImpTest {
         trackPointsLeft.remove(trackPointLeft1);
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .maximumHeartRate(176)
                 .maximumSpeed(22.0)
@@ -299,7 +299,7 @@ public class LapsOperationsImpTest {
                 .build();
         lapRight = Lap.builder().tracks(trackPointsRight)
                 .distanceMeters(150.0)
-                .startTime(toZonedDateTime(timeMillisRight1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisRight1).orElse(null))
                 .index(1)
                 .maximumHeartRate(156)
                 .maximumSpeed(22.0)
@@ -330,7 +330,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(8)
                 .maximumHeartRate(176)
                 .maximumSpeed(22.0)
@@ -341,7 +341,7 @@ public class LapsOperationsImpTest {
                 .build();
         lapRight = Lap.builder().tracks(trackPointsRight)
                 .distanceMeters(150.0)
-                .startTime(toZonedDateTime(timeMillisRight1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisRight1).orElse(null))
                 .index(9)
                 .maximumHeartRate(156)
                 .maximumSpeed(22.0)
@@ -368,7 +368,7 @@ public class LapsOperationsImpTest {
         trackPointsLeft.stream().forEach(resetAltValues);
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(8)
                 .maximumHeartRate(176)
                 .maximumSpeed(22.0)
@@ -431,7 +431,7 @@ public class LapsOperationsImpTest {
         trackPointsLeft.stream().forEach(resetAltValues);
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(8)
                 .maximumHeartRate(176)
                 .maximumSpeed(22.0)
@@ -462,7 +462,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(8)
                 .maximumHeartRate(176)
                 .maximumSpeed(22.0)
@@ -492,7 +492,7 @@ public class LapsOperationsImpTest {
         trackPointsLeft.stream().forEach(resetPosition);
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(8)
                 .maximumHeartRate(176)
                 .maximumSpeed(22.0)
@@ -522,7 +522,7 @@ public class LapsOperationsImpTest {
         trackPointsLeft.stream().forEach(resetPosition);
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(8)
                 .maximumHeartRate(176)
                 .maximumSpeed(22.0)
@@ -549,7 +549,7 @@ public class LapsOperationsImpTest {
         Consumer<TrackPoint> resetDistValues = trackPoint -> trackPoint.setDistanceMeters(null);
         trackPointsRight.stream().forEach(resetDistValues);
         lapRight = Lap.builder().tracks(trackPointsRight)
-                .startTime(toZonedDateTime(timeMillisRight1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisRight1).orElse(null))
                 .index(3)
                 .totalTimeSeconds(50.0)
                 .intensity("HIGH")
@@ -589,7 +589,7 @@ public class LapsOperationsImpTest {
         Consumer<TrackPoint> resetDistValues = trackPoint -> trackPoint.setDistanceMeters(null);
         trackPointsLeft.stream().forEach(resetDistValues);
         lapLeft = Lap.builder().tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
         double dist1 = 0.0;
@@ -626,7 +626,7 @@ public class LapsOperationsImpTest {
         // Given
         trackPointsRight.stream().forEach(resetSpeedValue);
         lapRight = Lap.builder().tracks(trackPointsRight)
-                .startTime(toZonedDateTime(timeMillisRight1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisRight1).orElse(null))
                 .index(0)
                 .build();
         double speed1 = 5.0;
@@ -668,7 +668,7 @@ public class LapsOperationsImpTest {
         // Given
         trackPointsLeft.stream().forEach(resetSpeedValue);
         lapLeft = Lap.builder().tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
         double speed1 = 0.0;
@@ -711,7 +711,7 @@ public class LapsOperationsImpTest {
         // Given
         trackPointsLeft.stream().forEach(resetSpeedValue);
         lapLeft = Lap.builder()
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
 
@@ -733,7 +733,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder()
                 .tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
         doReturn(true).when(trackPointOperations).isThisTrack(trackPointLeft1,
@@ -758,7 +758,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder()
                 .tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
         doReturn(true).when(trackPointOperations).isThisTrack(trackPointLeft4,
@@ -783,7 +783,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder()
                 .tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
 
@@ -804,7 +804,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder()
                 .tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
         doReturn(true).when(trackPointOperations)
@@ -829,7 +829,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder()
                 .tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
         doReturn(true).when(trackPointOperations)
@@ -854,7 +854,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder()
                 .tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
 
@@ -887,7 +887,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder()
                 .tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
 
@@ -906,7 +906,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder()
                 .tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
         // When
@@ -925,7 +925,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder()
                 .tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(0)
                 .build();
 
@@ -945,7 +945,7 @@ public class LapsOperationsImpTest {
         // Given
         trackPointsLeft.addAll(trackPointsRight);
         Lap lap = Lap.builder().tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisRight1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisRight1).orElse(null))
                 .index(0)
                 .totalTimeSeconds(50.0)
                 .intensity("HIGH")
@@ -964,7 +964,7 @@ public class LapsOperationsImpTest {
         // Given
         trackPointsLeft.addAll(trackPointsRight);
         Lap lap = Lap.builder().tracks(trackPointsLeft)
-                .startTime(toZonedDateTime(timeMillisRight1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisRight1).orElse(null))
                 .index(0)
                 .totalTimeSeconds(50.0)
                 .intensity("HIGH")
@@ -1077,7 +1077,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(2)
                 .totalTimeSeconds(50.0)
                 .intensity("LOW")
@@ -1113,7 +1113,7 @@ public class LapsOperationsImpTest {
         // Given
         lapLeft = Lap.builder().tracks(trackPointsLeft)
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLeft1).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLeft1).orElse(null))
                 .index(2)
                 .totalTimeSeconds(50.0)
                 .intensity("LOW")

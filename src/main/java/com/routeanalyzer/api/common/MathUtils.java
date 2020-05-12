@@ -10,6 +10,7 @@ import java.util.List;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
+import static java.util.Objects.nonNull;
 
 @UtilityClass
 public class MathUtils {
@@ -32,49 +33,65 @@ public class MathUtils {
                 .orElse(null);
     }
 
-    public static double round(final double number, final int round) {
-        double roundNumber = Math.pow(10, round);
-        return Math.round(number * roundNumber) / roundNumber;
+    public static Double round(final Double number, final Integer round) {
+        return ofNullable(number)
+                .flatMap(__ -> ofNullable(round)
+                        .map(___ ->  Math.pow(10, round))
+                        .map(rounder -> Math.round(number * rounder) / rounder))
+                .orElse(null);
     }
 
-    public static double degrees2Radians(final BigDecimal degrees) {
-        return degrees.doubleValue() * Math.PI / 180.0;
+    public static Double degrees2Radians(final BigDecimal degrees) {
+        return ofNullable(degrees)
+                .map(BigDecimal::doubleValue)
+                .map(degreesDouble -> degreesDouble * Math.PI / 180.0)
+                .orElse(null);
     }
 
     public static Integer increaseUnit(final Integer num) {
-        return num + 1;
+        return ofNullable(num)
+                .map(__ -> num + 1)
+                .orElse(null);
     }
 
     public static Integer decreaseUnit(final Integer num) {
-        return num - 1;
+        return ofNullable(num)
+                .map(__ -> num - 1)
+                .orElse(null);
     }
 
     // Logical operations
 
-    public static boolean isPositiveNonZero(final Double value) {
-        return value > 0;
+    public static Boolean isPositiveNonZero(final Double value) {
+        return ofNullable(value)
+                .map(__ -> value > 0)
+                .orElse(null);
     }
 
-    public static boolean isPositiveNonZero(final Integer value) {
-        return value > 0;
+    public static Boolean isPositiveNonZero(final Integer value) {
+        return ofNullable(value)
+                .map(__ -> value > 0)
+                .orElse(null);
     }
 
-    public static boolean isPositiveNonZero(final Long value) {
-        return value > 0;
+    public static Boolean isPositiveOrZero(final Integer value) {
+        return ofNullable(value)
+                .map(__ -> value >= 0)
+                .orElse(null);
     }
 
-    public static boolean isPositiveOrZero(final Integer value) {
-        return value >= 0;
-    }
-
-    public static boolean isPositiveHeartRate(final HeartRateInBeatsPerMinuteT heartRate) {
-        return heartRate.getValue() > 0;
+    public static Boolean isPositiveHeartRate(final HeartRateInBeatsPerMinuteT heartRate) {
+        return ofNullable(heartRate)
+                .map(HeartRateInBeatsPerMinuteT::getValue)
+                .map(heartRateValue -> heartRateValue > 0)
+                .orElse(null);
     }
 
     public static List<Integer> sortingPositiveValues(final Integer indexLeft, final Integer indexRight) {
         return ofNullable(indexLeft)
                 .filter(MathUtils::isPositiveOrZero)
-                .filter(__ -> isPositiveOrZero(indexRight))
+                .filter(__ -> ofNullable(isPositiveOrZero(indexRight))
+                        .orElse(false))
                 .map(__ -> indexLeft.compareTo(indexRight) > 0
                         ? swapValues(indexLeft, indexRight) : asList(indexLeft, indexRight))
                 .orElse(emptyList());
@@ -87,13 +104,21 @@ public class MathUtils {
         return asList(smallerNumber, biggerNumber);
     }
 
-    public static double metersBetweenCoordinates(final BigDecimal latP1, final BigDecimal lngP1, final BigDecimal latP2,
+    public static Double metersBetweenCoordinates(final BigDecimal latP1, final BigDecimal lngP1, final BigDecimal latP2,
                                                   final BigDecimal lngP2) {
-        return metersBetweenCoordinates(degrees2Radians(latP1), degrees2Radians(lngP1),
-                degrees2Radians(latP2), degrees2Radians(lngP2));
+        return ofNullable(latP1)
+                .filter(__ -> nonNull(latP2))
+                .filter(__ -> nonNull(lngP1))
+                .filter(__ -> nonNull(lngP2))
+                .map(__ -> metersBetweenRadiansCoordinates(
+                        degrees2Radians(latP1),
+                        degrees2Radians(lngP1),
+                        degrees2Radians(latP2),
+                        degrees2Radians(lngP2)))
+                .orElse(null);
     }
 
-    public static double metersBetweenCoordinates(final double latP1, final double lngP1, final double latP2,
+    public static double metersBetweenRadiansCoordinates(final double latP1, final double lngP1, final double latP2,
                                                   final double lngP2) {
         // Point P
         double rho1 = EARTHS_RADIUS_METERS * Math.cos(latP1);

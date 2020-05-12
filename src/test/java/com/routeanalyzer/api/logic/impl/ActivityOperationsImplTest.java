@@ -18,11 +18,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static com.routeanalyzer.api.common.DateUtils.toZonedDateTime;
+import static com.routeanalyzer.api.common.DateUtils.toUtcZonedDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -77,35 +76,35 @@ public class ActivityOperationsImplTest {
 	private void initLaps() {
 		lap1 = Lap.builder()
 				.distanceMeters(100.0)
-				.startTime(toZonedDateTime(timeMillisLap11).orElse(null))
+				.startTime(toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.index(0)
 				.totalTimeSeconds(50.0)
 				.intensity("LOW")
 				.build();
 		lap2 = Lap.builder()
 				.distanceMeters(150.0)
-				.startTime(toZonedDateTime(timeMillisLap21).orElse(null))
+				.startTime(toUtcZonedDateTime(timeMillisLap21).orElse(null))
 				.index(1)
 				.totalTimeSeconds(50.0)
 				.intensity("MEDIUM")
 				.build();
 		lap3 = Lap.builder()
 				.distanceMeters(100.0)
-				.startTime(toZonedDateTime(timeMillisLap31).orElse(null))
+				.startTime(toUtcZonedDateTime(timeMillisLap31).orElse(null))
 				.index(2)
 				.totalTimeSeconds(50.0)
 				.intensity("HIGH")
 				.build();
 		lap4 = Lap.builder()
 				.distanceMeters(150.0)
-				.startTime(toZonedDateTime(timeMillisLap41).orElse(null))
+				.startTime(toUtcZonedDateTime(timeMillisLap41).orElse(null))
 				.index(3)
 				.totalTimeSeconds(50.0)
 				.intensity("HIGH")
 				.build();
         lap3OneTrackPoint = Lap.builder()
                 .distanceMeters(100.0)
-                .startTime(toZonedDateTime(timeMillisLap31).orElse(null))
+                .startTime(toUtcZonedDateTime(timeMillisLap31).orElse(null))
                 .index(2)
                 .totalTimeSeconds(50.0)
                 .intensity("HIGH")
@@ -116,20 +115,20 @@ public class ActivityOperationsImplTest {
 		createAddTrack(lap1, timeMillisLap11, timeMillisLap12, index11, index12,
 				"43.3602900","43.352478",  "-5.8447600", "-5.8501170", "120",
 				"123", "25.0", "25.0", "12.0", "12.0", 76, 86);
-		lap1.setStartTime(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null));
+		lap1.setStartTime(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null));
 		createAddTrack(lap2, timeMillisLap21, timeMillisLap22, index21, index22,
 				"44.3602900","46.352478",  "-6.8447600", "-4.8501170", "119",
 				"125", "15.0", "15.0", "16.0", "13.0", 90, 95);
-		lap2.setStartTime(DateUtils.toZonedDateTime(timeMillisLap21).orElse(null));
+		lap2.setStartTime(DateUtils.toUtcZonedDateTime(timeMillisLap21).orElse(null));
 		createAddTrack(lap3, timeMillisLap31, timeMillisLap32, index31, index32,
 				"42.3602900","46.452478",  "-3.8447600", "-6.9501170", "130",
 				"131", "46.0", "65.0", "21.0", "10.0", 100, 107);
-		lap3.setStartTime(DateUtils.toZonedDateTime(timeMillisLap31).orElse(null));
+		lap3.setStartTime(DateUtils.toUtcZonedDateTime(timeMillisLap31).orElse(null));
 		createAddTrack(lap4, timeMillisLap41, timeMillisLap42, index41, index42,
 				"40.3602900","40.352478",  "-8.8447600", "-9.8501170", "116",
 				"121", "80.0", "120.0", "13.0", "15.0", 112, 123);
-		lap4.setStartTime(DateUtils.toZonedDateTime(timeMillisLap41).orElse(null));
-		lap3OneTrackPoint.setStartTime(DateUtils.toZonedDateTime(timeMillisLap31).orElse(null));
+		lap4.setStartTime(DateUtils.toUtcZonedDateTime(timeMillisLap41).orElse(null));
+		lap3OneTrackPoint.setStartTime(DateUtils.toUtcZonedDateTime(timeMillisLap31).orElse(null));
         createAddTrack(lap3OneTrackPoint, timeMillisLap31, timeMillisLap32, index31, index32,
                 "42.3602900","46.452478",  "-3.8447600", "-6.9501170", "130",
                 "131", "46.0", "65.0", "21.0", "10.0", 100, 107);
@@ -181,7 +180,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		Optional<Activity> optResult = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
@@ -204,7 +203,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		Optional<Activity> optResult = activityOperations.removeLaps(activity, null, Lists.newArrayList(0));
@@ -220,7 +219,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		Optional<Activity> optResult = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21), Lists.newArrayList(1));
@@ -240,7 +239,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		Optional<Activity> optResult = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
@@ -261,7 +260,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		Optional<Activity> optResult = activityOperations.removeLaps(activity, Lists.newArrayList(timeMillisLap21),
@@ -282,7 +281,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		Optional<Activity> optResult = activityOperations.removeLaps(activity, null, singletonList(-1));
@@ -302,7 +301,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		Optional<Activity> optResult = activityOperations.removeLaps(activity, singletonList(timeMillisLap11), null);
@@ -333,7 +332,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		doReturn(joinedLap).when(lapsOperations).joinLaps(eq(lap2), eq(lap3));
@@ -362,7 +361,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		doReturn(joinedLap).when(lapsOperations).joinLaps(eq(lap2), eq(lap3));
@@ -389,7 +388,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		Activity result = activityOperations.joinLaps(activity, indexLeft, indexRight);
@@ -410,7 +409,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		String latitude = "46.452478";
 		String longitude = "-6.9501170";
@@ -440,7 +439,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		String latitude = "46.452478";
 		String longitude = "-6.9501170";
@@ -470,7 +469,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		String latitude = "46.452478";
 		String longitude = "-6.9501170";
@@ -500,7 +499,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		doReturn(lap3.getTracks().get(1)).when(lapsOperations)
 				.getTrackPoint(lap3, null, null, timeMillisLap31,1);
@@ -540,7 +539,7 @@ public class ActivityOperationsImplTest {
                 .idUser("foo")
                 .name("boo")
                 .sport("sport")
-                .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+                .date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
 		String latitude = "46.452478";
 		String longitude = "-6.9501170";
@@ -578,7 +577,7 @@ public class ActivityOperationsImplTest {
                 .idUser("foo")
                 .name("boo")
                 .sport("sport")
-                .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+                .date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
 		doReturn(true).when(lapsOperations)
 				.fulfillCriteriaPositionTime(lap3OneTrackPoint, latitude, longitude, timeMillisLap31, index31);
@@ -609,7 +608,7 @@ public class ActivityOperationsImplTest {
                 .idUser("foo")
                 .name("boo")
                 .sport("sport")
-                .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+                .date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
         // When
 		Optional<Activity> optAct = activityOperations.removePoint(activity, "40.3602900", "-8.8447600",
@@ -635,7 +634,7 @@ public class ActivityOperationsImplTest {
                 .idUser("foo")
                 .name("boo")
                 .sport("sport")
-                .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+                .date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
 		String latitude = "40.3602900";
 		String longitude = "-8.8447600";
@@ -673,7 +672,7 @@ public class ActivityOperationsImplTest {
                 .idUser("foo")
                 .name("boo")
                 .sport("sport")
-                .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+                .date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
 		String latitude = "44.3602900";
 		String longitude = "-6.8447600";
@@ -712,7 +711,7 @@ public class ActivityOperationsImplTest {
                 .idUser("foo")
                 .name("boo")
                 .sport("sport")
-                .date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+                .date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
                 .build();
         // When
 		Optional<Activity> optAct = activityOperations.removePoint(activity, "46.452478", "-6.9501170",
@@ -738,7 +737,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		String latitude = "44.3602900";
 		String longitude = "-6.8447600";
@@ -787,7 +786,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		Optional<Activity> optAct = activityOperations.splitLap(activity, null, "-6.8447600", timeMillisLap21, index21);
@@ -806,7 +805,7 @@ public class ActivityOperationsImplTest {
 				.idUser("foo")
 				.name("boo")
 				.sport("sport")
-				.date(DateUtils.toZonedDateTime(timeMillisLap11).orElse(null))
+				.date(DateUtils.toUtcZonedDateTime(timeMillisLap11).orElse(null))
 				.build();
 		// When
 		Optional<Activity> optAct = activityOperations.splitLap(activity, "44.3602900", null,

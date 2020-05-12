@@ -35,7 +35,9 @@ public class CommonUtils {
 	// Boolean utils
 
 	public static <T> Predicate<T> not(final Predicate<T> t) {
-		return t.negate();
+		return ofNullable(t)
+				.map(Predicate::negate)
+				.orElse(null);
 	}
 
 	// String utils

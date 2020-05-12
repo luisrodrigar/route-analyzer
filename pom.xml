@@ -12,7 +12,7 @@
 	<name>Route Analyzer API Service</name>
 	<groupId>com.routeanalyzer</groupId>
 	<artifactId>api</artifactId>
-	<version>0.0.1</version>
+	<version>1.0.0</version>
 
 	<properties>
 		<aws.version>1.11.283</aws.version>
