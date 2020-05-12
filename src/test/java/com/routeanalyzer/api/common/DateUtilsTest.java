@@ -1,17 +1,14 @@
 package com.routeanalyzer.api.common;
 
-import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -20,14 +17,49 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnit4.class)
-class DateUtilsTest {
+public class DateUtilsTest {
+
+    private static ZonedDateTime zonedDateTime;
+    private static Long timeMillis;
+    private static Long timeMillisNull;
+    private static ZonedDateTime zonedDateTimeNull;
+    private static ZonedDateTime utcZonedDateTime;
+    private static Instant instantNull;
+    private static GregorianCalendar gregorianCalendar;
+    private static GregorianCalendar gregorianCalendarNull;
+    private static GregorianCalendar utcGregorianCalendar;
+    private static XMLGregorianCalendar xmlGregorianCalendar;
+    private static XMLGregorianCalendar utcXmlGregorianCalendar;
+    private static XMLGregorianCalendar xmlGregorianCalendarNull;
+    private static Date date;
+    private static Date utcDate;
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        zonedDateTime = ZonedDateTime.of(2020, 05, 12,
+                17, 36, 00, 00, ZoneId.of("Europe/Madrid"));
+        utcZonedDateTime = ZonedDateTime.of(2020, 05, 12,
+                15, 36, 00, 00, ZoneId.of("UTC"));
+        timeMillis = 1589297760000L;
+
+        date = new Date(timeMillis);
+        gregorianCalendar = new GregorianCalendar();
+        gregorianCalendar.setTime(date);
+
+        xmlGregorianCalendar = DatatypeFactory.newInstance()
+                .newXMLGregorianCalendar(gregorianCalendar);
+
+        utcDate = new Date(1589290560000L);
+        utcGregorianCalendar = new GregorianCalendar();
+        utcGregorianCalendar.setTime(utcDate);
+
+        utcXmlGregorianCalendar = DatatypeFactory.newInstance()
+                .newXMLGregorianCalendar(utcGregorianCalendar);
+    }
 
     @Test
-    void toDate() {
+    public void toDate() {
         // Given
-        ZonedDateTime zonedDateTime = ZonedDateTime.of(2020, 05, 12,
-                17, 36, 00, 00, ZoneId.of("Europe/Madrid"));
-        Long timeMillis = 1589297760000L;
 
         // When
         Optional<Date> result = DateUtils.toDate(zonedDateTime);
@@ -37,23 +69,21 @@ class DateUtilsTest {
     }
 
     @Test
-    void nullToDate() {
+    public void nullToDate() {
         // Given
-        ZonedDateTime zonedDateTime = null;
+
 
         // When
-        Optional<Date> result = DateUtils.toDate(zonedDateTime);
+        Optional<Date> result = DateUtils.toDate(zonedDateTimeNull);
 
         // Then
         assertThat(result).isEmpty();
     }
 
     @Test
-    void toTimeMillis() {
+    public void toTimeMillis() {
         // Given
-        ZonedDateTime zonedDateTime = ZonedDateTime.of(2020, 05, 12,
-                17, 36, 00, 00, ZoneId.of("Europe/Madrid"));
-        Long timeMillis = 1589297760000L;
+
 
         // When
         Optional<Long> result = DateUtils.toTimeMillis(zonedDateTime);
@@ -63,50 +93,41 @@ class DateUtilsTest {
     }
 
     @Test
-    void nullToTimeMillis() {
+    public void nullToTimeMillis() {
         // Given
-        ZonedDateTime zonedDateTime = null;
 
         // When
-        Optional<Long> result = DateUtils.toTimeMillis(zonedDateTime);
+        Optional<Long> result = DateUtils.toTimeMillis(zonedDateTimeNull);
 
         // Then
         assertThat(result).isEmpty();
     }
 
     @Test
-    void timeMillisToZonedDateTime() {
+    public void timeMillisToZonedDateTime() {
         // Given
-        Long utcTimeMillis = 1589297760000L;
-        ZonedDateTime utcZonedDateTime = ZonedDateTime.of(2020, 05, 12,
-                15, 36, 00, 00, ZoneId.of("UTC"));
 
         // When
-        Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(utcTimeMillis);
+        Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(timeMillis);
 
         // Then
         assertThat(result).contains(utcZonedDateTime);
     }
 
     @Test
-    void nullTimeMillisToZonedDateTime() {
+    public void nullTimeMillisToZonedDateTime() {
         // Given
-        Long utcTimeMillis = null;
 
         // When
-        Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(utcTimeMillis);
+        Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(timeMillisNull);
 
         // Then
         assertThat(result).isEmpty();
     }
 
     @Test
-    void testToZonedDateTime() {
+    public void testToZonedDateTime() {
         // Given
-        ZonedDateTime zonedDateTime = ZonedDateTime.of(2020, 05, 12,
-                17, 36, 00, 00, ZoneId.of("Europe/Madrid"));
-        ZonedDateTime utcZonedDateTime = ZonedDateTime.of(2020, 05, 12,
-                15, 36, 00, 00, ZoneId.of("UTC"));
 
         // When
         Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(zonedDateTime.toInstant());
@@ -116,25 +137,19 @@ class DateUtilsTest {
     }
 
     @Test
-    void nullInstantToZonedDateTime() {
+    public void nullInstantToZonedDateTime() {
         // Given
-        Instant instant = null;
 
         // When
-        Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(instant);
+        Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(instantNull);
 
         // Then
         assertThat(result).isEmpty();
     }
 
     @Test
-    void testToZonedDateTime1() {
+    public void testToZonedDateTime1() {
         // Given
-        ZonedDateTime utcZonedDateTime = ZonedDateTime.of(2020, 05, 12,
-                15, 36, 00, 00, ZoneId.of("UTC"));
-        Date utcDate = new Date(1589297760000L);
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.setTime(utcDate);
 
         // When
         Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(gregorianCalendar);
@@ -144,28 +159,19 @@ class DateUtilsTest {
     }
 
     @Test
-    void nullGregorianToZonedDateTime() {
+    public void nullGregorianToZonedDateTime() {
         // Given
-        GregorianCalendar gregorianCalendar = null;
 
         // When
-        Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(gregorianCalendar);
+        Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(gregorianCalendarNull);
 
         // Then
         assertThat(result).isEmpty();
     }
 
     @Test
-    void testToZonedDateTime2() throws DatatypeConfigurationException {
+    public void testToZonedDateTime2() {
         // Given
-        ZonedDateTime utcZonedDateTime = ZonedDateTime.of(2020, 05, 12,
-                15, 36, 00, 00, ZoneId.of("UTC"));
-        Date utcDate = new Date(1589297760000L);
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.setTime(utcDate);
-        XMLGregorianCalendar xmlGregorianCalendar = DatatypeFactory.newInstance()
-                .newXMLGregorianCalendar(gregorianCalendar);
-
 
         // When
         Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(xmlGregorianCalendar);
@@ -175,34 +181,29 @@ class DateUtilsTest {
     }
 
     @Test
-    void nullXmlGregorianToZonedDateTime() throws DatatypeConfigurationException {
+    public void nullXmlGregorianToZonedDateTime() {
         // Given
-        XMLGregorianCalendar xmlGregorianCalendar = null;
-
 
         // When
-        Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(xmlGregorianCalendar);
+        Optional<ZonedDateTime> result = DateUtils.toUtcZonedDateTime(xmlGregorianCalendarNull);
 
         // Then
         assertThat(result).isEmpty();
     }
 
     @Test
-    void createGregorianCalendar() {
+    public void createGregorianCalendar() {
         // Given
-        Date utcDate = new Date(1589290560000L);
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.setTime(utcDate);
 
         // When
         GregorianCalendar result = DateUtils.createGregorianCalendar(utcDate);
 
         // Then
-        assertThat(result).isEqualTo(gregorianCalendar);
+        assertThat(result).isEqualTo(utcGregorianCalendar);
     }
 
     @Test
-    void createGregorianCalendarPassingNullParam() {
+    public void createGregorianCalendarPassingNullParam() {
         // Given
 
         // When
@@ -213,23 +214,18 @@ class DateUtilsTest {
     }
 
     @Test
-    void createXmlGregorianCalendar() throws DatatypeConfigurationException {
+    public void createXmlGregorianCalendar() {
         // Given
-        Date utcDate = new Date(1589290560000L);
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.setTime(utcDate);
-        XMLGregorianCalendar xmlGregorianCalendar = DatatypeFactory.newInstance()
-                .newXMLGregorianCalendar(gregorianCalendar);
 
         // When
-        XMLGregorianCalendar result = DateUtils.createXmlGregorianCalendar(gregorianCalendar);
+        XMLGregorianCalendar result = DateUtils.createXmlGregorianCalendar(utcGregorianCalendar);
 
         // Then
-        assertThat(result).isEqualTo(xmlGregorianCalendar);
+        assertThat(result).isEqualTo(utcXmlGregorianCalendar);
     }
 
     @Test
-    void createXmlGregorianCalendarPassingNullParam() throws DatatypeConfigurationException {
+    public void createXmlGregorianCalendarPassingNullParam() {
         // Given
 
         // When
@@ -240,7 +236,7 @@ class DateUtilsTest {
     }
 
     @Test
-    void createXmlGregorianCalendarFromNull() {
+    public void createXmlGregorianCalendarFromNull() {
         // Given
 
         // When
@@ -251,7 +247,7 @@ class DateUtilsTest {
     }
 
     @Test
-    void millisToSeconds() {
+    public void millisToSeconds() {
         // Given
         double millis = 123000d;
 
@@ -263,7 +259,7 @@ class DateUtilsTest {
     }
 
     @Test
-    void nullMillisToSeconds() {
+    public void nullMillisToSeconds() {
         // Given
         Double nullValue = null;
 
