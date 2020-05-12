@@ -3,7 +3,6 @@ package com.routeanalyzer.api.common;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,25 +17,27 @@ public class CommonUtilsTest {
     @Test
     public void convertToListBoolean() {
         // Given
-        List<String> inputList = Arrays.asList("true","false","true","true");
+        List<String> inputList = Arrays.asList("true","false", "true","true");
         // When
         List<Boolean> result = CommonUtils.toListOfType(inputList, Boolean::valueOf);
-
         // Then
-        assertThat(result).isEqualTo(Arrays.asList(true, false, true, true));
+        assertThat(result).isEqualTo(Arrays.asList(true, false,
+                true, true));
     }
 
     @Test
     public void convertToListLong() {
         // Given
-        List<String> inputList = Arrays.asList("8321312431412412422","1043123412312312313",
-                "4531231231233232","32312312314231394");
+        List<String> inputList = Arrays.asList("8321312431412412422",
+                "1043123412312312313", "4531231231233232",
+                "32312312314231394");
         // When
         List<Long> result = CommonUtils.toListOfType(inputList, Long::valueOf);
-
         // Then
-        assertThat(result).isEqualTo(Arrays.asList(8321312431412412422L, 1043123412312312313L,
-                4531231231233232L, 32312312314231394L));
+        assertThat(result)
+                .isEqualTo(Arrays.asList(8321312431412412422L,
+                        1043123412312312313L, 4531231231233232L,
+                        32312312314231394L));
     }
 
     @Test
@@ -45,9 +46,17 @@ public class CommonUtilsTest {
         List<String> inputList = Collections.emptyList();
         // When
         List<Long> result = CommonUtils.toListOfType(inputList, Long::valueOf);
-
         // Then
         assertThat(result).isEqualTo(Collections.emptyList());
+    }
+
+    @Test
+    public void convertToNullList() {
+        // Given
+        // When
+        List<Long> result = CommonUtils.toListOfType(null, Long::valueOf);
+        // Then
+        assertThat(result).isNull();
     }
 
     @Test

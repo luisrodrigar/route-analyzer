@@ -12,6 +12,7 @@ import java.util.stream.IntStream;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import static java.util.Objects.nonNull;
 
 @Slf4j
 @UtilityClass
@@ -23,13 +24,16 @@ public class CommonUtils {
 		Function<String, Optional<T>> checkConvertTo = str ->  Try.of(() -> convertTo.apply(str))
 				.onFailure(err -> log.error("Error trying to convert to a List of types using {}", convertTo, err))
 				.toJavaOptional();
-		return IntStream.range(0, listStrings.size())
-				.boxed()
-				.map(listStrings::get)
-				.map(checkConvertTo)
-				.filter(Optional::isPresent)
-				.map(Optional::get)
-				.collect(toList());
+		return ofNullable(listStrings)
+				.filter(__ -> nonNull(convertTo))
+				.map(__ -> IntStream.range(0, listStrings.size())
+						.boxed()
+						.map(listStrings::get)
+						.map(checkConvertTo)
+						.filter(Optional::isPresent)
+						.map(Optional::get)
+						.collect(toList()))
+				.orElse(null);
 	}
 
 	// Boolean utils
