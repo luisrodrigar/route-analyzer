@@ -16,7 +16,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
@@ -42,7 +41,7 @@ import static org.mockito.Mockito.verify;
 @RunWith(MockitoJUnitRunner.class)
 public class LapsOperationsImpTest {
 
-    @Spy
+    @Mock
     private TrackPointOperations trackPointOperations;
 
     @Mock
@@ -79,7 +78,7 @@ public class LapsOperationsImpTest {
     }
 
     private void addLeftTracks() {
-        createLeftTrack();
+        createLeftTracks();
         trackPointsLeft = Lists.newArrayList();
         trackPointsLeft.add(trackPointLeft1);
         trackPointsLeft.add(trackPointLeft2);
@@ -88,7 +87,7 @@ public class LapsOperationsImpTest {
     }
 
     private void addRightTracks() {
-        createRightTrack();
+        createRightTracks();
         trackPointsRight = Lists.newArrayList();
         trackPointsRight.add(trackPointRight1);
         trackPointsRight.add(trackPointRight2);
@@ -96,7 +95,7 @@ public class LapsOperationsImpTest {
         trackPointsRight.add(trackPointRight4);
     }
 
-    private void createLeftTrack() {
+    private void createLeftTracks() {
         timeMillisLeft1 = 123456L;
         timeMillisLeft2 = 123466L;
         timeMillisLeft3 = 123476L;
@@ -152,7 +151,7 @@ public class LapsOperationsImpTest {
                 .build();
     }
 
-    private void createRightTrack() {
+    private void createRightTracks() {
         timeMillisRight1 = 123506L;
         timeMillisRight2 = 123526L;
         timeMillisRight3 = 123546L;

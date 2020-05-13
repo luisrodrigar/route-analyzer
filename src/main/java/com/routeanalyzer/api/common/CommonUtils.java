@@ -5,14 +5,12 @@ import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.IntStream;
 
+import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static java.util.Objects.nonNull;
 
 @Slf4j
 @UtilityClass
@@ -21,17 +19,14 @@ public class CommonUtils {
 	// List Utils
 
 	public static <T> List<T> toListOfType(final List<String> listStrings, final Function<String, T> convertTo) {
-		Function<String, Optional<T>> checkConvertTo = str ->  Try.of(() -> convertTo.apply(str))
-				.onFailure(err -> log.error("Error trying to convert to a List of types using {}", convertTo, err))
-				.toJavaOptional();
 		return ofNullable(listStrings)
 				.filter(__ -> nonNull(convertTo))
-				.map(__ -> IntStream.range(0, listStrings.size())
-						.boxed()
-						.map(listStrings::get)
-						.map(checkConvertTo)
-						.filter(Optional::isPresent)
-						.map(Optional::get)
+				.map(__ -> listStrings
+						.stream()
+						.flatMap(stringObject -> Try.of(() -> convertTo.apply(stringObject))
+								.onFailure(err -> log.error("Error trying to convert " +
+										"to a List of types using {}", convertTo, err))
+								.toJavaStream())
 						.collect(toList()))
 				.orElse(null);
 	}
