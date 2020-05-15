@@ -14,7 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static com.routeanalyzer.api.common.Constants.COLORS_LAP_PATH;
@@ -44,7 +44,7 @@ import static utils.TestUtils.ACTIVITY_GPX_ID;
 import static utils.TestUtils.ACTIVITY_TCX_ID;
 import static utils.TestUtils.toActivity;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@RunWith(SpringRunner.class)
 @WebMvcTest(ActivityRestController.class)
 public class ActivityRestControllerTest {
 	@MockBean
