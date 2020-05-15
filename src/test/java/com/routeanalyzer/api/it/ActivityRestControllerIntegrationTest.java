@@ -52,8 +52,6 @@ import static utils.TestUtils.NOT_EXIST_1_ID;
 import static utils.TestUtils.NOT_EXIST_2_ID;
 import static utils.TestUtils.toActivity;
 
-@RunWith(SpringRunner.class)
-@TestPropertySource("classpath:test.properties")
 public class ActivityRestControllerIntegrationTest extends IntegrationTest {
 
     @ClassRule

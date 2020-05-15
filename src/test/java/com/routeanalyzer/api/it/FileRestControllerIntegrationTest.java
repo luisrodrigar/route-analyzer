@@ -62,8 +62,6 @@ import static utils.TestUtils.GPX_ID_XML;
 import static utils.TestUtils.NOT_EXIST_1_ID;
 import static utils.TestUtils.TCX_ID_XML;
 
-@RunWith(SpringRunner.class)
-@TestPropertySource("classpath:test.properties")
 @ContextConfiguration(initializers = FileRestControllerIntegrationTest.Initializer.class)
 public class FileRestControllerIntegrationTest extends IntegrationTest {
 
