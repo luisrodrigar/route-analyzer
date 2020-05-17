@@ -12,7 +12,6 @@ import io.vavr.control.Try;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -29,15 +28,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
-import java.io.File;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -87,11 +82,6 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
             .dynamicPort()
             .bindAddress(LOCALHOST_HOST_NAME));
 
-    @ClassRule
-    public static DockerComposeContainer mongoDbContainer =
-            new DockerComposeContainer(new File(DOCKER_COMPOSE_MONGO_DB))
-                    .withExposedService(MONGO_CONTAINER_NAME, MONGO_PORT);
-
     @Value("classpath:input/coruna.gpx.xml")
     private Resource gpxXmlResource;
     @Value("classpath:input/oviedo.tcx.xml")
@@ -104,10 +94,8 @@ public class FileRestControllerIntegrationTest extends IntegrationTest {
 
     @AfterClass
     public static void shutDown() {
-        mongoDbContainer.stop();
         localStackS3.stop();
         googleApiWireMockClass.stop();
-        mongoDbContainer.close();
         localStackS3.close();
     }
 

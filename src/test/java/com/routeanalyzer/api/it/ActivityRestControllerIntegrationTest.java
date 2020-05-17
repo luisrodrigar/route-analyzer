@@ -4,9 +4,7 @@ import com.routeanalyzer.api.database.ActivityMongoRepository;
 import com.routeanalyzer.api.model.Activity;
 import com.routeanalyzer.api.model.Lap;
 import org.junit.AfterClass;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -16,13 +14,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.testcontainers.containers.DockerComposeContainer;
 import utils.TestUtils;
 
-import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -54,11 +48,6 @@ import static utils.TestUtils.toActivity;
 
 public class ActivityRestControllerIntegrationTest extends IntegrationTest {
 
-    @ClassRule
-    public static DockerComposeContainer mongoDbContainer =
-            new DockerComposeContainer(new File(DOCKER_COMPOSE_MONGO_DB))
-                    .withExposedService(MONGO_CONTAINER_NAME, MONGO_PORT);
-
     @Autowired
     private ActivityMongoRepository activityMongoRepository;
 
@@ -79,12 +68,8 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
     @Value("classpath:expected/activity/remove-laps-tcx.json")
     private Resource removeLapsTcxJsonResource;
 
-    private HttpEntity<Activity> requestEntity = new HttpEntity<>(new Activity(), new HttpHeaders());
-
-    @AfterClass
-    public static void shutDown() {
-        mongoDbContainer.stop();
-    }
+    private HttpEntity<Activity> requestEntity =
+            new HttpEntity<>(new Activity(), new HttpHeaders());
 
     @Test
     public void getGpxActivityByIdTest() throws Exception {
@@ -95,8 +80,8 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
                 .toUriString();
         // When
         // Activity with id 5ace8cd14c147400048aa6b0 exists in database
-        ResponseEntity<Activity> result = testRestTemplate.getForEntity(getGpxUri, Activity.class);
-
+        ResponseEntity<Activity> result =
+                testRestTemplate.getForEntity(getGpxUri, Activity.class);
         // Then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).isEqualTo(gpxActivity);
@@ -128,11 +113,11 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
         String getActivityNotFound2 = UriComponentsBuilder.fromPath(GET_ACTIVITY_PATH)
                 .buildAndExpand(NOT_EXIST_2_ID)
                 .toUriString();
-
         // when
-        ResponseEntity<Activity> result1 = testRestTemplate.getForEntity(getActivityNotFound1, Activity.class);
-        ResponseEntity<Activity> result2 = testRestTemplate.getForEntity(getActivityNotFound2, Activity.class);
-
+        ResponseEntity<Activity> result1 =
+                testRestTemplate.getForEntity(getActivityNotFound1, Activity.class);
+        ResponseEntity<Activity> result2 =
+                testRestTemplate.getForEntity(getActivityNotFound2, Activity.class);
         // Then
         assertThat(result1.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(result2.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -146,8 +131,10 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
                 .toUriString();
 
         // When
-        ResponseEntity<String> result = testRestTemplate.getForEntity(exportActivityAsGpxFile, String.class);
+        ResponseEntity<String> result =
+                testRestTemplate.getForEntity(exportActivityAsGpxFile, String.class);
 
+        // Then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_OCTET_STREAM);
         assertThat(result.getBody()).isNotEmpty();
@@ -161,8 +148,10 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
                 .toUriString();
 
         // When
-        ResponseEntity<String> result = testRestTemplate.getForEntity(exportActivityAsTcxFile, String.class);
+        ResponseEntity<String> result =
+                testRestTemplate.getForEntity(exportActivityAsTcxFile, String.class);
 
+        // Then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_OCTET_STREAM);
         assertThat(result.getBody()).isNotEmpty();
@@ -176,8 +165,10 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
                 .toUriString();
 
         // When
-        ResponseEntity<String> result = testRestTemplate.getForEntity(exportNonExistentActivityToTcxFile, String.class);
+        ResponseEntity<String> result =
+                testRestTemplate.getForEntity(exportNonExistentActivityToTcxFile, String.class);
 
+        // Then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
@@ -188,10 +179,10 @@ public class ActivityRestControllerIntegrationTest extends IntegrationTest {
         String exportAsNonKnownFile = UriComponentsBuilder.fromPath(EXPORT_AS_PATH)
                 .buildAndExpand(ACTIVITY_GPX_ID, unknownXmlType)
                 .toUriString();
-
         // When
-        ResponseEntity<String> result = testRestTemplate.getForEntity(exportAsNonKnownFile, String.class);
-
+        ResponseEntity<String> result =
+                testRestTemplate.getForEntity(exportAsNonKnownFile, String.class);
+        // Then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 

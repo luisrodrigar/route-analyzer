@@ -26,7 +26,7 @@ public class OriginalActivityS3Service implements OriginalActivityRepository {
 	
 	@Override
 	public void uploadFile(byte[] byteArray, String fileName) {
-		log.info("Uploading a new file to S3 from a file, name of the file: " + fileName + "\n");
+		log.info("Uploading a new file to S3 from a file, name of the file: {}", fileName);
 		ofNullable(byteArray)
 				.map(this::getMetadata)
 				.map(metadata -> new PutObjectRequest(awsProperties.getS3Bucket(),
@@ -53,7 +53,7 @@ public class OriginalActivityS3Service implements OriginalActivityRepository {
 	
 	@Override
 	public Optional<S3ObjectInputStream> getFile(String fileName) {
-		log.info("Getting a file from S3 with identify: " + fileName + "\n");
+		log.info("Getting a file from S3 with identify: {} ", fileName);
 		return Try.of(() -> s3Client.getObject(new GetObjectRequest(awsProperties.getS3Bucket(), fileName)))
 				.onFailure(err -> log.error("Error trying to get the file from S3 AWS bucket", err))
 				.map(S3Object::getObjectContent)
