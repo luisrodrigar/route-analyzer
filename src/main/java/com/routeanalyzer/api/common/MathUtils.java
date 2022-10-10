@@ -120,24 +120,16 @@ public class MathUtils {
 
     public static double metersBetweenRadiansCoordinates(final double latP1, final double lngP1, final double latP2,
                                                   final double lngP2) {
-        // Point P
-        double rho1 = EARTHS_RADIUS_METERS * Math.cos(latP1);
-        double z1 = EARTHS_RADIUS_METERS * Math.sin(latP1);
-        double x1 = rho1 * Math.cos(lngP1);
-        double y1 = rho1 * Math.sin(lngP1);
+        double dLon = lngP2 - lngP1;
+        double dLat = latP2 - latP1;
 
-        // Point Q
-        double rho2 = EARTHS_RADIUS_METERS * Math.cos(latP2);
-        double z2 = EARTHS_RADIUS_METERS * Math.sin(latP2);
-        double x2 = rho2 * Math.cos(lngP2);
-        double y2 = rho2 * Math.sin(lngP2);
+        // Haversine formula
+        double a = Math.pow(Math.sin(dLat / 2), 2)
+                + Math.cos(latP1) * Math.cos(latP2)
+                * Math.pow(Math.sin(dLon / 2), 2);
 
-        // Dot product
-        double dot = (x1 * x2 + y1 * y2 + z1 * z2);
-        double cosTheta = dot / (Math.pow(EARTHS_RADIUS_METERS, 2));
+        double c = 2 * Math.asin(Math.sqrt(a));
 
-        double theta = Math.acos(cosTheta);
-
-        return Math.abs(EARTHS_RADIUS_METERS * theta);
+        return Math.abs(EARTHS_RADIUS_METERS * c);
     }
 }

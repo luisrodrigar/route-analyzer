@@ -461,7 +461,7 @@ public class MathUtilsTest {
         Double result = MathUtils.metersBetweenCoordinates(latOviedo, lngOviedo, latMadrid, lngMadrid);
 
         // Then
-        assertThat(result).isEqualTo(372247.29576206073);
+        assertThat(result).isEqualTo(372247.2957620641);
     }
 
     @Test
@@ -569,6 +569,6 @@ public class MathUtilsTest {
                 latitudeMadrid, longitudeMadrid);
 
         // Then
-        assertThat(result).isEqualTo(372247.29597759416);
+        assertThat(result).isEqualTo(372247.2959776188);
     }
 }
